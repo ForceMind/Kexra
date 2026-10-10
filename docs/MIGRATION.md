@@ -2,6 +2,8 @@
 
 ## 已确认事实
 
+- Actions 运行额度保护：六套工作流已暂停自动触发，仅手动 `workflow_dispatch`；待用户公开仓库并完成安全审查后再恢复必要的自动检查。
+
 - GitHub 仓库名称已由 `ForceMind/Artex` 修改为 **`ForceMind/Kexra`**。
 - `main` 尚保持此前中文化基线；新的品牌迁移代码位于 [Draft PR #1](https://github.com/ForceMind/Kexra/pull/1)。
 - Web 产品名称、图标、登录名及若干启动/发布标识已在该 PR 中更新。

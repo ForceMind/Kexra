@@ -15,7 +15,7 @@
 
 한국어 · [中文](README.md) · [English](README.en.md)
 
-[![ci](https://github.com/ForceMind/Artex/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ForceMind/Artex/actions/workflows/ci.yml) [![detections](https://github.com/ForceMind/Artex/actions/workflows/detections.yml/badge.svg?branch=main)](https://github.com/ForceMind/Artex/actions/workflows/detections.yml) [![web](https://github.com/ForceMind/Artex/actions/workflows/web.yml/badge.svg?branch=main)](https://github.com/ForceMind/Artex/actions/workflows/web.yml) [![license: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![ci](https://github.com/ForceMind/Kexra/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ForceMind/Kexra/actions/workflows/ci.yml) [![detections](https://github.com/ForceMind/Kexra/actions/workflows/detections.yml/badge.svg?branch=main)](https://github.com/ForceMind/Kexra/actions/workflows/detections.yml) [![web](https://github.com/ForceMind/Kexra/actions/workflows/web.yml/badge.svg?branch=main)](https://github.com/ForceMind/Kexra/actions/workflows/web.yml) [![license: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
 </div>
 
@@ -72,7 +72,7 @@ ARTEX 는 **자신이 소유하거나 서면으로 명시적 허가를 받은 �
 - **국내법 고지**: 정보통신망법·개인정보보호법 고지와 "권한 범위 안에서만 사용" 경고를 한국어로 분명히 제공합니다.
 - **국내 스택 대응**: LLM 공급자를 프런티어 모델뿐 아니라 OpenAI 호환 엔드포인트(국산·오픈 모델)로 교체할 수 있습니다. 아래 [설정](#설정)을 참고하십시오.
 
-> 현지화의 경계와 설계 방침은 저장소의 작업 문서에 더 자세히 적혀 있습니다. 상류(upstream) 저장소의 변경을 대조하기 쉽도록 원본 중국어 문서는 `README.zh.md` 로 보존합니다.
+> 현지화의 경계와 설계 방침은 저장소의 작업 문서에 더 자세히 적혀 있습니다. 상류(upstream) 저장소의 변경을 대조하기 쉽도록 과거 원본 중국어 문서는 Git 기록에서 확인할 수 있고, 현재 설명은 `README.md` 와 `docs/README.md` 로 옮겼습니다.
 
 ---
 
@@ -108,7 +108,7 @@ ARTEX 는 **자신이 소유하거나 서면으로 명시적 허가를 받은 �
 > **⚠️ 지금은 아래 `docker compose up -d` 빠른 시작이 바로 작동하지 않습니다.** `docker-compose.yml` 의 `artex` 서비스가 받도록 지정된 상류(원본) 이미지 `autumn27/artex` 는 현재 Docker Hub 에서 내려가 받을 수 없습니다(2026-10-09 확인). 그래서 이 명령은 이미지 pull 단계에서 `pull access denied`/`manifest unknown` 으로 실패합니다. 한국어판 화면과 출력은 아래 ["그 밖의 설치 방법"](#그-밖의-설치-방법)에 있는 **소스에서 단일 바이너리 컴파일** 경로로 빌드하면 바로 쓸 수 있습니다(현재 정상 작동을 확인했습니다). 한국어판 Docker 이미지의 배포는 준비 중입니다.
 
 ```bash
-git clone https://github.com/ForceMind/Artex.git
+git clone https://github.com/ForceMind/Kexra.git
 cd Artex
 cp .env.example .env          # POSTGRES_PASSWORD 설정, ANTHROPIC_API_KEY 는 선택
 docker compose up -d          # artex 이미지 + postgres 를 함께 기동
@@ -127,7 +127,7 @@ docker compose up -d          # artex 이미지 + postgres 를 함께 기동
   ```bash
   cd web && npm ci && npm run build:static && cd ..   # 1) 프런트엔드 정적 빌드
   rm -rf server/webui/dist && mkdir -p server/webui/dist && cp -a web/out/. server/webui/dist/   # 2) 내장 디렉터리로 동기화(재빌드 시 중첩 방지)
-  CGO_ENABLED=0 go build -tags embedui -o artex ./cmd/artex   # 3) 프런트 내장 컴파일
+  CGO_ENABLED=0 go build -tags embedui -o kexra ./cmd/kexra   # 3) 프런트 내장 컴파일
   ./start.sh                                          # → http://localhost:8787
   ```
 
@@ -372,7 +372,7 @@ flowchart TB
 ./dev.sh    # 백엔드(:8787) + 트래픽 프록시(:8788) + 프런트엔드 next dev(:5173) → http://localhost:5173
 ```
 
-- 백엔드: `go run ./cmd/artex` (`-tags embedui` 없으면 프런트엔드를 내장하지 않음)
+- 백엔드: `go run ./cmd/kexra` (`-tags embedui` 없으면 프런트엔드를 내장하지 않음)
 - 프런트엔드: `cd web && npm run dev` (`/api` 를 백엔드로 프록시, 핫 리로드)
 - 테스트: `go test ./...`
 - Mock 미리 보기(백엔드 없이): `cd web && NEXT_PUBLIC_MOCK=1 npm run dev`

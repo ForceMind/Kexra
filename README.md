@@ -21,6 +21,12 @@ Kexra 将目标管理、AI 任务规划、并行执行、资产与探索图谱�
 
 **技术组成**：Go 1.26.x、Next.js 16 / React 19、PostgreSQL 16、TypeScript、MCP / Skills。有关实际依赖版本，以 `go.mod`、`web/package.json` 和 CI 定义为准。
 
+## 验证与 CI 状态
+
+为避免私有仓库 GitHub Actions 额度持续消耗，全部工作流已暂时切换为手动触发（`workflow_dispatch`）。当前迁移通过静态一致性检查准备验收，完整 Go 1.26、前端和数据库 CI 尚未运行；不要将手动模式理解为测试通过。
+
+本地先运行 `python3 -I scripts/check-kexra-migration.py` 检查更名契约，再执行下方构建命令。
+
 ## 开始使用
 
 建议从**隔离的本地开发环境**入手，不要直接执行未知测试目标。
