@@ -8,10 +8,12 @@
 | --- | --- | --- |
 | `README.zh.md` | 旧产品的中文完整说明已过时；建议保留极短的跳转页，未来可彻底删除 | 新 [README](../README.md) 已覆盖，历史内容在 Git 中可追溯；更新所有引用 |
 | `README.ko.md` | 旧韩语说明仅用于历史；可移入 `docs/legacy/` 或在成熟后删除 | 确认韩语兼容维护策略与内部锚点引用 |
-| `CHANGELOG.en.md` / `CHANGELOG.zh.md` | 作为历史参考保留或归档，避免与新 Kexra 版本日志混淆 | 不改变旧版本史实和已存在的版权信息 |
+| `CHANGELOG.zh.md` | 继承的旧项目历史日志，建议只作存档 | 不改变既有版本史实及相关许可声明 |
+| `CHANGELOG.en.md` | 现已改写为 Kexra 英文摘要，若继续维护双语则保留 | 仅在停止维护英文文档且旧链接已更新时考虑删除 |
 | `MAINTAINING.en.md`、`CONTRIBUTING.en.md`、`SECURITY.en.md`、`CODE_OF_CONDUCT.en.md` | 如不维护英文双语可退化为简短导航文件，之后再删除 | 确认 README、Issue 模板和其他链接不依赖其锚点 |
 | `screenshots/wx.png` | 旧上游的推广二维码，建议在取消旧 README 图片引用后移除 | 确保文档与站点不再引用 |
 | `screenshots/.gitkeep` | 同目录已有文件时属于冗余占位，可删除 | 已确认 Git 跟踪该目录中其他文件 |
+| `web/public/logo.png`、`web/src/app/icon.png`、`web/src/app/favicon.ico` | 新 SVG 品牌分支已移除旧图标，但不能在旧版 main 中提前删除 | 先确认所有界面已改用 SVG，且不存在旧路径引用 |
 | `scripts/rebrand_kexra.py`、`.github/workflows/kexra-migrate-once.yml` | 一次性迁移工具，已从品牌 PR 移除 | 不应恢复到正式主线 |
 
 以上是**建议清理名单**，不等于这些文件已经被物理删除；删除前要验证实际文件依赖。可优先清理与旧品牌相关的广告入口，而保留真实软件来源记录。
