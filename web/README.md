@@ -1,26 +1,42 @@
-# ARTEX Web 前端
+# Kexra Web 前端
 
-本目录是 ARTEX 的 Next.js / React / TypeScript 前端，不是一个独立部署的完整服务。后端位于仓库根目录的 `server/`、`cmd/artex/` 等路径。
+**代码状态**：Kexra Logo / 登录品牌迁移仍在 Draft PR #1，正式分支 `main` 可能尚未显示新版界面。
 
-## 常用操作
+Kexra 的 Web 管理界面基于 **Next.js 16、React 19、TypeScript、Tailwind、next-intl**。Go API 位于仓库根目录的 `server/` 等路径；本目录不是独立的后端服务。
 
-准备 Node.js 22。**默认以简体中文（zh）生成静态网页**，并保留韩语（ko）作为可选的兼容构建。在本目录执行：
+## 开发
 
-```bash
+~~~bash
+cd web
 npm ci
 npm run check
+npm run dev
+~~~
+
+开发服务器实际端口以控制台为准，Next.js 默认常为 3000。若需访问真实 Go API，先在隔离环境准备本地数据库和后端；前端转发规则参见 `next.config.mjs`，默认调用 `http://localhost:8787`。
+
+## 构建与中文验收
+
+~~~bash
 npm run build:static
-# 保留韩语版本时，可单独执行：NEXT_PUBLIC_LOCALE=ko npm run build:static
-```
+cd ..
+python3 -I scripts/check-i18n-keys.py
+python3 -I scripts/check-web-zh.py
+~~~
 
-- `npm run check`：Biome 代码风格、静态质量与可访问性检查。
-- `npm run build:static`：为 Go 单二进制构建导出静态前端到 `out/`。
-- `npm run dev`：用于本地 UI 开发；连接实际 API 前请审查代理、鉴权和目标环境。
-- `src/app/`：页面路由；`src/components/`：组件；`src/lib/`：客户端逻辑；`messages/`：多语言文案。
-- `package-lock.json` 应随依赖变动同步提交；`node_modules/`、`.next/`、`out/` 均不应提交。
+`build:static` 通过环境变量 `NEXT_EXPORT=1` 导出到 `web/out/`。默认使用简体中文 `zh`；如需韩语兼容构建，设置 `NEXT_PUBLIC_LOCALE=ko` 后重新构建。前端标识使用 Kexra SVG，历史 PNG 素材不应继续作为现行品牌资产。
 
-## 合并前校验
+## 关键结构
 
-仓库中的 `.github/workflows/web.yml` 对 `web/**` 变动运行静态构建、TypeScript、Biome 和简体中文默认页面与韩语残留检查。不要擅自弱化这些门禁；新增或修改语言文案时同步验证 `messages/`。中文化变更记录见 [本地化说明](../docs/LOCALIZATION.zh-CN.md)。
+- `src/app/`：Next.js 页面及路由
+- `src/components/`：UI 组件
+- `src/lib/`：接口客户端、模型、展示数据
+- `src/i18n/` 与 `messages/`：本地化
+- `src/config/app-config.ts`：产品名、版本显示、浏览器标题
+- `public/`：静态资源（实际使用的新 Logo 为 `logo.svg`）
 
-完整项目的编译、内嵌前端和运行要求见 [中文维护指南](../docs/REPOSITORY_GUIDE.zh-CN.md)。
+## 兼容与安全
+
+`kexra_token` 与旧 `artex_token` 处于迁移期。不要随意删除旧读取路径或真实会话数据。`NEXT_PUBLIC_MOCK=1` 仅用于模拟数据展示；它的通过不等于真实 Agent、数据库、审批系统通过验收。
+
+完整说明见 [安装指南](../docs/INSTALLATION.md)、[开发与测试](../docs/DEVELOPMENT.md)、[中文化规范](../docs/LOCALIZATION.zh-CN.md)。
