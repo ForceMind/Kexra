@@ -40,7 +40,7 @@ func assertKorean(t *testing.T, label, s string) {
 // TestPostgresDSNErrorLocalized pins the install-path startup message to Korean.
 // When neither ARTEX_PG_DSN nor a config file supplies a database, PostgresDSN
 // returns an error that propagates verbatim (db.DSN → server.NewManager → the
-// `log.Fatalf("open stores: %v", err)` in cmd/artex/main.go). An operator who
+// `log.Fatalf("open stores: %v", err)` in cmd/kexra/main.go). An operator who
 // boots with missing config sees it first, so it must read as Korean.
 func TestPostgresDSNErrorLocalized(t *testing.T) {
 	dir := t.TempDir()

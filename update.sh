@@ -54,10 +54,10 @@ update_local(){
     ( cd web && npm ci && npm run build:static )
     rm -rf server/webui/dist && cp -r web/out server/webui/dist
     info "프런트엔드를 내장한 단일 바이너리를 다시 컴파일합니다…"
-    CGO_ENABLED=0 go build -tags embedui -trimpath -o kexra ./cmd/artex
+    CGO_ENABLED=0 go build -tags embedui -trimpath -o kexra ./cmd/kexra
   else
     warn "npm 을 찾을 수 없습니다. 프런트엔드를 내장하지 않은 백엔드만 컴파일합니다(프런트엔드는 npm run dev 로 따로 실행해야 합니다)"
-    CGO_ENABLED=0 go build -o kexra ./cmd/artex
+    CGO_ENABLED=0 go build -o kexra ./cmd/kexra
   fi
   ok "컴파일 완료 → ./kexra"
   warn "完成构建后请手动重启正在运行的 Kexra 进程，重启前备份数据库。"

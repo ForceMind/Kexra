@@ -1,4 +1,4 @@
-// Command artex runs the ARTEX backend: the dual SQLite graph stores,
+// Command kexra runs the Kexra backend: the dual SQLite graph stores,
 // the event-driven exploration engine, and the JSON HTTP API consumed by the
 // shadcn/ui frontend.
 package main
@@ -16,10 +16,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/config"
-	"github.com/Autumn-27/artex/selfupdate"
-	"github.com/Autumn-27/artex/server"
+	"github.com/ForceMind/Kexra/agent"
+	"github.com/ForceMind/Kexra/config"
+	"github.com/ForceMind/Kexra/selfupdate"
+	"github.com/ForceMind/Kexra/server"
 )
 
 // version is the build version, injected at release time via

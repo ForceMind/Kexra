@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/guard"
-	"github.com/Autumn-27/artex/intercept"
+	"github.com/ForceMind/Kexra/db"
+	"github.com/ForceMind/Kexra/guard"
+	"github.com/ForceMind/Kexra/intercept"
 	"github.com/Autumn-27/norma/llm"
 )
 

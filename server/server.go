@@ -19,19 +19,19 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/intercept"
-	"github.com/Autumn-27/artex/llmpool"
-	"github.com/Autumn-27/artex/llmrec"
-	"github.com/Autumn-27/artex/report"
-	"github.com/Autumn-27/artex/traffic"
+	"github.com/ForceMind/Kexra/agent"
+	"github.com/ForceMind/Kexra/db"
+	"github.com/ForceMind/Kexra/intercept"
+	"github.com/ForceMind/Kexra/llmpool"
+	"github.com/ForceMind/Kexra/llmrec"
+	"github.com/ForceMind/Kexra/report"
+	"github.com/ForceMind/Kexra/traffic"
 	"github.com/Autumn-27/norma/llm"
 	actool "github.com/Autumn-27/norma/tool"
 	"github.com/Autumn-27/norma/transcript"
 )
 
-// BuildVersion is the backend application version, injected from cmd/artex at
+// BuildVersion is the backend application version, injected from cmd/kexra at
 // startup (which in turn gets it from -ldflags "-X main.version=<tag>").
 // Defaults to "dev" for local builds. Exposed to the frontend via GET /api/health.
 var BuildVersion = "dev"

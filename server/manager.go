@@ -14,12 +14,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Autumn-27/artex/agent"
-	pgdb "github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/enrich"
-	"github.com/Autumn-27/artex/guard"
-	"github.com/Autumn-27/artex/intercept"
-	"github.com/Autumn-27/artex/traffic"
+	"github.com/ForceMind/Kexra/agent"
+	pgdb "github.com/ForceMind/Kexra/db"
+	"github.com/ForceMind/Kexra/enrich"
+	"github.com/ForceMind/Kexra/guard"
+	"github.com/ForceMind/Kexra/intercept"
+	"github.com/ForceMind/Kexra/traffic"
 	actool "github.com/Autumn-27/norma/tool"
 )
 

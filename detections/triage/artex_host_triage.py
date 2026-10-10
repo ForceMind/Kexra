@@ -25,13 +25,13 @@
 # What it checks (each cites the source it is grounded in):
 #   1. Listening ports        :8787 (admin UI) and 127.0.0.1:8788 (recording proxy)
 #                             — defaults of the --addr / --proxy flags in
-#                               cmd/artex/main.go. Parsed from `ss`/`netstat`/`lsof`
+#                               cmd/kexra/main.go. Parsed from `ss`/`netstat`/`lsof`
 #                               on the live host, or from --ports-from FILE.
 #   2. Recording-proxy MITM    <data-dir>/traffic/_ca/mitmproxy-ca-cert.pem and the
 #      CA + stores             sibling _index/index.sqlite and _blobs/ the recorder
 #                             writes on first start (traffic/traffic.go; the data
 #                               dir default is data/ next to the binary — see
-#                               cmd/artex/main.go). The CA is the trust anchor of an
+#                               cmd/kexra/main.go). The CA is the trust anchor of an
 #                               adversary-in-the-middle traffic recorder (ATT&CK
 #                               T1557).
 #   3. Log markers            the enrichment prober UA `artex-enrich/1.0`
@@ -94,7 +94,7 @@ import tempfile
 
 # --- grounded constants (every value is verified in this repository's source) ---
 
-# Default listen / recording-proxy ports (cmd/artex/main.go --addr / --proxy).
+# Default listen / recording-proxy ports (cmd/kexra/main.go --addr / --proxy).
 SERVER_PORT = 8787
 PROXY_HOST = "127.0.0.1"
 PROXY_PORT = 8788
@@ -161,7 +161,7 @@ CA_ENV_VARS = (
     "SSL_CERT_FILE", "CURL_CA_BUNDLE", "REQUESTS_CA_BUNDLE", "GIT_SSL_CAINFO", "NODE_EXTRA_CA_CERTS",
 )
 CA_BASENAME = "mitmproxy-ca-cert.pem"  # basename of CA_RELPATH; the value a CA var points at
-# The recording-proxy default endpoint (cmd/artex/main.go --proxy). An operator can
+# The recording-proxy default endpoint (cmd/kexra/main.go --proxy). An operator can
 # point --proxy elsewhere, so the CA var is the anchor and this is only the fallback.
 PROXY_DEFAULT_ENDPOINT = f"{PROXY_HOST}:{PROXY_PORT}"  # 127.0.0.1:8788
 
@@ -248,7 +248,7 @@ def check_listening_ports(listing):
                     "medium",
                     "ARTEX default admin-UI port is listening",
                     f"a process is listening on {host}:{port} (ARTEX --addr default :{SERVER_PORT})",
-                    "cmd/artex/main.go",
+                    "cmd/kexra/main.go",
                     "The port is configurable; confirm the process with `ss -ltnp` / `lsof`.",
                 )
             )
@@ -259,7 +259,7 @@ def check_listening_ports(listing):
                     "high",
                     "ARTEX recording-proxy loopback port is listening",
                     f"a process is listening on {host}:{port} (ARTEX --proxy default {PROXY_HOST}:{PROXY_PORT})",
-                    "cmd/artex/main.go",
+                    "cmd/kexra/main.go",
                     "Loopback-only and configurable; correlate with the MITM CA file under traffic/_ca/.",
                 )
             )
@@ -646,7 +646,7 @@ def run_checks(args):
     else:
         notes.append(
             "recording-proxy artifact check skipped (no --data-dir; "
-            "ARTEX's default is data/ next to the binary — cmd/artex/main.go)."
+            "ARTEX's default is data/ next to the binary — cmd/kexra/main.go)."
         )
 
     if args.log or args.log_dir:

@@ -41,7 +41,7 @@
 # (.github/workflows/detections.yml push/pull_request paths) and the local
 # pre-commit hook (.pre-commit-config.yaml files regex). Every upstream source file
 # this test reads must be covered by both, or a change touching only a newly pinned
-# source (as cmd/artex/main.go once was) would skip the test on one of them: on CI
+# source (as cmd/kexra/main.go once was) would skip the test on one of them: on CI
 # the drift sails through the merge gate green, on the hook it is never caught
 # locally even though the hook's comment promises "the same source scope as CI".
 # The check derives the required set from the indicators it already asserts, so
@@ -338,7 +338,7 @@ else:
 # The local hook gates on a files regex, not a paths list. Its comment promises the
 # "same source scope as CI", so the same required set must match that regex. This is
 # the sibling drift the CI check above does not see: CI paths can carry a source the
-# hook's regex omits (as cmd/artex/main.go once did), leaving the local gate a false
+# hook's regex omits (as cmd/kexra/main.go once did), leaving the local gate a false
 # promise even while the merge gate is sound.
 pc_text = read(PRECOMMIT_REL)
 if pc_text is None:
