@@ -15,7 +15,11 @@ export const auth = {
   getToken(): string | null {
     if (typeof window === "undefined") return null;
     // Mock demo：无真实登录，返回一个假 token 让路由守卫放行、直接进主界面。
-    return localStorage.getItem(TOKEN_KEY) ?? localStorage.getItem(LEGACY_TOKEN_KEY) ?? (process.env.NEXT_PUBLIC_MOCK === "1" ? "mock-demo" : null);
+    return (
+      localStorage.getItem(TOKEN_KEY) ??
+      localStorage.getItem(LEGACY_TOKEN_KEY) ??
+      (process.env.NEXT_PUBLIC_MOCK === "1" ? "mock-demo" : null)
+    );
   },
 
   setToken(token: string): void {
