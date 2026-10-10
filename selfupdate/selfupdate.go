@@ -42,7 +42,7 @@ const maxAttempts = 3
 // 别处，换装逻辑直接失效。
 type Paths struct {
 	Dir     string // 可执行文件所在目录
-	Current string // 当前运行的二进制        artex      / artex.exe
+	Current string // 当前运行的二进制        kexra      / kexra.exe
 	New     string // 暂存的新版本            kexra.new  / kexra.new.exe
 	Sum     string // 新版本的 sha256（hex）  kexra.new.sha256 / kexra.new.exe.sha256
 	Old     string // 换装前备份的旧版本      kexra.old  / kexra.old.exe

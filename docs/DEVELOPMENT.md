@@ -12,7 +12,7 @@
 
 | 目录 | 代码职责 |
 | --- | --- |
-| `cmd/artex/` | 当前 Go CLI 入口（品牌迁移尚未完成路径切换） |
+| `cmd/kexra/` | 品牌分支中的 Go CLI 入口，需执行 Go 1.26 完整回归 |
 | `server/` | HTTP API、会话和认证 |
 | `agent/` | Agent 计划、执行、上下文与工具调用 |
 | `db/`、`evidence/`、`report/` | 数据、证据和报告 |
@@ -66,7 +66,7 @@ CI 通过 `.github/workflows/ci.yml`、`web.yml`、`docs.yml` 和 `detections.ym
 
 ## 需要重点审查
 
-- 改名后 `cmd/kexra` 目录与实际 `cmd/artex` 的不一致；
+- 已迁移的 `cmd/kexra` 及 `github.com/ForceMind/Kexra` 内部导入路径是否通过完整构建；
 - Release 工作流、Dockerfile、启动脚本和二进制文件名；
 - 登录名新旧兼容、Cookie 过渡、JWT 密钥位置；
 - `config.example.json` 与 Docker 的不同默认端口；

@@ -14,7 +14,7 @@
 
 | 模块 | 入口 |
 | --- | --- |
-| Go 启动 / API | `cmd/artex/`、`server/` |
+| Go 启动 / API | `cmd/kexra/`、`server/` |
 | Agent 调度 | `agent/`、`llmpool/` |
 | 数据及证据 | `db/`、`evidence/`、`report/` |
 | 浏览器 UI | `web/`、`web/messages/zh.json` |
@@ -37,7 +37,7 @@
 ## 容易误判的迁移事项
 
 - `ForceMind/Artex` **已经更名**，不需要重复操作；本地 Git 需更新 remote。
-- `go.mod` 和 `cmd/artex` 仍有历史命名，属代码迁移任务，不是合法可删的旧文件。
+- 品牌分支已迁移 `go.mod` 的内部模块路径及 `cmd/kexra` 入口，但仍需完成构建回归；旧数据库、API 兼容字段和检测签名不可删除。
 - 旧 `ARTEX_*` 配置、数据库用户/库名、Cookie 与 JWT 密钥可能仍被现有部署使用。
 - `detections/` 内旧名称为技术指纹/回归样例的一部分，不能作为品牌批量替换。
 - 旧 README 的 Docker/Releases/Demo 入口不是 Kexra 当前可用的安装源。

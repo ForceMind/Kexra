@@ -25,8 +25,8 @@ GitHub 的旧 URL 重定向是兼容机制，**不应作为长期配置依赖**�
 | --- | --- | --- |
 | GitHub 仓库名 | 已改为 Kexra | 无需再次更名 |
 | Web 品牌及 SVG | 已在品牌 PR 中修改 | 要求前端构建和视觉验收 |
-| Go module | 仍为 `github.com/Autumn-27/artex` | 仅在完整搜索、修改 import 与 Go 测试后迁移 |
-| Go CLI | 入口仍是 `cmd/artex` | `build.sh` 等已指向 `cmd/kexra`，需要统一后才能发布 |
+| Go module | 品牌分支已改为 `github.com/ForceMind/Kexra` | 已同步内部 Go import，完整 Go 编译及依赖验证仍待执行 |
+| Go CLI | 品牌分支已迁移至 `cmd/kexra` | 入口及测试文件迁移完成，仍待跨平台验证 |
 | 构建产物 | 部分改为 `kexra` | 同步 Dockerfile、安装、更新与打包路径 |
 | 环境变量 | `ARTEX_*` 兼容字段仍使用 | 不得批量移除；必要时引入新别名并测试 |
 | 数据库 | 仍可能叫 `artex` | 无须因改品牌而改库名；不得重置历史数据 |
@@ -36,7 +36,7 @@ GitHub 的旧 URL 重定向是兼容机制，**不应作为长期配置依赖**�
 
 ## 推荐迁移顺序
 
-1. 先完成命名/构建一致性修复，确认 `go build ./...` 与脚本产物成功。
+1. 已在品牌分支完成 Go module、内部导入和 CLI 命名迁移；下一步必须确认 `go build ./...` 与脚本产物实际成功。
 2. 修复旧安装脚本、端口提示及 Go/前端本地开发流程。
 3. 核验现有数据库和 JWT 密钥迁移，不进行任何自动清空。
 4. 执行 Go + PostgreSQL、Web、文档、检测规则的全部 CI。

@@ -3,7 +3,7 @@
 > **ForceMind/Artex · 中文入口**
 >
 > 本仓库是从 [jiwoochris/artex-ko](https://github.com/jiwoochris/artex-ko) 的固定版本导入的韩语本地化 ARTEX 工程。源码、原作者署名和 AGPL-3.0 许可证均予保留。
-> **[中文仓库说明与开发指南](docs/REPOSITORY_GUIDE.zh-CN.md)** · [中文技术说明](README.zh.md) · [English](README.en.md) · [导入来源与版本校验](docs/IMPORT_PROVENANCE.md)
+> **[中文仓库说明与开发指南](docs/REPOSITORY_GUIDE.zh-CN.md)** · [中文技术说明](README.md) · [English](README.en.md) · [导入来源与版本校验](docs/IMPORT_PROVENANCE.md)
 >
 > 下方保留原韩语版完整说明。请只在自有或取得明确授权的隔离环境中使用。
 
@@ -13,7 +13,7 @@
 
 **LLM 멀티 에이전트가 자율적으로 침투 테스트를 수행하는 시스템** (Go 백엔드 + Next.js 프런트엔드)
 
-한국어 · [中文](README.zh.md) · [English](README.en.md)
+한국어 · [中文](README.md) · [English](README.en.md)
 
 [![ci](https://github.com/ForceMind/Artex/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ForceMind/Artex/actions/workflows/ci.yml) [![detections](https://github.com/ForceMind/Artex/actions/workflows/detections.yml/badge.svg?branch=main)](https://github.com/ForceMind/Artex/actions/workflows/detections.yml) [![web](https://github.com/ForceMind/Artex/actions/workflows/web.yml/badge.svg?branch=main)](https://github.com/ForceMind/Artex/actions/workflows/web.yml) [![license: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
@@ -97,7 +97,7 @@ ARTEX 는 **자신이 소유하거나 서면으로 명시적 허가를 받은 �
   <sub><b>대화</b>: 자율 실행 중에 사람이 끼어들어 힌트를 주고, 에이전트가 공격 체인을 한국어로 요약합니다.</sub>
 </p>
 
-원본(중국어 UI) 전체 화면은 [`README.zh.md`](README.zh.md#截图预览) 에서 볼 수 있습니다.
+원본(중국어 UI) 전체 화면은 [`README.zh.md`](screenshots/README.md) 에서 볼 수 있습니다.
 
 ---
 
@@ -119,7 +119,7 @@ docker compose up -d          # artex 이미지 + postgres 를 함께 기동
 
 ### 그 밖의 설치 방법
 
-원본 저장소는 설치 스크립트(`./install.sh`), 사전 컴파일 바이너리(Releases), 소스 단일 바이너리 컴파일 등 여러 방법을 제공합니다. 명령과 절차는 [`README.zh.md`](README.zh.md#安装)의 "安装"(설치) 절에 정리되어 있으며, 아래 핵심만 옮깁니다.
+원본 저장소는 설치 스크립트(`./install.sh`), 사전 컴파일 바이너리(Releases), 소스 단일 바이너리 컴파일 등 여러 방법을 제공합니다. 명령과 절차는 [`README.zh.md`](docs/INSTALLATION.md)의 "安装"(설치) 절에 정리되어 있으며, 아래 핵심만 옮깁니다.
 
 - **설치 스크립트:** `./install.sh` 를 실행하면 Docker 감지·설치 후 "① 전부 Docker" 또는 "② 로컬 컴파일 실행"을 고르게 합니다. 다만 기본값인 "① 전부 Docker" 는 위 빠른 시작과 같은 상류 이미지(`autumn27/artex`)를 받으려 하는데, 그 이미지가 현재 Docker Hub 에서 내려가 받을 수 없으므로(위 경고 참조) 이 경로는 지금 이미지 pull 에서 실패합니다. 스크립트도 그 상황을 감지하면 같은 안내를 내고 중단합니다. 한국어판 화면·출력은 "② 로컬 컴파일 실행"을 고르거나 아래 **소스에서 단일 바이너리 컴파일** 경로로 빌드하십시오.
 - **소스에서 단일 바이너리 컴파일:**
@@ -171,7 +171,7 @@ docker compose up -d          # artex 이미지 + postgres 를 함께 기동
 
 프런트엔드와 API/SSE 모두 같은 백엔드 포트(기본 `:8787`)가 제공하고, 실시간 활동 스트림은 기본적으로 **동일 출처(same-origin)** 로 연결합니다. 따라서 `NEXT_PUBLIC_SSE_BASE` 를 따로 설정할 필요 없이, 공개망에는 443 만 열고 8787 은 내부망에 두면 됩니다.
 
-SSE 는 장시간 연결로 이벤트를 계속 밀어 주므로, 리버스 프록시에서 **버퍼링을 반드시 꺼야** 합니다. 끄지 않으면 브라우저가 연결은 되지만 이벤트를 못 받습니다(활동 스트림이 계속 로딩 상태로 보임). Nginx 설정 예시는 [`README.zh.md`](README.zh.md#反向代理部署https--只开放-443)에 있습니다.
+SSE 는 장시간 연결로 이벤트를 계속 밀어 주므로, 리버스 프록시에서 **버퍼링을 반드시 꺼야** 합니다. 끄지 않으면 브라우저가 연결은 되지만 이벤트를 못 받습니다(활동 스트림이 계속 로딩 상태로 보임). Nginx 설정 예시는 [`README.zh.md`](docs/DEPLOYMENT.md)에 있습니다.
 
 ---
 
@@ -377,7 +377,7 @@ flowchart TB
 - 테스트: `go test ./...`
 - Mock 미리 보기(백엔드 없이): `cd web && NEXT_PUBLIC_MOCK=1 npm run dev`
 
-그 밖의 개발 항목(수동 취약점 재검증 등)은 [`README.zh.md`](README.zh.md#开发)의 "开发"(개발) 절을 참고하십시오.
+그 밖의 개발 항목(수동 취약점 재검증 등)은 [`README.zh.md`](docs/DEVELOPMENT.md)의 "开发"(개발) 절을 참고하십시오.
 
 이 한국어판이 상류 ARTEX 에 더한 변경은 [변경 이력(CHANGELOG.md)](CHANGELOG.md)에 정리되어 있습니다.
 
@@ -411,6 +411,6 @@ flowchart TB
 ## 원본 프로젝트
 
 - 원본 저장소: [Autumn-27/ARTEX](https://github.com/Autumn-27/ARTEX)
-- 원본 README(중국어): [README.zh.md](README.zh.md)
+- 원본 README(중국어): [README.zh.md](README.md)
 - 원본 온라인 데모(중국어 UI): [https://artex-demo.vercel.app/](https://artex-demo.vercel.app/)
 - 에이전트 SDK: [Autumn-27/norma](https://github.com/Autumn-27/norma)
