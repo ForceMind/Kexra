@@ -4,12 +4,13 @@
 
 ## 常用操作
 
-准备 Node.js 22，并在本目录执行：
+准备 Node.js 22。**默认以简体中文（zh）生成静态网页**，并保留韩语（ko）作为可选的兼容构建。在本目录执行：
 
 ```bash
 npm ci
 npm run check
 npm run build:static
+# 保留韩语版本时，可单独执行：NEXT_PUBLIC_LOCALE=ko npm run build:static
 ```
 
 - `npm run check`：Biome 代码风格、静态质量与可访问性检查。
@@ -20,6 +21,6 @@ npm run build:static
 
 ## 合并前校验
 
-仓库中的 `.github/workflows/web.yml` 对 `web/**` 变动运行静态构建、TypeScript、Biome 和用户界面中文字符残留检查（原韩语本地化分支的约束）。不要擅自弱化这些门禁；新增或修改语言文案时同步验证 `messages/`。
+仓库中的 `.github/workflows/web.yml` 对 `web/**` 变动运行静态构建、TypeScript、Biome 和简体中文默认页面与韩语残留检查。不要擅自弱化这些门禁；新增或修改语言文案时同步验证 `messages/`。中文化变更记录见 [本地化说明](../docs/LOCALIZATION.zh-CN.md)。
 
 完整项目的编译、内嵌前端和运行要求见 [中文维护指南](../docs/REPOSITORY_GUIDE.zh-CN.md)。

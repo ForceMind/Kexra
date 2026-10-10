@@ -10,10 +10,12 @@
 - 文案资源：`web/messages/zh.json`、`web/messages/ko.json`（两者的键必须保持一一对应）。
 
 ## 验收方式
-1. `npm run check`、`npm run build:static`，核对 `web/out/index.html` 的 `<html lang="zh">` 和中文标题。
-2. `python3 -I scripts/check-web-zh.py` 检测**静态页面**可见韩语残留。
+1. `npm run check`、`npm run build:static`，核对 `web/out/login/index.html` 等真实页面中的 `<html lang="zh">` 和中文标题；根目录 `web/out/index.html` 可能只是 Next.js 的跳转占位页面。
+2. `python3 -I scripts/check-web-zh.py` 检测**静态页面**可见韩语残留；`python3 -I scripts/check-i18n-keys.py` 检查中韩翻译 JSON 的键集合一致。
 3. 检查登录、任务列表、详情、聊天、资产、设置与报告；核对模型返回的内容、通知与运行时 mock 数据。
 4. 检查动态插值、富文本标签（如 `<terms>`）、换行、Markdown 和安全免责声明。
 5. 使用 `go test ./... -count=1` 验证后端输出改动没有破坏兼容性。
 
-**已知边界：** 静态页面检查不会覆盖 JavaScript 运行时演示数据、聊天记录及 AI 模型本身生成的文字。后端/提示词改动应另行通过回归测试核实；未完成前不能宣称“所有输出都已中文化”。历史韩语说明保留为 `README.ko.md`，原作者版权与 AGPL-3.0 许可证不变。
+**已完成范围：** UI 默认中文、现有中韩翻译文件复用、中文仓库首页和指南、Agent 对用户输出中文的末尾约束、核心任务/LLM/聊天错误提示中文化、内置演示数据和样例报告恢复中文原文。
+
+**已知边界：** 静态页面检查不会覆盖 JavaScript 运行时数据、历史聊天记录或模型自身生成的文字。**通知模块、部分后端子模块、历史文档和存量数据库内容仍可能出现韩语；本轮不应被理解成全项目零韩语。** 后端的提示词约束也不能绝对保证任意模型都以中文回复。实际运行环境尚需独立验收。历史韩语说明保留为 `README.ko.md`，原作者版权与 AGPL-3.0 许可证不变。

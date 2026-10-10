@@ -6,6 +6,7 @@ on:
     paths:
       - "web/**"
       - "scripts/check-web-zh.py"
+      - "scripts/check-i18n-keys.py"
       - ".github/workflows/web.yml"
   pull_request:
     paths:
@@ -37,6 +38,8 @@ jobs:
         run: npm run build:static
       - name: 简体中文默认页面与可见韩语残留检查
         run: python3 -I ../scripts/check-web-zh.py
+      - name: 中韩本地化键集一致性
+        run: python3 -I ../scripts/check-i18n-keys.py
       - name: Biome lint/format/a11y
         if: always()
         run: npm run check -- --diagnostic-level=error --max-diagnostics=100
