@@ -1,23 +1,35 @@
 # Kexra
 
-**AI multi-agent security assessment and evidence-management workspace.**
+**An AI multi-agent workspace for authorized security assessment and evidence management.**
 
-Kexra is independently maintained under the ForceMind organization, based on previously open-source work. It is not a clean-room original implementation. Only test systems you own or are explicitly authorized to assess.
+Kexra integrates task orchestration, asset and exploration graphs, traceable findings, evidence review, reports, and human oversight into a Web UI. The default UI build is Simplified Chinese.
 
-Key capabilities: agent planning/execution, asset and exploration graphs, traceable findings and retesting, reports, a Go API and a Next.js web dashboard. Existing approval and interception rules must not be considered a hardened security sandbox.
+> **Status:** The GitHub repository is now `ForceMind/Kexra`. Independent branding is being validated in [draft PR #1](https://github.com/ForceMind/Kexra/pull/1). The `main` branch has not yet adopted the entire rebrand. No Kexra Docker image or production release has been verified.
+>
+> **Scope:** Work only in your own systems, explicitly authorized environments, or isolated labs. Application approval and interception features are not a hardened sandbox.
 
-## Local development
+## Main capabilities
 
-Go 1.26, Node.js 22, npm and PostgreSQL 16 are required. From the project root:
+- Planner/worker orchestration and human interaction
+- Persistent asset, task, fact and finding relationships
+- Evidence tracking, report generation, and retesting
+- Go backend, Next.js/React frontend, PostgreSQL
+- LLM integrations, MCP/Skills, notification and traffic components
 
-```bash
-cd web && npm ci && npm run build:static && cd ..
+## Developer quick start
+
+~~~bash
+git clone https://github.com/ForceMind/Kexra.git
+cd Kexra
+cd web && npm ci && npm run check && npm run build:static && cd ..
 go build ./...
 go test ./... -count=1
-```
+~~~
 
-Repository rename is pending admin action: `ForceMind/Artex` → `ForceMind/Kexra`. There is no verified Kexra release image yet.
+These commands verify source compilation, **not** application deployment or the safety of live tests. The legacy Go entrypoint remains `cmd/artex` on the current rebrand branch for compatibility.
 
-## Licensing and acknowledgments
+For detailed instructions see [installation](docs/INSTALLATION.md), [configuration](docs/CONFIGURATION.md), [architecture](docs/ARCHITECTURE.md), [development](docs/DEVELOPMENT.md), [security policy](SECURITY.md), and the [Chinese documentation index](docs/README.md).
 
-The project contains AGPL-3.0-covered code, and the web application contains separately MIT-licensed material. Original license and copyright notices remain in [LICENSE](LICENSE), [web/LICENSE](web/LICENSE), and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The original source snapshot is recorded in [docs/IMPORT_PROVENANCE.md](docs/IMPORT_PROVENANCE.md).
+## Licensing
+
+This is independently maintained software based on existing open-source code, **not a clean-room rewrite**. Preserve the applicable [AGPL-3.0](LICENSE), [MIT notices for frontend components](web/LICENSE), and [source provenance](docs/IMPORT_PROVENANCE.md). See [third-party notices](THIRD_PARTY_NOTICES.md). A new brand does not remove inherited rights and obligations.
