@@ -14,8 +14,9 @@ services:
       retries: 10
     restart: unless-stopped
 
-  artex:
-    image: autumn27/artex:${ARTEX_TAG:-latest}
+  kexra:
+    # No Kexra image is published. Build and tag kexra:local first.
+    image: ${KEXRA_IMAGE:-kexra:local}
     depends_on:
       postgres:
         condition: service_healthy
