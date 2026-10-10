@@ -1693,7 +1693,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
         const error = rule ? companyScopeRuleError(rule) : "";
         if (!rule || error)
           throw new Error(
-            `${index + 1}번째 범위가 유효하지 않습니다: ${companyScopeErrorText(error) || "无法识别"}`,
+            `第 ${index + 1} 项范围无效：${companyScopeErrorText(error) || "无法识别"}`,
           );
         return rule;
       });
