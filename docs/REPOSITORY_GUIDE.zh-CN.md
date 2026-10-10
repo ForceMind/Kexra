@@ -38,7 +38,7 @@ cp .env.example .env
 cp config.example.json config.json
 ```
 
-注意：`config.example.json` 内的默认端口和路径仅为示例；DB 连接参数须与实际环境一致。也可通过 `ARTEX_PG_DSN` 指定连接。若仅需启动开发数据库，可审阅 `.env` 后使用 `docker compose up -d postgres`，无需拉取失效的上游 `artex` 镜像。
+注意：`config.example.json` 内的默认端口和路径仅为示例；DB 连接参数须与实际环境一致。也可通过 `ARTEX_PG_DSN` 指定连接。若只想启动 Compose 中的 PostgreSQL 服务，可审阅 `.env` 后使用 `docker compose up -d postgres`，无需拉取失效的上游 `artex` 镜像。**注意原 Compose 没有把数据库端口映射给宿主机**：宿主机上直接运行的 Go 程序不能凭此访问数据库；需要独立本地 PostgreSQL，或自行增加仅绑定 `127.0.0.1` 的端口映射并同步修改 DSN。
 
 **后端检查（需要匹配的 Go 工具链及可访问的依赖缓存）：**
 
@@ -73,6 +73,7 @@ CGO_ENABLED=0 go build -tags embedui -o artex ./cmd/artex
 
 - **Docker 一键启动尚不能直接使用：** 导入版本的 `docker-compose.yml` 指向 `autumn27/artex`，原本地化文档记录该镜像在 2026-10-09 无法拉取。这个状态尚未在当前仓库重新发布与验收，切勿把 Compose 文件视为可用部署方案。
 - **发布与镜像：** `release.yml` 仍按 `v*` 标签触发二进制发布。Docker Hub 发布需显式配置 Actions 变量 `ARTEX_DOCKER_IMAGE`（完整命名空间/镜像名）及 Secrets `DOCKERHUB_USERNAME`、`DOCKERHUB_TOKEN`，否则跳过；不得默认推送到原作者的 `autumn27/artex`。
+- **内置一键更新风险：** `selfupdate/github.go` 仍硬编码 `Autumn-27/artex` 的 GitHub Release；使用界面中的一键更新/回滚功能前，必须先审计发布源与版本兼容性，否则可能用原上游二进制覆盖本地化版本。不要未经验证就启用该路径。
 - **CI：** `ci.yml`、`web.yml`、`docs.yml`、`detections.yml` 持续校验源码与文档；另有外部链接检查，部分依赖外网。
 - **秘钥与数据：** `.env`、`config.json`、`jwt.key`、运行目录、令牌、真实授权凭据和抓包数据保持本地；请在每次提交前检查 `git status` 与 diff。不要将真实渗透测试资产、客户信息、流量或证据上传到 GitHub。
 - **网络与版本：** 未经明确验证，不宣称生产就绪、自动更新安全或上游发行版兼容。升级依赖/自动更新目标应单独审查。
