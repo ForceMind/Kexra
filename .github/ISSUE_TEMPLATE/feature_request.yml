@@ -1,52 +1,32 @@
-name: 💡 기능 제안
-description: 새로운 기능이나 개선 아이디어를 제안합니다.
-title: "[제안] "
+name: "✨ 功能建议"
+description: "提出改进 Kexra 功能、体验或开发工具的建议"
+title: "[Feature] "
 labels: ["enhancement"]
 body:
-  - type: markdown
-    attributes:
-      value: |
-        아이디어를 제안해 주셔서 고맙습니다. 아래 항목을 채워 주시면 방향을 맞추기 좋습니다.
-  - type: checkboxes
-    id: preflight
-    attributes:
-      label: 확인
-      options:
-        - label: 비슷한 제안이 이미 열려 있는지 검색했습니다.
-          required: true
-        - label: 이 제안은 허가된 사용 범위와 국내법을 벗어난 사용을 조장하지 않습니다.
-          required: true
   - type: textarea
-    id: problem
+    id: need
     attributes:
-      label: 어떤 문제·필요에서 출발했나요
-      description: 해결하려는 상황을 먼저 적어 주십시오. 해결책보다 문제를 아는 것이 더 중요합니다.
-      placeholder: "예: 탐지 결과를 팀에 공유할 때 리포트를 PDF 로 내보내고 싶습니다."
+      label: 用户需求与场景
+      description: "明确适用范围，不要包含未经授权的安全测试需求"
     validations:
       required: true
   - type: textarea
     id: proposal
     attributes:
-      label: 제안하는 방식
-      description: 어떻게 해결하면 좋을지 적어 주십시오.
+      label: 建议方案
+      description: "说明交互、数据模型、验收方式与兼容性影响"
     validations:
       required: true
   - type: textarea
-    id: alternatives
+    id: alternative
     attributes:
-      label: 고려한 대안
-      description: 다른 방법을 생각해 봤다면 적어 주십시오.
+      label: 已考虑的替代方案
     validations:
       required: false
-  - type: dropdown
-    id: area
+  - type: checkboxes
+    id: checks
     attributes:
-      label: 관련 영역
+      label: 约束
       options:
-        - 에이전트 (agent)
-        - 웹 UI / 서버 (web / server)
-        - LLM 공급자 연동
-        - 문서·번역
-        - 기타
-    validations:
-      required: false
+        - label: 建议符合授权使用和第三方许可要求。
+          required: true
