@@ -1,3 +1,5 @@
+> **历史导入记录 / Historical changelog**：以下内容为原始 ARTEX 项目继承的历史版本说明，并非 Kexra 自行发布或验证的版本。当前维护记录请阅读 [Kexra 更新日志](CHANGELOG.md)，源码来源见 [导入校验记录](docs/IMPORT_PROVENANCE.md)。
+
 # 更新日志
 
 本项目的重要变更记录在此文件中，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。

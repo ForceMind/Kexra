@@ -1,3 +1,5 @@
+> **历史资料 / Legacy archive**：此文件保留原 ARTEX 韩语本地化版本的历史描述、页面锚点及来源信息，不是 Kexra 当前的安装、发布或安全保证。当前文档：[Kexra 中文首页](README.md) · [文档中心](docs/README.md) · [许可证与来源](THIRD_PARTY_NOTICES.md)。
+
 > **ForceMind/Artex · 中文入口**
 >
 > 本仓库是从 [jiwoochris/artex-ko](https://github.com/jiwoochris/artex-ko) 的固定版本导入的韩语本地化 ARTEX 工程。源码、原作者署名和 AGPL-3.0 许可证均予保留。
