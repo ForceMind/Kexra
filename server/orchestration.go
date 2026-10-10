@@ -735,8 +735,8 @@ func (s *Server) upgradeReporterTriggerMessage() {
 // 들어가지 않는 순수 UI 라벨이라 한국어화한다(BRIEF 사용자 노출 산출물 한국어화 범위). 트리거는
 // report_finding 도구 호출 기반(OnToolCall·결정적)이라 reporter 는 key "reporter" 로 참조될 뿐
 // 표시 이름으로 선택되지 않는다. 회귀 방어: reporter_seed_localized_test.go. [[F35]]
-const reporterAgentName = "보고서 작성"
-const reporterAgentDescription = "취약점 상세 보고서 작성: 취약점을 발견하면 자동으로 트리거되어, 증거와 실행 과정을 조회한 뒤 Markdown 보고서를 작성해 해당 취약점에 기록합니다."
+const reporterAgentName = "报告生成"
+const reporterAgentDescription = "自动生成漏洞详细报告：发现漏洞后检索证据与执行记录，编写 Markdown 报告并关联到该漏洞。"
 
 // seedReporterAgent 预置一个「보고서 작성」自定义 agent(builtin=false，可在 UI 编辑/删除)：
 // 绑定 update_finding_report + 任务查询工具，并挂一个「report_finding 被调用即触发」的

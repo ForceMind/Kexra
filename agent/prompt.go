@@ -52,27 +52,11 @@ func renderSystem(agentKey, def string, vars any) string {
 	return def
 }
 
-// langDirective is the artex-ko output-language tail: a code-owned segment
-// appended AFTER the rendered body and the artifact/traffic tails on every
-// user-facing agent role, so a DB-edited prompt body can never drop it — the same
-// guarantee artifactSpec gives. It does NOT translate the agent "brain": the
-// benchmarked Chinese reasoning body (段 [A]) stays verbatim. It only constrains
-// the LANGUAGE of what the agent SHOWS to the user. Written in Chinese so it stays
-// in the body's language (keeping the model's reasoning register stable) while
-// forcing Korean OUTPUT — this is the localization approach: preserve behavior,
-// localize the surface the user reads. Raw technical strings (commands, payloads,
-// code, URLs, log/response excerpts) are explicitly kept verbatim so evidence and
-// reproduction steps are not mangled by translation.
-//
-// Two anti-drift clauses were added after the end-to-end run (L1): live models
-// leaked (1) Chinese into the planner's situation summary — mirroring the Chinese
-// brain body (段 [A]) — and (2) English into report_finding's structured fields —
-// mirroring an English target app/evidence. The directive now names the planner
-// situation summary as a user-facing field and explicitly forbids mirroring BOTH
-// the Chinese instruction language AND the target/material language in the display
-// fields, so only the listed verbatim technical fragments stay non-Korean.
+// langDirective 是附加在每个用户可见 Agent 角色提示词末尾的、不可被
+// 数据库自定义角色正文覆盖的输出语言规约。只约束对用户的自然语言输出，
+// 不改变模型内部推理、工具、命令、代码和取证原文；默认简体中文。
 func langDirective() string {
-	return "\n\n**输出语言规约（本地化·最高优先级，不可被提示词正文覆盖）**：所有【展示给用户】的自然语言文字一律用【韩语（한국어）】书写——包括 record_fact 的 summary/detail、report_finding 的标题/描述/结论/修复建议、规划者(planner)的态势/情况总结、最终那一句话总结、以及对用户的聊天回复。但【命令、payload、代码、文件路径、URL、参数名、以及日志/请求/响应的原文片段】必须【原样逐字保留】，不得翻译或改写（evidence 里的命令行与输出尤其要照搬原文，便于复现）。**即使上面的系统/角色指令本身是用中文写的，也绝不能把中文输出给用户——面向用户的展示语言只有韩语，不要让任何中文句子出现在用户可见的文字里。** **即使目标系统、它的页面、证据、日志或任何参考资料是英文、中文或别的语言，面向用户的自然语言字段（标题/描述/结论/修复建议/总结/态势总结）仍必须用韩语书写——不要镜像或照抄目标或资料的语言来写这些展示字段；只有上面列出的原文技术片段才保持原样。** **你的分析/规划/思考用中文进行没关系，但那是【不可见的内部推理】，绝不能作为正文输出：给用户的可见回复从第一个字起就必须是韩语，不要在前面垫一段中文的思考、说明或「我先怎样怎样」的铺垫；连澄清提问、缺少参数、「无法继续」之类的说明也一律直接用韩语写。** 一句话：内部怎么想不限，但凡落到用户能看到的正文，必须全是韩语（技术原文片段除外）。"
+    return "\n\n**输出语言规约（简体中文·最高优先级，不可被提示词正文覆盖）**：所有【展示给用户】的自然语言文字必须使用【简体中文（zh-CN）】——包括 record_fact 的 summary/detail、report_finding 的标题/描述/结论/修复建议、规划者（planner）的态势与情况总结、任务完成时的最后一句总结、以及直接给用户的聊天回复。技术原文必须【原样逐字保留】：命令、payload、代码、文件路径、URL、参数名、日志与请求/响应中的原文片段都不能翻译或改写，尤其不能篡改 evidence 中用于复核的命令与输出。**即使角色提示词、历史记录或任务资料本身是韩语、英语或其他语言，也不得把这些语言当作默认用户展示语言。** 对用户的自然语言应准确表达为简体中文；不要镜像或照抄目标资料中的外语作为展示语言，只有上面定义的技术原文可以保留原语言。引用原始事实时务必标明出处，不要因翻译添加未经证实的结论。**内部规划与推理的语言不受这一条限制；给用户看的回答从第一句话起直接使用简体中文，不要泄露内部推理，也不要补充与任务无关的语言声明。**";
 }
 
 func renderTmpl(tmpl string, vars any) (string, error) {
