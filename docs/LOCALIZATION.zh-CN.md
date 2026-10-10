@@ -1,21 +1,51 @@
-# Kexra 简体中文本地化说明
+# Kexra 中文化与术语规范
 
-**当前目标：** 让 ForceMind/Kexra 的默认用户体验面向简体中文用户，同时保持旧版韩语资源可选，不破坏现有 API 协议、证据和原始安全声明。
+## 默认语言与构建
 
-## 默认语言
-- 默认构建：`cd web && npm ci && npm run build:static`，使用简体中文（`zh`）。
-- 显式中文构建：`NEXT_PUBLIC_LOCALE=zh npm run build:static`。
-- 韩语兼容构建：`NEXT_PUBLIC_LOCALE=ko npm run build:static`。
-- 语言是**构建时选项**，不是浏览器内即时切换；切换语言必须重新构建前端。
-- 文案资源：`web/messages/zh.json`、`web/messages/ko.json`（两者的键必须保持一一对应）。
+Kexra 前端使用 next-intl。`web/src/i18n/config.ts` 默认 locale 为 `zh`；保留 `ko` 用于兼容性比较。它属于**构建时语言选择**，而不是浏览器内即时切换。
 
-## 验收方式
-1. `npm run check`、`npm run build:static`，核对 `web/out/login/index.html` 等真实页面中的 `<html lang="zh">` 和中文标题；根目录 `web/out/index.html` 可能只是 Next.js 的跳转占位页面。
-2. `python3 -I scripts/check-web-zh.py` 检测**静态页面**可见韩语残留；`python3 -I scripts/check-i18n-keys.py` 检查中韩翻译 JSON 的键集合一致。
-3. 检查登录、任务列表、详情、聊天、资产、设置与报告；核对模型返回的内容、通知与运行时 mock 数据。
-4. 检查动态插值、富文本标签（如 `<terms>`）、换行、Markdown 和安全免责声明。
-5. 使用 `go test ./... -count=1` 验证后端输出改动没有破坏兼容性。
+~~~bash
+cd web
+npm ci
+npm run build:static
+# 若需韩语兼容构建，单独运行：
+NEXT_PUBLIC_LOCALE=ko npm run build:static
+cd ..
+~~~
 
-**已完成范围：** UI 默认中文、现有中韩翻译文件复用、中文仓库首页和指南、Agent 对用户输出中文的末尾约束、核心任务/LLM/聊天错误提示中文化、内置演示数据和样例报告恢复中文原文。
+资源文件：`web/messages/zh.json`、`web/messages/ko.json`。新增文案须保持两个 JSON 的字段结构一致，键名不等于语言文字。
 
-**已知边界：** 静态页面检查不会覆盖 JavaScript 运行时数据、历史聊天记录或模型自身生成的文字。**通知模块、部分后端子模块、历史文档和存量数据库内容仍可能出现韩语；本轮不应被理解成全项目零韩语。** 后端的提示词约束也不能绝对保证任意模型都以中文回复。实际运行环境尚需独立验收。历史韩语说明保留为 `README.ko.md`，原作者版权与 AGPL-3.0 许可证不变。
+## 翻译范围
+
+**应中文化**：导航、表单、状态、错误提示、通知展示文字、报告标题、非原文的 Agent 最终摘要和演示数据的解释性文本。
+
+**必须保留原文**：命令、代码、日志、URL、请求/响应、漏洞证据、第三方许可证、检测 IOC、技术标识、原始安全样例和用户上传文本。
+
+旧 `ARTEX_*` 配置、`artex_token`、数据库和 Go module 是协议兼容项，不能直接全文替换。软件历史版权信息必须保留。
+
+## 术语建议
+
+| 原词 | 中文展示 |
+| --- | --- |
+| Planner | 规划智能体 |
+| Worker | 执行智能体 |
+| Main Agent | 主智能体 |
+| Finding | 安全发现 / 漏洞发现（按是否已验证区分） |
+| Evidence | 证据 |
+| Asset | 资产 |
+| Intent | 探索意图 |
+| Scope | 授权测试范围 |
+| Retest | 复测 |
+
+## 回归验证
+
+~~~bash
+cd web && npm run check && npm run build:static && cd ..
+python3 -I scripts/check-i18n-keys.py
+python3 -I scripts/check-web-zh.py
+python3 -I scripts/check-doc-links.py
+~~~
+
+这些校验不能证明运行时所有韩语或英文都已清除。通知模块、历史数据和外部模型仍可能产生非中文内容，需逐条测验。对于较长的 AI 输出，中文语言约束不是绝对保证，结论还要与原始证据核对。
+
+相关：[Web 子项目](../web/README.md) · [开发与测试](DEVELOPMENT.md)。

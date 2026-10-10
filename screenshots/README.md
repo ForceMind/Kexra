@@ -1,44 +1,17 @@
-# 스크린샷 안내 (Screenshots)
+# 截图与历史界面素材
 
-한국어 · [English below](#english)
+本目录中的截图大多来自**最初导入的 ARTEX / 韩语本地化版本**，目前不能作为 Kexra 迁移后真实运行界面的验收证据。
 
-이 폴더에는 서로 다른 두 화면 모음이 들어 있습니다. 섞여 보이지 않도록 어느 쪽이
-무엇인지 먼저 밝힙니다.
+- 根目录的多张 `*.png`：原始项目的中文界面参考。
+- `ko/`：原韩语本地化项目的示例截图。
+- `wx.png`：旧上游推广二维码/素材，不属于 Kexra 品牌；当确认没有有效文档引用后建议移除。
+- Kexra 的当前新视觉标志位于 `web/public/logo.svg` 与 `web/src/app/icon.svg`；正式产品截图应在独立授权测试环境重新生成。
 
-- **`ko/`: ARTEX 한국어판의 실제 UI 캡처.** 이 저장소가 전달하는 결과물입니다.
-  메인 문서 [`../README.md`](../README.md) 와 [`../README.en.md`](../README.en.md) 가
-  이 이미지를 씁니다. 한국어판 화면만 보시려면 [`ko/`](ko/) 폴더를 여세요.
-- **루트의 `*.png`: 상류 원본(중국어판)의 UI 캡처.** 상류 저장소와 1:1 로 대조할 수
-  있도록 **원본 그대로 보존**한 것이며, 보존된 중국어 README
-  [`../README.zh.md`](../README.zh.md) 가 이 이미지를 참조합니다. 한국어·영어 문서에는
-  쓰이지 않습니다.
-- **`wx.png`: 상류 원작자의 WeChat 공식 계정 홍보 이미지.**
-  [`../README.zh.md`](../README.zh.md) 가 원본 그대로 렌더되도록 함께 보존했습니다.
-  한국어판과는 무관합니다.
+## 新截图交付规范
 
-곧, 루트에 중국어 화면이 먼저 보이는 것은 상류 보존 때문이고, **한국어판 화면은
-[`ko/`](ko/) 안에 있습니다.** 이 저장소가 왜 원본을 함께 두는지(현지화 투명성·상류
-대조)는 방어·탐지 포지셔닝과 같은 맥락이며, 자세한 배경은 루트 README 를 참조하십시오.
+1. 使用最新 Kexra 品牌分支和可复现版本构建，注明截图来源与提交 SHA。
+2. 去除真实 API Key、JWT、数据库密码、IP、公司名称、客户流量和任何未授权目标信息。
+3. 为任务、资产、发现、报告、模型配置、设置、登录等主要路径各留必要的截图。
+4. 在 [项目首页](../README.md) 发布之前核对功能、语言及品牌，不借旧截图宣称新产品已验收。
 
----
-
-## English
-
-This folder holds two separate sets of captures. To keep them from looking mixed, here
-is what each one is.
-
-- **`ko/` — real UI of the Korean edition of ARTEX.** This is what the fork delivers. The
-  main docs [`../README.md`](../README.md) and [`../README.en.md`](../README.en.md) use
-  these images. For the Korean edition's screens, open [`ko/`](ko/).
-- **The `*.png` files in the root — upstream (Chinese edition) UI captures.** They are
-  **preserved as-is** so the fork can be diffed against the upstream repository 1:1, and
-  the preserved Chinese README [`../README.zh.md`](../README.zh.md) references them. The
-  Korean and English docs do not use them.
-- **`wx.png` — the upstream author's WeChat channel promo image.** Kept so that
-  [`../README.zh.md`](../README.zh.md) still renders unchanged. It is unrelated to the
-  Korean edition.
-
-In short, the Chinese screens you see first in the root are there for upstream
-preservation; the **Korean edition's screens live in [`ko/`](ko/).** See the root README
-for why this fork keeps the originals alongside (localization transparency and upstream
-comparison).
+历史内容无需因为改品牌而全删，但不要作为新版本的宣传主图。具体清理原则见 [旧文件清单](../docs/PROJECT_CLEANUP.md)。
