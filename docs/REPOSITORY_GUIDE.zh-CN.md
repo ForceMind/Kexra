@@ -7,7 +7,7 @@
 - **仓库：** [ForceMind/Artex](https://github.com/ForceMind/Artex)，以私有仓库独立维护。
 - **来源：** [jiwoochris/artex-ko](https://github.com/jiwoochris/artex-ko)，属于 [Autumn-27/ARTEX](https://github.com/Autumn-27/ARTEX) 的韩语本地化版本；完整固定提交见 [IMPORT_PROVENANCE.md](IMPORT_PROVENANCE.md)。
 - **许可：** 保留原作者署名、版权标记与根目录 [LICENSE](../LICENSE)（AGPL-3.0）；后续修改和分发须继续核对许可证义务。
-- **语言：** 原始主 [README.md](../README.md) 为韩语，另有 [README.en.md](../README.en.md) 与 [README.zh.md](../README.zh.md)。中文 README 的部分链接指向最初上游，请以本指南的当前仓库路径为准。
+- **语言：** 默认简体中文（`NEXT_PUBLIC_LOCALE=zh`），主 [README.md](../README.md) 使用中文；保留 [README.ko.md](../README.ko.md) 作为韩语历史文档、[README.en.md](../README.en.md) 作为英文说明。部分安装/发行链接仍指向原上游，请以本指南的当前仓库路径为准。
 - **代码身份：** Go module 暂时仍为 `github.com/Autumn-27/artex`。这是源码兼容性约束，不代表本仓库属于原作者，也不应只为重命名仓库而批量替换导入路径。
 
 ## 2. 核心技术与目录

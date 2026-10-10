@@ -144,26 +144,26 @@ export function companyScopeRuleError(rule: CompanyScopeRule): CompanyScopeError
   return "";
 }
 
-// mock handler(React 밖) 전용: 오류 코드를 한국어 문구로 바꾼다. 실제 UI 는
+// 仅供 React 外部的 mock handler 使用：将错误代码转换成中文。正式界面由 i18n 处理。
 // scope-text-editor 가 next-intl 의 t("scopeEditor.error.*") 로 지역화한다.
 export function companyScopeErrorText(code: CompanyScopeErrorCode | "" | undefined): string {
   switch (code) {
     case "empty":
-      return "범위 값을 입력해 주세요";
+      return "请输入范围值";
     case "tooLong":
-      return `최대 ${MAX_COMPANY_SCOPE_VALUE_LENGTH}자까지 입력할 수 있습니다`;
+      return `最多允许输入 ${MAX_COMPANY_SCOPE_VALUE_LENGTH} 个字符`;
     case "domainSpace":
-      return "공백 없이 유효한 도메인 또는 URL을 입력해 주세요";
+      return "请输入不含空格的有效域名或 URL";
     case "domainInvalid":
-      return "유효한 도메인 또는 URL을 입력해 주세요";
+      return "请输入有效域名或 URL";
     case "ipInvalid":
-      return "유효한 IP를 입력해 주세요";
+      return "请输入有效的 IP 地址";
     case "cidrInvalid":
-      return "유효한 CIDR 대역을 입력해 주세요";
+      return "请输入有效的 CIDR 网段";
     case "cidrPrefixV4":
-      return "IPv4 대역 프리픽스는 /16 ~ /32 범위여야 합니다";
+      return "IPv4 网段前缀须在 /16 至 /32 之间";
     case "cidrPrefixV6":
-      return "IPv6 대역 프리픽스는 /32 ~ /128 범위여야 합니다";
+      return "IPv6 网段前缀须在 /32 至 /128 之间";
     default:
       return "";
   }

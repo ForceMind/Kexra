@@ -4,7 +4,7 @@
 
 - This is `ForceMind/Artex`, an independently maintained **private import** of `jiwoochris/artex-ko` (a Korean localization of `Autumn-27/ARTEX`). The original source commit, license and tree hash are documented in `docs/IMPORT_PROVENANCE.md`.
 - Go (`cmd/`, `server/`, `agent/`, `db/`, etc.) + Next.js/TypeScript (`web/`) + PostgreSQL. The Go module's original import path is deliberately retained; do not mass-rename it without a complete migration.
-- For repository-specific development instructions, read `docs/REPOSITORY_GUIDE.zh-CN.md`. Read the source language READMEs for behavioral details.
+- For repository-specific development instructions, read `docs/REPOSITORY_GUIDE.zh-CN.md`. The default product language is Simplified Chinese (zh); Chinese README is the main entrypoint, while historical Korean material remains available as README.ko.md.
 
 ## Working agreements
 
@@ -13,6 +13,7 @@
 - Never commit local `.env*` secrets, credentials, JWT keys, runtime data, customer/target assets, evidence or captured traffic. Do not paste secrets into CI logs or issues.
 - Do not run autonomous penetration tests, active scans or exploit chains against third-party hosts. Testing must be limited to explicitly authorized, isolated fixtures; code review and static analysis are preferred.
 - When changing behavior, extend relevant Go or Web unit tests, and update the corresponding documentation.
+- The default UI locale is zh (Simplified Chinese), with ko retained as an explicitly selectable build-time compatibility locale. Prefer next-intl keys over hardcoded user-facing strings, keep both locale JSON key sets in sync, and preserve API protocol identifiers exactly.
 - Do not assume the original upstream Docker Hub image is accessible, or that the new repository has published a working image.
 - Do not publish releases, Docker images, or change production credentials without verifying the target namespace and approvals.
 
