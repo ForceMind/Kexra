@@ -45,13 +45,14 @@ install_docker(){
   else
     info "이미 있는 .env 파일을 그대로 사용합니다"
   fi
-  info "이미지를 받아 기동합니다…"
-  docker image inspect kexra:local || true
-  if ! docker compose up -d; then
-    warn "상류 이미지 kexra:local 를 Docker Hub 에서 받을 수 없어 기동에 실패했습니다(현재 상류에서 내려간 상태라 pull 이 거부됩니다)"
-    warn "한국어판 화면·출력은 이 스크립트를 다시 실행해 \"2) 로컬 실행 (go 컴파일)\" 을 고르거나, README \"소스에서 단일 바이너리 컴파일\" 경로로 빌드하세요"
-    die "Docker Compose(전부 Docker) 경로는 현재 상류 이미지를 받을 수 없어 사용할 수 없습니다"
+  local image
+  image="$(grep -m1 '^KEXRA_IMAGE=' .env | cut -d= -f2- || true)"
+  image="${image:-kexra:local}"
+  if ! docker image inspect "$image" >/dev/null 2>&1; then
+    die "尚未找到本地镜像 $image。请先构建 Kexra 二进制并根据 Dockerfile 构建镜像；不会自动拉取原项目镜像。"
   fi
+  info "启动 Kexra 容器（镜像：$image）"
+  docker compose up -d || die "Docker Compose 启动失败，请检查容器日志"
   ok "기동을 완료했습니다 → http://localhost:8787"
   info "로그 확인: docker compose logs -f kexra"
 }
