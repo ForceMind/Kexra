@@ -1,5 +1,7 @@
 # Kexra 配置与兼容字段
 
+> **注意**：`KEXRA_IMAGE` / `kexra:local` 等配置当前定义于待验收的品牌 PR；`main` 在合并前仍可能采用旧配置。切换分支或部署前务必核对实际代码。
+
 ## 配置来源
 
 项目采用 `config.json`、环境变量、部分运行时数据库设置并存的方式。以当前 `config/config.go` 与 `docker-compose.yml` 代码为准。**改品牌不代表配置字段已全部改名。**

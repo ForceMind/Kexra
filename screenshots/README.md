@@ -5,7 +5,7 @@
 - 根目录的多张 `*.png`：原始项目的中文界面参考。
 - `ko/`：原韩语本地化项目的示例截图。
 - `wx.png`：旧上游推广二维码/素材，不属于 Kexra 品牌；当确认没有有效文档引用后建议移除。
-- Kexra 的当前新视觉标志位于 `web/public/logo.svg` 与 `web/src/app/icon.svg`；正式产品截图应在独立授权测试环境重新生成。
+- 待验收的 Kexra 品牌分支中新视觉标志位于 `web/public/logo.svg` 与 `web/src/app/icon.svg`；正式产品截图应在独立授权测试环境重新生成。
 
 ## 新截图交付规范
 
