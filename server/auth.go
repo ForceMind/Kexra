@@ -82,7 +82,7 @@ func loadOrCreateJWTKey(keyDir, dataDir string) ([]byte, error) {
 // signJWT issues a 7-day HS256 token for user ARTEX.
 func signJWT(key []byte) (string, error) {
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Subject:   "ARTEX",
+		Subject:   "Kexra",
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(jwtTTL)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}).SignedString(key)
@@ -105,8 +105,10 @@ func extractToken(r *http.Request) string {
 	if h := r.Header.Get("Authorization"); strings.HasPrefix(h, "Bearer ") {
 		return strings.TrimPrefix(h, "Bearer ")
 	}
-	if c, err := r.Cookie("artex_token"); err == nil && c.Value != "" {
-		return c.Value
+	for _, cookieName := range []string{"kexra_token", "artex_token"} {
+		if c, err := r.Cookie(cookieName); err == nil && c.Value != "" {
+			return c.Value
+		}
 	}
 	return r.URL.Query().Get("token")
 }
@@ -237,7 +239,7 @@ func (s *Server) authLogin(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, authErrBadRequest)
 		return
 	}
-	if req.Username != "ARTEX" {
+	if req.Username != "Kexra" && req.Username != "ARTEX" {
 		writeErr(w, 401, authErrBadCredential)
 		return
 	}
