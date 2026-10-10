@@ -72,3 +72,16 @@ agent/d2_models_live_test.go
 # API 키·비밀: 어디에 두든 커밋 금지
 *.env
 secrets.env
+
+# ForceMind local secrets and generated outputs (do not commit)
+.env.*
+!.env.example
+!**/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.log
+.npmrc
+web/.turbo/
+web/coverage/

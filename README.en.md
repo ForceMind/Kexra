@@ -1,3 +1,5 @@
+> **ForceMind/Artex repository:** This is a verified source snapshot of the [jiwoochris/artex-ko](https://github.com/jiwoochris/artex-ko) Korean localization, with original attribution and AGPL-3.0 licensing preserved. See the [Chinese repository guide](docs/REPOSITORY_GUIDE.zh-CN.md) and [source provenance](docs/IMPORT_PROVENANCE.md). Use only in explicitly authorized, isolated environments.
+
 <div align="center">
 
 # ARTEX — Korean Edition
@@ -6,7 +8,7 @@
 
 [한국어](README.md) · [中文](README.zh.md) · English
 
-[![ci](https://github.com/jiwoochris/artex-ko/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jiwoochris/artex-ko/actions/workflows/ci.yml) [![detections](https://github.com/jiwoochris/artex-ko/actions/workflows/detections.yml/badge.svg?branch=main)](https://github.com/jiwoochris/artex-ko/actions/workflows/detections.yml) [![web](https://github.com/jiwoochris/artex-ko/actions/workflows/web.yml/badge.svg?branch=main)](https://github.com/jiwoochris/artex-ko/actions/workflows/web.yml) [![license: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![ci](https://github.com/ForceMind/Artex/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ForceMind/Artex/actions/workflows/ci.yml) [![detections](https://github.com/ForceMind/Artex/actions/workflows/detections.yml/badge.svg?branch=main)](https://github.com/ForceMind/Artex/actions/workflows/detections.yml) [![web](https://github.com/ForceMind/Artex/actions/workflows/web.yml/badge.svg?branch=main)](https://github.com/ForceMind/Artex/actions/workflows/web.yml) [![license: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
 </div>
 
@@ -92,8 +94,8 @@ The original (Chinese UI) screens are available in [`README.zh.md`](README.zh.md
 > **⚠️ The `docker compose up -d` quick start below does not work right now.** The `artex` service in `docker-compose.yml` is set to pull `autumn27/artex`, the upstream (original) image, but that image has been taken down from Docker Hub and can no longer be pulled (verified 2026-10-09). As a result this command fails at the image-pull step with `pull access denied` / `manifest unknown`. To get the Korean edition's screens and output, build it via the **single-binary build from source** path under ["Other installation methods"](#other-installation-methods) below, which currently works. A Korean-edition Docker image is in the works.
 
 ```bash
-git clone https://github.com/jiwoochris/artex-ko.git
-cd artex-ko
+git clone https://github.com/ForceMind/Artex.git
+cd Artex
 cp .env.example .env          # set POSTGRES_PASSWORD; ANTHROPIC_API_KEY is optional
 docker compose up -d          # brings up the artex image + postgres together
 # → open http://localhost:8787 (on first visit, set the admin password at /setup)

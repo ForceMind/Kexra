@@ -1,3 +1,10 @@
+> **ForceMind/Artex · 中文入口**
+>
+> 本仓库是从 [jiwoochris/artex-ko](https://github.com/jiwoochris/artex-ko) 的固定版本导入的韩语本地化 ARTEX 工程。源码、原作者署名和 AGPL-3.0 许可证均予保留。
+> **[中文仓库说明与开发指南](docs/REPOSITORY_GUIDE.zh-CN.md)** · [中文技术说明](README.zh.md) · [English](README.en.md) · [导入来源与版本校验](docs/IMPORT_PROVENANCE.md)
+>
+> 下方保留原韩语版完整说明。请只在自有或取得明确授权的隔离环境中使用。
+
 <div align="center">
 
 # ARTEX 한국어판
@@ -6,7 +13,7 @@
 
 한국어 · [中文](README.zh.md) · [English](README.en.md)
 
-[![ci](https://github.com/jiwoochris/artex-ko/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jiwoochris/artex-ko/actions/workflows/ci.yml) [![detections](https://github.com/jiwoochris/artex-ko/actions/workflows/detections.yml/badge.svg?branch=main)](https://github.com/jiwoochris/artex-ko/actions/workflows/detections.yml) [![web](https://github.com/jiwoochris/artex-ko/actions/workflows/web.yml/badge.svg?branch=main)](https://github.com/jiwoochris/artex-ko/actions/workflows/web.yml) [![license: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![ci](https://github.com/ForceMind/Artex/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ForceMind/Artex/actions/workflows/ci.yml) [![detections](https://github.com/ForceMind/Artex/actions/workflows/detections.yml/badge.svg?branch=main)](https://github.com/ForceMind/Artex/actions/workflows/detections.yml) [![web](https://github.com/ForceMind/Artex/actions/workflows/web.yml/badge.svg?branch=main)](https://github.com/ForceMind/Artex/actions/workflows/web.yml) [![license: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
 </div>
 
@@ -99,8 +106,8 @@ ARTEX 는 **자신이 소유하거나 서면으로 명시적 허가를 받은 �
 > **⚠️ 지금은 아래 `docker compose up -d` 빠른 시작이 바로 작동하지 않습니다.** `docker-compose.yml` 의 `artex` 서비스가 받도록 지정된 상류(원본) 이미지 `autumn27/artex` 는 현재 Docker Hub 에서 내려가 받을 수 없습니다(2026-10-09 확인). 그래서 이 명령은 이미지 pull 단계에서 `pull access denied`/`manifest unknown` 으로 실패합니다. 한국어판 화면과 출력은 아래 ["그 밖의 설치 방법"](#그-밖의-설치-방법)에 있는 **소스에서 단일 바이너리 컴파일** 경로로 빌드하면 바로 쓸 수 있습니다(현재 정상 작동을 확인했습니다). 한국어판 Docker 이미지의 배포는 준비 중입니다.
 
 ```bash
-git clone https://github.com/jiwoochris/artex-ko.git
-cd artex-ko
+git clone https://github.com/ForceMind/Artex.git
+cd Artex
 cp .env.example .env          # POSTGRES_PASSWORD 설정, ANTHROPIC_API_KEY 는 선택
 docker compose up -d          # artex 이미지 + postgres 를 함께 기동
 # → http://localhost:8787 접속 (처음 들어가면 /setup 에서 관리자 비밀번호 설정)
