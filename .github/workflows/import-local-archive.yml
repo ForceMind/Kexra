@@ -1,0 +1,42 @@
+name: One-time import of the verified Artex archive
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/import-local-archive.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  import-verified-snapshot:
+    if: github.repository == 'ForceMind/Artex'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the new destination repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Import exactly the commit matching the user-provided ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA=0fdecdc56750
+          SOURCE_TREE=826785de7ffd3c042d6832bcb332fef8f0239337
+          SOURCE_URL=https://github.com/jiwoochris/artex-ko.git
+          tempdir=$(mktemp -d)
+          trap 'rm -rf "$tempdir"' EXIT
+          git clone --quiet --depth 30 "$SOURCE_URL" "$tempdir/source"
+          git -C "$tempdir/source" checkout --quiet --detach "$SOURCE_SHA"
+          actual_tree=$(git -C "$tempdir/source" rev-parse HEAD^{tree})
+          test "$actual_tree" = "$SOURCE_TREE"
+          rsync -a --exclude '.git' "$tempdir/source/" ./
+          rm -f .github/workflows/import-local-archive.yml
+          git add -A
+          imported_tree=$(git write-tree)
+          test "$imported_tree" = "$SOURCE_TREE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: import verified artex-ko snapshot (0fdecdc)"
+          git push origin HEAD:main
