@@ -241,9 +241,9 @@ func get(ctx context.Context, c *http.Client, rawURL string) (io.ReadCloser, err
 // 包内结构是 artex-<版本>-<os>-<arch>/artex，但这里按**基名**匹配而不是拼完整
 // 路径：版本号在包名里出现过一次，拼错一个字符就整个升级失败，按基名找更耐改。
 func extractBinary(zipPath, dst string) error {
-	want := "artex"
+	want := "kexra"
 	if runtime.GOOS == "windows" {
-		want = "artex.exe"
+		want = "kexra.exe"
 	}
 	zr, err := zip.OpenReader(zipPath)
 	if err != nil {
