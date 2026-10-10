@@ -1,10 +1,10 @@
-# ForceMind/Artex：仓库开发与维护指南
+# Kexra（科巡）：仓库开发与维护指南
 
 > 这是中文入口和本仓库的维护基线，而不是对原开发团队身份、功能、法律责任的重新声明。工具具有自动化安全测试能力，仅用于拥有明确授权的隔离测试环境。
 
 ## 1. 项目定位与来源
 
-- **仓库：** [ForceMind/Artex](https://github.com/ForceMind/Artex)，以私有仓库独立维护。
+- **仓库：** [ForceMind/Kexra](https://github.com/ForceMind/Kexra)，以私有仓库独立维护。
 - **来源：** [jiwoochris/artex-ko](https://github.com/jiwoochris/artex-ko)，属于 [Autumn-27/ARTEX](https://github.com/Autumn-27/ARTEX) 的韩语本地化版本；完整固定提交见 [IMPORT_PROVENANCE.md](IMPORT_PROVENANCE.md)。
 - **许可：** 保留原作者署名、版权标记与根目录 [LICENSE](../LICENSE)（AGPL-3.0）；后续修改和分发须继续核对许可证义务。
 - **语言：** 默认简体中文（`NEXT_PUBLIC_LOCALE=zh`），主 [README.md](../README.md) 使用中文；保留 [README.ko.md](../README.ko.md) 作为韩语历史文档、[README.en.md](../README.en.md) 作为英文说明。部分安装/发行链接仍指向原上游，请以本指南的当前仓库路径为准。
@@ -31,7 +31,7 @@
 在拥有权限的隔离开发环境中，从本仓库获取源码：
 
 ```bash
-git clone https://github.com/ForceMind/Artex.git
+git clone https://github.com/ForceMind/Kexra.git
 cd Artex
 cp .env.example .env
 # 根据本地环境填写 .env 和 config.json，绝不提交真实密钥

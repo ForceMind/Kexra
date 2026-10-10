@@ -1,8 +1,8 @@
-# Artex — instructions for coding agents
+# Kexra — instructions for coding agents
 
 ## Repository context
 
-- This is `ForceMind/Artex`, an independently maintained **private import** of `jiwoochris/artex-ko` (a Korean localization of `Autumn-27/ARTEX`). The original source commit, license and tree hash are documented in `docs/IMPORT_PROVENANCE.md`.
+- This is `ForceMind/Kexra`, a separately branded **AGPL-3.0-derived** project of `jiwoochris/artex-ko` (a Korean localization of `Autumn-27/ARTEX`). The original source commit, license and tree hash are documented in `docs/IMPORT_PROVENANCE.md`.
 - Go (`cmd/`, `server/`, `agent/`, `db/`, etc.) + Next.js/TypeScript (`web/`) + PostgreSQL. The Go module's original import path is deliberately retained; do not mass-rename it without a complete migration.
 - For repository-specific development instructions, read `docs/REPOSITORY_GUIDE.zh-CN.md`. The default product language is Simplified Chinese (zh); Chinese README is the main entrypoint, while historical Korean material remains available as README.ko.md.
 
