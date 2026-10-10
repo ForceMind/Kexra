@@ -14,11 +14,11 @@ jobs:
     if: github.repository == 'ForceMind/Artex'
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the new destination repository
+      - name: Check out the destination
         uses: actions/checkout@v4
         with:
           persist-credentials: true
-      - name: Import exactly the commit matching the user-provided ZIP
+      - name: Import original snapshot without modifying workflow files
         shell: bash
         run: |
           set -euo pipefail
@@ -31,12 +31,16 @@ jobs:
           git -C "$tempdir/source" checkout --quiet --detach "$SOURCE_SHA"
           actual_tree=$(git -C "$tempdir/source" rev-parse HEAD^{tree})
           test "$actual_tree" = "$SOURCE_TREE"
-          rsync -a --exclude '.git' "$tempdir/source/" ./
-          rm -f .github/workflows/import-local-archive.yml
-          git add -A
-          imported_tree=$(git write-tree)
-          test "$imported_tree" = "$SOURCE_TREE"
+          for workflow in "$tempdir/source"/.github/workflows/*.yml; do
+            cmp --silent "$workflow" ".github/workflows/$(basename "$workflow")"
+          done
+          rsync -a --exclude='.git' --exclude='.github/workflows/' "$tempdir/source/" ./
+          git add -A -- . ':(exclude).github/workflows'
+          cp .git/index "$tempdir/check.index"
+          GIT_INDEX_FILE="$tempdir/check.index" git rm -q --cached .github/workflows/import-local-archive.yml
+          actual_import_tree=$(GIT_INDEX_FILE="$tempdir/check.index" git write-tree)
+          test "$actual_import_tree" = "$SOURCE_TREE"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: import verified artex-ko snapshot (0fdecdc)"
+          git commit -m "chore: import verified local Artex snapshot (0fdecdc)"
           git push origin HEAD:main
