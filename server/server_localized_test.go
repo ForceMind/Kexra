@@ -6,7 +6,21 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+    "unicode"
 )
+
+
+// assertChineseError 校验对用户展示的简体中文提示（不修改其他模块仍保留的韩语兼容用例）。
+func assertChineseError(t *testing.T, label, msg string) {
+    t.Helper()
+    if msg == "" { t.Fatalf("%s: 错误消息为空", label) }
+    var han bool
+    for _, r := range msg {
+        if unicode.Is(unicode.Hangul, r) { t.Fatalf("%s: 用户提示残留韩语：%q", label, msg) }
+        if unicode.Is(unicode.Han, r) { han = true }
+    }
+    if !han { t.Fatalf("%s: 用户提示缺少简体中文：%q", label, msg) }
+}
 
 // server.go 의 사용자 노출 응답을 한국어로 유지하는 회귀 방어 테스트다(F3b-server.go +
 // F34). 한국어 판정은 F3a 의 assertKoreanError(한글 포함·중국어 한자 0)를, 응답 본문
@@ -50,7 +64,7 @@ func TestServerErrorConstantsLocalized(t *testing.T) {
 		"fallback_hint":   fallbackHintRecorded,
 	}
 	for label, msg := range plain {
-		assertKoreanError(t, label, msg)
+		assertChineseError(t, label, msg)
 	}
 
 	formatted := map[string]string{
@@ -62,7 +76,7 @@ func TestServerErrorConstantsLocalized(t *testing.T) {
 		"fallback_status": fmt.Sprintf(fallbackChatStatus, 3, 2, 1),
 	}
 	for label, msg := range formatted {
-		assertKoreanError(t, label, msg)
+		assertChineseError(t, label, msg)
 	}
 }
 
@@ -248,7 +262,7 @@ func TestServerHandlersResponsesLocalized(t *testing.T) {
 			if got != c.want {
 				t.Fatalf("응답 문구 = %q, 기대 = %q", got, c.want)
 			}
-			assertKoreanError(t, c.name, got)
+			assertChineseError(t, c.name, got)
 		})
 	}
 }
@@ -264,7 +278,7 @@ func TestChatUnavailableReasonLocalized(t *testing.T) {
 	if got != errChatLLMNotReady {
 		t.Fatalf("chatUnavailableReason() = %q, 기대 = %q", got, errChatLLMNotReady)
 	}
-	assertKoreanError(t, "chat_not_ready", got)
+	assertChineseError(t, "chat_not_ready", got)
 }
 
 // TestFallbackCommandParsing 은 규칙 모드 채팅의 트리거 키워드 파싱(fallbackCommand)이 한국어
