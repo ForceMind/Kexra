@@ -1,7 +1,7 @@
 name: release
+# Temporary cost-control: manual runs only; re-enable after repository is public and release safety verified.
 on:
-  push:
-    tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: write # Release 생성에 필요

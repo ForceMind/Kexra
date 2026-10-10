@@ -19,31 +19,9 @@ name: detections
 # 바꿔 규칙·지표 목록이 조용히 낡는 경우를 머지 게이트에서 잡는다. 공개 Docker 이미지를 인증
 # 없이 내려받으므로 드물게 Docker Hub 내려받기 속도 제한에 걸릴 수 있고, 그때는 작업을
 # 다시 돌리면 해소된다.
+# Temporary cost-control: manual runs only; re-enable after repository is public and release safety verified.
 on:
-  push:
-    paths:
-      - "detections/**"
-      - "enrich/enrich.go"
-      - "selfupdate/github.go"
-      - "selfupdate/stage.go"
-      - "guard/guard.go"
-      - "db/db.go"
-      - "db/schema.sql"
-      - "cmd/artex/main.go"
-      - "traffic/traffic.go"
-      - ".github/workflows/detections.yml"
-  pull_request:
-    paths:
-      - "detections/**"
-      - "enrich/enrich.go"
-      - "selfupdate/github.go"
-      - "selfupdate/stage.go"
-      - "guard/guard.go"
-      - "db/db.go"
-      - "db/schema.sql"
-      - "cmd/artex/main.go"
-      - "traffic/traffic.go"
-      - ".github/workflows/detections.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read

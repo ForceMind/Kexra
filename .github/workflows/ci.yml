@@ -2,10 +2,9 @@ name: ci
 # 푸시와 PR 마다 빌드·정적 분석·테스트를 돌려, 한국어화 과정에서 생긴 회귀를
 # 머지 전에 잡는다. 릴리스 워크플로(release.yml)는 태그(v*)에서만 돌고 빌드·배포만
 # 하므로, 일상적인 변경을 검증하는 역할은 이 워크플로가 맡는다.
+# Temporary cost-control: manual runs only; re-enable after repository is public and release safety verified.
 on:
-  push:
-    branches: ["**"]
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read

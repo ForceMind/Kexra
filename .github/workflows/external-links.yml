@@ -12,9 +12,8 @@ name: external-links
 # 살아 있는 상태)와 ALLOWED(우리가 고칠 수 없는 상류 상속 죽은 링크)는 실패로 치지 않으므로,
 # 빨간불은 "우리 문서가 큐레이션한 외부 링크가 새로 깨졌다 — 가서 보라"는 신호다. 스케줄
 # 워크플로는 기본 브랜치(main)에서만 돈다.
+# Temporary cost-control: manual runs only; re-enable after repository is public and release safety verified.
 on:
-  schedule:
-    - cron: "17 0 * * 1" # 매주 월요일 00:17 UTC
   workflow_dispatch:
 
 permissions:
