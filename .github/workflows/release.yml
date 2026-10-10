@@ -1,7 +1,7 @@
 name: Kexra Release
+# Temporary cost-control: dispatch by hand only; no push/PR/schedule/tag automation.
 on:
-  push:
-    tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: write # Release 생성에 필요

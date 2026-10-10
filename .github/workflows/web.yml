@@ -1,18 +1,8 @@
 name: web
 # 简体中文版前端验证：检查静态导出、页面中文默认配置和 Biome 代码质量。
+# Temporary cost-control: dispatch by hand only; no push/PR/schedule/tag automation.
 on:
-  push:
-    branches: ["**"]
-    paths:
-      - "web/**"
-      - "scripts/check-web-zh.py"
-      - "scripts/check-i18n-keys.py"
-      - ".github/workflows/web.yml"
-  pull_request:
-    paths:
-      - "web/**"
-      - "scripts/check-web-zh.py"
-      - ".github/workflows/web.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
