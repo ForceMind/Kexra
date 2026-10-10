@@ -10,8 +10,8 @@ from pathlib import Path
 import re
 import sys
 
-HANGUL = re.compile(r"[\\uac00-\\ud7a3]")
-HAN = re.compile(r"[\\u4e00-\\u9fff]")
+HANGUL = re.compile(r"[가-힣]")
+HAN = re.compile(r"[一-鿿]")
 
 class PageText(HTMLParser):
     def __init__(self):
@@ -49,16 +49,19 @@ def check(root: Path) -> list[str]:
         parser = PageText()
         parser.feed(page.read_text(encoding="utf-8"))
         name = page.relative_to(root)
+        # Next 静态导出可能会生成不带 html 根元素的 index.html 占位文件。
+        if parser.root_lang is None and name.as_posix() == "index.html":
+            continue
         if parser.root_lang != "zh":
             problems.append(f"{name}: lang 应为 zh，实际为 {parser.root_lang!r}")
         if parser.hangul:
             problems.append(f"{name}: 存在韩语可见文本：{parser.hangul[:5]}")
-    home = root / "index.html"
-    if home.exists():
+    landing = root / "login" / "index.html"
+    if landing.exists():
         parser = PageText()
-        parser.feed(home.read_text(encoding="utf-8"))
+        parser.feed(landing.read_text(encoding="utf-8"))
         if not parser.han_count:
-            problems.append("首页未检测到任何中文可见文本，请检查 next-intl 构建语言")
+            problems.append("登录页未检测到中文可见文本，请检查 next-intl 构建语言")
     return problems
 
 def main():
