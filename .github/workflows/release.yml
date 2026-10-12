@@ -9,6 +9,8 @@ permissions:
 jobs:
   # ① 프런트엔드 정적 내보내기(한 번 수행), 산출물을 각 플랫폼 크로스 컴파일에서 재사용
   frontend:
+    # workflow_dispatch must point at an explicit v* Git tag, never main.
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -102,6 +104,7 @@ jobs:
   #     여부를 이 잡의 출력으로 넘긴 뒤 docker 잡의 if 조건으로 쓴다.
   #     어느 네임스페이스로 발행할지는 별도 결정 사안이다(G6·DECISIONS 8).
   docker-gate:
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     outputs:
       publish: ${{ steps.check.outputs.publish }}
