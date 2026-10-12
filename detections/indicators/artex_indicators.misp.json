@@ -50,7 +50,7 @@
         "to_ids": false,
         "disable_correlation": true,
         "value": "8787",
-        "comment": "Default ARTEX server HTTP listen port (cmd/artex/main.go --addr). Host-triage hint, not a blocking indicator; check with ss/netstat on a suspected host."
+        "comment": "Default ARTEX server HTTP listen port (cmd/kexra/main.go --addr). Host-triage hint, not a blocking indicator; check with ss/netstat on a suspected host."
       },
       {
         "uuid": "b575c98a-629d-42d4-bac0-3280f6c6c6b8",
@@ -59,7 +59,7 @@
         "to_ids": false,
         "disable_correlation": true,
         "value": "127.0.0.1|8788",
-        "comment": "Default loopback traffic-recording MITM proxy endpoint (cmd/artex/main.go --proxy). Loopback — a host-triage hint, not a network block; check with ss/netstat."
+        "comment": "Default loopback traffic-recording MITM proxy endpoint (cmd/kexra/main.go --proxy). Loopback — a host-triage hint, not a network block; check with ss/netstat."
       },
       {
         "uuid": "7628f0dc-d5f8-45ea-8aec-64843667658e",
