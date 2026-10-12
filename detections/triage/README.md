@@ -26,7 +26,7 @@ Every check is grounded in a string or path verified in this repository's source
 carries the same honest caveat as the matching Sigma rule or indicator row.
 
 - **Listening ports** — `:8787` (admin UI) and `127.0.0.1:8788` (recording proxy), the defaults of the
-  `--addr` / `--proxy` flags in [`cmd/artex/main.go`](../../cmd/artex/main.go). Parsed from `ss`/`netstat`/`lsof`
+  `--addr` / `--proxy` flags in [`cmd/artex/main.go`](../../cmd/kexra/main.go). Parsed from `ss`/`netstat`/`lsof`
   on the live host, or from a file you pass with `--ports-from`.
 - **Recording-proxy artifacts** — the MITM CA the recorder writes on first start,
   `<data-dir>/traffic/_ca/mitmproxy-ca-cert.pem`, and the sibling `_index/index.sqlite` and `_blobs/`
