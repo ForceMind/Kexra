@@ -26,13 +26,15 @@ func TestShutdownContextPreservesNamedCause(t *testing.T) {
 // TestPrintBannerLocalized ensures the Kexra CLI shows our own product name
 // and Simplified Chinese text without requiring Korean.
 func TestPrintBannerLocalized(t *testing.T) {
-  out := captureStdout(t, func() { printBanner(":8787") })
-  for _, want := range []string{"KEXRA", "科巡", "多智能体安全评估", "版本", "监听地址", ":8787"} {
-    if !strings.Contains(out, want) { t.Errorf("banner missing %q: %q", want, out) }
-  }
-  if strings.ContainsFunc(out, func(r rune) bool { return unicode.Is(unicode.Hangul, r) }) {
-    t.Errorf("banner unexpectedly contains Korean: %q", out)
-  }
+	out := captureStdout(t, func() { printBanner(":8787") })
+	for _, want := range []string{"KEXRA", "科巡", "多智能体安全评估", "版本", "监听地址", ":8787"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("banner missing %q: %q", want, out)
+		}
+	}
+	if strings.ContainsFunc(out, func(r rune) bool { return unicode.Is(unicode.Hangul, r) }) {
+		t.Errorf("banner unexpectedly contains Korean: %q", out)
+	}
 }
 
 // captureStdout redirects os.Stdout for the duration of fn and returns whatever
