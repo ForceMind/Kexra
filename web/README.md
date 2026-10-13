@@ -1,6 +1,6 @@
 # Kexra Web 前端
 
-**代码状态**：Kexra Logo / 登录品牌迁移仍在 Draft PR #1，正式分支 `main` 可能尚未显示新版界面。
+**代码状态**：Kexra Logo、登录品牌与中文构建已进入 `main`；前端与本地服务已通过隔离环境检查。
 
 Kexra 的 Web 管理界面基于 **Next.js 16、React 19、TypeScript、Tailwind、next-intl**。Go API 位于仓库根目录的 `server/` 等路径；本目录不是独立的后端服务。
 

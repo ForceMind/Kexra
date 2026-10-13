@@ -12,7 +12,7 @@
 
 | 目录 | 代码职责 |
 | --- | --- |
-| `cmd/kexra/` | 品牌分支中的 Go CLI 入口，需执行 Go 1.26 完整回归 |
+| `cmd/kexra/` | `main` 中的 Go CLI 入口，Go 1.26 构建和测试已验证 |
 | `server/` | HTTP API、会话和认证 |
 | `agent/` | Agent 计划、执行、上下文与工具调用 |
 | `db/`、`evidence/`、`report/` | 数据、证据和报告 |
@@ -46,7 +46,7 @@ python3 -I scripts/check-doc-links.py
 
 `check-web-zh.py` 需要先生成 `web/out`；其静态 HTML 检查**不能证明**运行时 API/Mock/Agent 输出已全部中文化。
 
-**GitHub Actions 节省额度状态**：当前 `main` 与品牌分支的 CI、文档、前端、检测规则、外链周检及 Release 工作流均已暂时改为手动触发（`workflow_dispatch`）。除非用户主动执行，否则不会因 push、PR 或定时计划运行。恢复自动门禁应等仓库公开、额度规则确认、代码通过人工验收以后再处理。
+**GitHub Actions 节省额度状态**：当前 `main` 的 CI、文档、前端、检测规则、外链周检及 Release 工作流仍为手动触发（`workflow_dispatch`）；不会因 push、PR 或定时任务自动运行。仓库已公开，但自动门禁的恢复需单独检查运行费用、安全边界与范围。
 
 CI 通过 `.github/workflows/ci.yml`、`web.yml`、`docs.yml` 和 `detections.yml` 组织。使用 PostgreSQL 16 的集成测试 job 按包隔离，不能以无数据库的普通 `go test` 代替它们。
 

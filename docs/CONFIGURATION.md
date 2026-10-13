@@ -1,6 +1,6 @@
 # Kexra 配置与兼容字段
 
-> **注意**：`KEXRA_IMAGE` / `kexra:local` 等配置当前定义于待验收的品牌 PR；`main` 在合并前仍可能采用旧配置。切换分支或部署前务必核对实际代码。
+> **注意**：`KEXRA_IMAGE` / `kexra:local` 等配置已进入 `main`；历史 `ARTEX_*` 环境变量与数据库名继续保留兼容。Docker 完整部署仍需独立验收。
 
 ## 配置来源
 

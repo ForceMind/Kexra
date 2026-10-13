@@ -4,8 +4,8 @@
 
 ## 当前基线
 
-- 仓库名称已迁移到 Kexra；品牌代码仍在 [Draft PR #1](https://github.com/ForceMind/Kexra/pull/1) 中。
-- Go module 与 Go 入口已在品牌分支迁移到 Kexra，但还需要编译和发布测试；数据库/环境变量仍保留旧兼容接口。
+- 仓库名称已迁移到 Kexra；品牌代码已由 [PR #1](https://github.com/ForceMind/Kexra/pull/1) 合入 `main`，完成更名和本地运行回归；尚无正式 Release。
+- Go module 与 Go 入口已改用 Kexra，Go/前端/数据库/五平台打包及隔离环境启动测试已通过；旧数据库/环境变量依然保留兼容，Docker 正式部署和更新回滚未验收。
 - 旧 Docker Hub 镜像不可作为部署前提；新镜像与 Release 尚未验收。
 - 不得删除根目录 AGPL、前端 MIT 或来源链路。
 

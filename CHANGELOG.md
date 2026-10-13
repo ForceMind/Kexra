@@ -1,26 +1,21 @@
 # Kexra 更新记录
 
-本文件只记录 **ForceMind/Kexra 作为独立维护项目**的变更。历史 ARTEX 发布记录不冒称为 Kexra 的自有版本。
+Kexra 由 ForceMind 独立维护。以下记录不把继承的 ARTEX 历史版本冒称为 Kexra 自有发布。
 
-## [未发布] — Kexra 独立品牌迁移
+## [未发布] — 2026-10-14，独立品牌基线已合入 main
 
-### 已提交到待验收分支
+- **[PR #1](https://github.com/ForceMind/Kexra/pull/1) 已合并**（合并提交 `9a3fd28e`）：Kexra 品牌、Go module `github.com/ForceMind/Kexra`、CLI `cmd/kexra/`、Web SVG、登录兼容、启动/构建/发布命名。
+- 移除旧项目推广二维码、无效跳转 README、冗余占位与旧 Logo 图片；保留 AGPL-3.0、前端 MIT、原始来源及检测证据。
+- 中文文档、配置、开发维护指南更新；保留现有 `ARTEX_*`、旧数据库及 Cookie 兼容，避免破坏已有数据。
+- 验收记录：[Go](https://github.com/ForceMind/Kexra/actions/runs/38267626025)、[Web/文档](https://github.com/ForceMind/Kexra/actions/runs/38267953075)、[PostgreSQL](https://github.com/ForceMind/Kexra/actions/runs/38268254170)、[检测规则](https://github.com/ForceMind/Kexra/actions/runs/38269136070)、[跨平台打包](https://github.com/ForceMind/Kexra/actions/runs/38269849980)、[本地运行与登录](https://github.com/ForceMind/Kexra/actions/runs/38455771805)。
 
-- 品牌标识改为 Kexra（科巡），新增独立 SVG 图标与中英文入口。
-- 登录展示、前端名称、启动横幅、构建产物、Docker 服务名和自更新目标开始迁移。
-- 新旧用户名/Cookie 保留兼容入口；部分 `ARTEX_*` 配置和数据库标识不做危险的直接删除。
-- 新建中文文档中心、架构/安装/配置/部署/安全/开发/迁移/清理资料。
-- 集中保留第三方许可证和代码导入来源说明。
+### 仍需完成
 
-### 尚未完成
+- 完整 Docker 镜像启动、网络隔离、备份/恢复演练。
+- 首个 Kexra 正式 Release 与自更新、回滚的端到端验收（目前没有发布）。
+- 进一步中文化部分后端、通知、历史文案，同时保留技术证据与协议兼容字段。
+- 公开仓库历史和依赖的安全审计。
 
-- 品牌代码仍在 [Draft PR #1](https://github.com/ForceMind/Kexra/pull/1)，未合入 `main`。
-- 品牌分支已将目录由 `cmd/artex` 迁移到 `cmd/kexra`，并调整 Go module/内部 import；构建、数据库集成与发布仍未完成验收。
-- GitHub Actions 环境异常导致品牌分支部分工作流未实际执行测试。
-- 尚无经过验证发布的 Kexra 官方二进制、容器镜像或自动更新流程。
+## 原始代码导入
 
-## 历史代码导入
-
-- 2026-10-10：以可校验的固定版本导入旧源码，随后建立简体中文默认界面和开发基线。
-- 原始源提交、SHA 与 Tree 见 [来源记录](docs/IMPORT_PROVENANCE.md)。
-- 继承项目的历史更新记录参考 [旧项目更新日志](CHANGELOG.zh.md)，**不是 Kexra 发布记录**。
+最初的可验证导入版本详见 [来源记录](docs/IMPORT_PROVENANCE.md)；继承的历史日志仅作参考，不属于 Kexra 自有发行版本。

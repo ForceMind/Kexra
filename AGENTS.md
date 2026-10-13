@@ -6,7 +6,7 @@
 
 - 仓库：`ForceMind/Kexra`，默认简体中文品牌 **Kexra（科巡）**。
 - 代码：Go + PostgreSQL 后端、Next.js/React 前端，包含 Agent 编排、MCP/Skills、检测规则与证据管理。
-- **品牌分支已完成源文件更名**：Go module 使用 `github.com/ForceMind/Kexra`，入口为 `cmd/kexra`；但 Go 1.26 编译、前端、数据库集成和发行流程仍需真实环境验证，不能据此宣布已发布。
+- **代码基线已进入 main**：Go module 使用 `github.com/ForceMind/Kexra`，入口为 `cmd/kexra`。Go、Web、PostgreSQL、检测规则、五平台打包及本地运行已完成验收；Docker 生产部署、正式 Release 和自动更新回滚仍需独立验证。
 - 现有代码基于 AGPL-3.0 等第三方许可，不得移除对应版权与原许可文本。参阅 [第三方声明](THIRD_PARTY_NOTICES.md)。
 
 ## 工作规则

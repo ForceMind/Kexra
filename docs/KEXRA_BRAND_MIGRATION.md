@@ -15,13 +15,13 @@
 
 1. 不因仓库更名重置用户、数据库、运行数据或 JWT 密钥。
 2. 对旧 `ARTEX_*` 环境变量和历史登录身份采用先兼容、后迁移的方式。
-3. 品牌分支已迁移 Go module 和 `cmd/kexra` 入口，旧 `cmd/artex` 已删除；构建与发行验证仍是合并前的必要条件。
+3. `main` 已迁移 Go module 和 `cmd/kexra`，旧 `cmd/artex` 已删除；Go、Web、PostgreSQL、检测规则、五平台打包和本地运行已通过，正式 Release 仍需端到端验收。
 4. 原始安全检测规则和证据不进行“品牌文字替换”。
 5. 自动更新必须指向新仓库、校验新发行包；正式发布前不启用。
 
 ## 下一步
 
-品牌实现仍在 [Draft PR #1](https://github.com/ForceMind/Kexra/pull/1)。详细阻塞、验收顺序及可清理旧文件参见 [迁移说明](MIGRATION.md) 和 [清理清单](PROJECT_CLEANUP.md)。
+品牌实现已通过 [PR #1](https://github.com/ForceMind/Kexra/pull/1) 合并。后续 Docker、自动更新、中文化余项和安全审查见 [迁移说明](MIGRATION.md) 与 [清理清单](PROJECT_CLEANUP.md)。
 
 旧仓库本地克隆可以运行：
 

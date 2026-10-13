@@ -6,7 +6,7 @@ Kexra 将目标管理、AI 任务规划、并行执行、资产与探索图谱�
 
 > **使用范围**：仅用于自有资产、书面授权的测试环境或隔离实验室。Kexra 的审批与拦截机制不等同于可信隔离边界，不应将其直接开放到公网。
 >
-> **项目状态**：已完成仓库重命名为 `ForceMind/Kexra`。独立品牌迁移仍在 [Draft PR #1](https://github.com/ForceMind/Kexra/pull/1) 验收，**main 不代表完整品牌迁移已完成**。暂无经本仓库验证发布的正式二进制和官方 Docker 镜像。
+> **项目状态**：已完成仓库重命名为 `ForceMind/Kexra`。[PR #1](https://github.com/ForceMind/Kexra/pull/1) 已合并至 `main`。Go、Web、PostgreSQL 集成、合成检测规则、五平台打包及隔离环境登录/重启验证均已通过；**尚无经过完整 Docker 部署与更新回滚验收的正式 Release 或官方镜像**。
 
 ## 功能概览
 
@@ -26,6 +26,17 @@ Kexra 将目标管理、AI 任务规划、并行执行、资产与探索图谱�
 为避免私有仓库 GitHub Actions 额度持续消耗，全部工作流已暂时切换为手动触发（`workflow_dispatch`）。当前迁移通过静态一致性检查准备验收，完整 Go 1.26、前端和数据库 CI 尚未运行；不要将手动模式理解为测试通过。
 
 本地先运行 `python3 -I scripts/check-kexra-migration.py` 检查更名契约，再执行下方构建命令。
+
+## 迁移验收记录
+
+- [Go 构建/单测](https://github.com/ForceMind/Kexra/actions/runs/38267626025)（Go job 通过，第一轮文档断链随后修复）
+- [前端中文构建与文档](https://github.com/ForceMind/Kexra/actions/runs/38267953075)
+- [PostgreSQL 16 集成测试](https://github.com/ForceMind/Kexra/actions/runs/38268254170)
+- [防御检测合成规则](https://github.com/ForceMind/Kexra/actions/runs/38269136070)
+- [五平台构建包与校验](https://github.com/ForceMind/Kexra/actions/runs/38269849980)
+- [本地服务启动、登录兼容与 JWT 持久化](https://github.com/ForceMind/Kexra/actions/runs/38455771805)
+
+六套正式 GitHub Actions 工作流目前均为**手动触发**。仅在人工核实运行成本与发布目标后恢复自动执行。
 
 ## 开始使用
 
@@ -47,7 +58,7 @@ go build ./...
 go test ./... -count=1
 ~~~
 
-以上命令仅完成**源码构建与校验**，不会配置数据库，也不会证明产品部署、测试结果或安全控制已完成验收。品牌分支已将 Go 入口迁移至 `cmd/kexra`，并完成模块路径和内部导入修改；完整 Go 编译与部署验收仍待执行。
+以上命令仅完成**源码构建与校验**，不会配置数据库，也不会证明产品部署、测试结果或安全控制已完成验收。主分支 Go 入口已迁移至 `cmd/kexra`，模块路径为 `github.com/ForceMind/Kexra`。源码编译与隔离本地启动已经通过测试，但公网部署、完整 Docker 镜像和真实版本更新/回滚仍待验收。
 
 完整的数据库配置、本地运行方式、镜像前置条件和限制见 [安装与启动](docs/INSTALLATION.md)。
 

@@ -25,6 +25,6 @@
 ## 当前版本说明
 
 - GitHub 仓库已改为 `ForceMind/Kexra`。
-- 独立品牌迁移仍在 Draft PR #1；Go module、数据库标识和若干 `ARTEX_*` 配置名可能保留兼容性。
+- 品牌迁移 [PR #1](https://github.com/ForceMind/Kexra/pull/1) 已合并至 `main`；Go module 与 CLI 均已改为 Kexra，数据库和部分 `ARTEX_*` 配置名为保留数据兼容而继续存在。
 - 仓库不提供已经验证的官方镜像，也不能以既有上游 Demo 或截图作为 Kexra 的当前运行证明。
 - 如文档与代码不符，优先核对具体提交、测试结果，然后修订文档。

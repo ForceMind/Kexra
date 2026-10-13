@@ -1,6 +1,6 @@
 # Kexra 部署与发布约束
 
-> **分支范围：本指南的 Kexra 构建与 Compose 步骤对应待合并的 `feat/kexra-independent-brand`，不是当前 `main` 的已验证部署说明。**
+> **版本范围：本指南对应已经合入 `main` 的 Kexra 代码。五平台打包、Compose 配置及隔离本地二进制运行已经验证；完整 Docker 镜像部署尚未验证。**
 >
 > **状态：未完成部署验收。** 当前仓库尚未确认存在可直接拉取的官方 Kexra Docker 镜像或可自动升级的正式 Release。仅用于授权的隔离实验室，不建议直接面向公网部署。
 

@@ -1,52 +1,39 @@
-# 从 Artex 仓库迁移到 Kexra
+# Kexra 迁移状态与后续兼容计划
 
-## 已确认事实
+## 已完成（2026-10-14）
 
-- Actions 运行额度保护：六套工作流已暂停自动触发，仅手动 `workflow_dispatch`；待用户公开仓库并完成安全审查后再恢复必要的自动检查。
+- 仓库已公开、更名为 [ForceMind/Kexra](https://github.com/ForceMind/Kexra)。
+- 独立品牌 [PR #1](https://github.com/ForceMind/Kexra/pull/1) 已合并至 `main`（提交 `9a3fd28e`）。
+- Go 模块 `github.com/ForceMind/Kexra`、CLI `cmd/kexra/`、Windows/Linux 启动与跨平台包名称、Web Logo/界面品牌已迁移。
+- 旧 `cmd/artex/`、无效推广二维码、旧图标及重复历史跳转页已清理，原版权和许可证保留。
+- 旧管理员用户名 `ARTEX`、旧 `artex_token` Cookie、数据库/环境变量 `ARTEX_*` 仍保留兼容，防止旧安装和已有数据失效。
+- 原始六套 GitHub Actions 工作流保持手动触发，不自动执行。
 
-- GitHub 仓库名称已由 `ForceMind/Artex` 修改为 **`ForceMind/Kexra`**。
-- `main` 尚保持此前中文化基线；新的品牌迁移代码位于 [Draft PR #1](https://github.com/ForceMind/Kexra/pull/1)。
-- Web 产品名称、图标、登录名及若干启动/发布标识已在该 PR 中更新。
-- **并非已完成独立发布的产品**：品牌迁移尚未合并，测试记录尚不充分。
-- 原主体许可证、前端 MIT 组件版权、导入校验和原始数据必须保留。
+## 验收证据
 
-## 本地仓库地址更新
-
-~~~bash
-git remote -v
-git remote set-url origin https://github.com/ForceMind/Kexra.git
-git remote -v
-git fetch origin
-~~~
-
-GitHub 的旧 URL 重定向是兼容机制，**不应作为长期配置依赖**；CI、Webhook、部署系统、README 链接等均应改成新地址。
-
-## 代码更名尚未闭环
-
-| 事项 | 目前情况 | 处理方式 |
+| 范围 | 结果 | GitHub Actions |
 | --- | --- | --- |
-| GitHub 仓库名 | 已改为 Kexra | 无需再次更名 |
-| Web 品牌及 SVG | 已在品牌 PR 中修改 | 要求前端构建和视觉验收 |
-| Go module | 品牌分支已改为 `github.com/ForceMind/Kexra` | 已同步内部 Go import，完整 Go 编译及依赖验证仍待执行 |
-| Go CLI | 品牌分支已迁移至 `cmd/kexra` | 入口及测试文件迁移完成，仍待跨平台验证 |
-| 构建产物 | 部分改为 `kexra` | 同步 Dockerfile、安装、更新与打包路径 |
-| 环境变量 | `ARTEX_*` 兼容字段仍使用 | 不得批量移除；必要时引入新别名并测试 |
-| 数据库 | 仍可能叫 `artex` | 无须因改品牌而改库名；不得重置历史数据 |
-| 登录与 Cookie | 新 `Kexra` 与旧 `ARTEX` 兼容过渡 | 验证真实登录、会话与刷新行为 |
-| 自动更新 | 源设为 `ForceMind/Kexra` | 首次发布、私有仓库权限、签名/校验和回滚尚待验收 |
-| Docker | `kexra:local` 是本地构建标签 | 不存在可宣称的官方镜像 |
+| Go 1.26 构建、vet、单测 | 成功 | [S1（Go job）](https://github.com/ForceMind/Kexra/actions/runs/38267626025) |
+| 中文前端、Biome、内部文档链接 | 成功 | [S2](https://github.com/ForceMind/Kexra/actions/runs/38267953075) |
+| 六模块 PostgreSQL 16 集成 | 成功 | [S3](https://github.com/ForceMind/Kexra/actions/runs/38268254170) |
+| 合成检测规则、IOC、MISP 等回归 | 成功 | [S4b](https://github.com/ForceMind/Kexra/actions/runs/38269136070) |
+| 5 平台 zip、SHA256、Compose 配置 | 成功 | [S5b](https://github.com/ForceMind/Kexra/actions/runs/38269849980) |
+| 本地服务健康、初始化、登录兼容、JWT 重启 | 成功 | [S6](https://github.com/ForceMind/Kexra/actions/runs/38455771805) |
 
-## 推荐迁移顺序
+## 尚未完成（独立于本次代码合并）
 
-1. 已在品牌分支完成 Go module、内部导入和 CLI 命名迁移；下一步必须确认 `go build ./...` 与脚本产物实际成功。
-2. 修复旧安装脚本、端口提示及 Go/前端本地开发流程。
-3. 核验现有数据库和 JWT 密钥迁移，不进行任何自动清空。
-4. 执行 Go + PostgreSQL、Web、文档、检测规则的全部 CI。
-5. 审查安全边界与部署网络，再考虑合并 PR。
-6. 通过可重复验收后，才建立首个 Kexra 版本标签与分发渠道。
+1. **真实 Docker 镜像构建和启动验收**：受控网络、端口绑定、敏感配置、持久化备份恢复与完整启动。
+2. **首次正式 Kexra Release**：验证 v* 标签、私有/公开下载、SHA256、软件自更新与回滚，在确认发布目标后才启用。
+3. **后端中文化余项**：部分认证错误、通知和启动日志仍有旧韩语文案；保留技术原文、历史签名与配置兼容标识。
+4. **安全审计**：真实公网部署前审查认证、模型和工具权限、出站网络限制及第三方依赖许可与 Git 历史。
 
-## 数据迁移禁止事项
+不要因更名删除 `artex` 数据库、`pgdata`、`data/`、JWT 密钥、旧 Cookie 兼容或 `detections/` 中的历史指标。当前未发布经过端到端验收的正式镜像，也不应将这份迁移合并等同于可安全部署在公网上。
 
-不要因“删除旧项目痕迹”而删除旧用户、`artex` 数据库、`pgdata`、`data/`、JWT 密钥、日志证据或新旧 Cookie 兼容逻辑。这些包含真实状态和使用中的协议信息。
+## 本地仓库 URL 更新
 
-来源、版权与合规说明： [导入记录](IMPORT_PROVENANCE.md) · [第三方许可](../THIRD_PARTY_NOTICES.md)。
+```bash
+git remote set-url origin https://github.com/ForceMind/Kexra.git
+git fetch origin
+```
+
+更多信息：[安装](INSTALLATION.md) · [部署](DEPLOYMENT.md) · [清理记录](PROJECT_CLEANUP.md) · [来源记录](IMPORT_PROVENANCE.md)。

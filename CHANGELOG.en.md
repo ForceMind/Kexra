@@ -1,16 +1,16 @@
 # Kexra Changelog
 
-This file reflects changes to the independently maintained Kexra project; historical ARTEX releases are not Kexra releases. See the canonical [Chinese changelog](CHANGELOG.md).
+For the full record see [CHANGELOG.md](CHANGELOG.md). Kexra independently maintains derived software, but the old ARTEX project’s releases are not Kexra releases.
 
-## Unreleased — independent brand migration
+## Unreleased — Independent brand merged on 2026-10-14
 
-- New Kexra branding, SVG identities, login display and bilingual repository entrypoints.
-- Updated startup/package/image names and an updater target for the renamed GitHub repository.
-- Legacy `ARTEX_*` configuration, data and user sessions preserved for compatibility.
-- Rewritten Chinese documentation center, setup, architecture, security, migration and cleanup guidance.
+- [PR #1](https://github.com/ForceMind/Kexra/pull/1) merged Kexra branding, SVG icons, `cmd/kexra` entrypoint and `github.com/ForceMind/Kexra` module, scripts and package names.
+- Compatibility retained for legacy `ARTEX_*` settings, original database contents and user sessions. Applicable AGPL-3.0 and MIT licenses, copyright and source provenance preserved.
+- Verified Go build/vet/tests, six PostgreSQL 16 integration packages, Chinese Web build, detection regression, five-platform package checks and isolated service/login/restart behavior. See [migration evidence](docs/MIGRATION.md).
+- The six normal GitHub Actions workflows remain manual-only for cost control.
 
-**Not completed:** Draft PR #1 is not merged, the Go CLI path and some build scripts are inconsistent, GitHub Actions on the branch have not delivered verified build results, and no Kexra release or Docker image is certified.
+**Still pending:** complete Docker image build/runtime, first official Release and updater rollback, legacy language cleanup, and a public repository security/license review. No production-ready release has been published.
 
-## Historical import
+## Inherited history
 
-The original source provenance is recorded in [docs/IMPORT_PROVENANCE.md](docs/IMPORT_PROVENANCE.md). See [CHANGELOG.zh.md](CHANGELOG.zh.md) only for inherited legacy history, not the Kexra release series.
+Older project releases are kept as historical reference in [CHANGELOG.zh.md](CHANGELOG.zh.md) with origin details in [docs/IMPORT_PROVENANCE.md](docs/IMPORT_PROVENANCE.md).
