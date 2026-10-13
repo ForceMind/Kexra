@@ -48,11 +48,11 @@ cd ..
 
 ## 5. 启动本地开发服务
 
-当前 Go 启动入口仍名为 `cmd/artex`（迁移任务），不要误写成不存在的 `cmd/kexra`。
+品牌迁移分支现使用 `cmd/kexra` 作为 Go 启动入口。旧 `cmd/artex` 已从该分支移除；不要用旧路径构建。
 
 ~~~bash
 # 先在独立终端启动 PostgreSQL，并确保连接参数已经配置。
-go run ./cmd/artex -addr 127.0.0.1:8787 -proxy ""
+go run ./cmd/kexra -addr 127.0.0.1:8787 -proxy ""
 ~~~
 
 需要浏览器开发热更新时，在另一个终端执行：

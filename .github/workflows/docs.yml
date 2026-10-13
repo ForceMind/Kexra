@@ -8,7 +8,7 @@ name: docs
 # 파이썬 표준 라이브러리만 쓰고 네트워크에 접속하지 않아 결정론적으로 끝나므로,
 # Docker Hub 속도 제한 같은 외부 요인으로 깜빡이지 않는다. Go 빌드·정적 분석·테스트는
 # ci.yml, 탐지 규칙 재현은 detections.yml, 한국어 UI 빌드는 web.yml 이 맡는다.
-# Temporary cost-control: manual runs only; re-enable after repository is public and release safety verified.
+# Temporary cost-control: dispatch by hand only; no push/PR/schedule/tag automation.
 on:
   workflow_dispatch:
 

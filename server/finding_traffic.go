@@ -13,9 +13,9 @@ import (
 	"strconv"
 	"unicode/utf8"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/evidence"
+	"github.com/ForceMind/Kexra/agent"
+	"github.com/ForceMind/Kexra/db"
+	"github.com/ForceMind/Kexra/evidence"
 	actool "github.com/Autumn-27/norma/tool"
 )
 

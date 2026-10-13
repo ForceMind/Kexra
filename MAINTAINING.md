@@ -5,9 +5,13 @@
 ## 当前基线
 
 - 仓库名称已迁移到 Kexra；品牌代码仍在 [Draft PR #1](https://github.com/ForceMind/Kexra/pull/1) 中。
-- Go module 与当前程序入口还存在旧路径，不可在构建修复前直接删除。
+- Go module 与 Go 入口已在品牌分支迁移到 Kexra，但还需要编译和发布测试；数据库/环境变量仍保留旧兼容接口。
 - 旧 Docker Hub 镜像不可作为部署前提；新镜像与 Release 尚未验收。
 - 不得删除根目录 AGPL、前端 MIT 或来源链路。
+
+## Actions 成本控制
+
+六个现有工作流当前全部只响应手动 `workflow_dispatch`；包含原来的周检和标签发布流程。恢复前先确认仓库公开设置与运行器计费规则，并只为必要文件范围启用自动 CI。**不要为验证一处小文档改动反复触发整套测试。**
 
 ## 日常维护
 
@@ -19,7 +23,7 @@
 
 ## 版本发布
 
-1. 先完成 `cmd` 路径、`go.mod` 导入路径、`build.sh`、`Dockerfile`、`selfupdate` 的一致性迁移。
+1. 已完成源码中 `cmd/kexra`、`go.mod` 与内部导入路径改名；先用 Go 1.26 核实构建和相关脚本/自动更新一致性，严禁跳过实测。
 2. 在隔离环境验证 Linux/macOS/Windows 包名、解压布局、校验文件与首次启动。
 3. 验证数据库备份/迁移、服务停止/重启、旧会话兼容及系统级安全隔离。
 4. 审核 `.github/workflows/release.yml` 的标签触发和发布命名空间；`KEXRA_DOCKER_IMAGE` 只能指向经许可使用的目标。

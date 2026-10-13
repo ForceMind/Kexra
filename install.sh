@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ARTEX 설치 스크립트: ① 전부 Docker  ② 로컬 컴파일 실행
+# KEXRA 安装 스크립트: ① 전부 Docker  ② 로컬 컴파일 실행
 set -euo pipefail
 cd "$(cd "$(dirname "$0")" && pwd)"
 
@@ -45,15 +45,16 @@ install_docker(){
   else
     info "이미 있는 .env 파일을 그대로 사용합니다"
   fi
-  info "이미지를 받아 기동합니다…"
-  docker compose pull || true
-  if ! docker compose up -d; then
-    warn "상류 이미지 autumn27/artex 를 Docker Hub 에서 받을 수 없어 기동에 실패했습니다(현재 상류에서 내려간 상태라 pull 이 거부됩니다)"
-    warn "한국어판 화면·출력은 이 스크립트를 다시 실행해 \"2) 로컬 실행 (go 컴파일)\" 을 고르거나, README \"소스에서 단일 바이너리 컴파일\" 경로로 빌드하세요"
-    die "Docker Compose(전부 Docker) 경로는 현재 상류 이미지를 받을 수 없어 사용할 수 없습니다"
+  local image
+  image="$(grep -m1 '^KEXRA_IMAGE=' .env | cut -d= -f2- || true)"
+  image="${image:-kexra:local}"
+  if ! docker image inspect "$image" >/dev/null 2>&1; then
+    die "尚未找到本地镜像 $image。请先构建 Kexra 二进制并根据 Dockerfile 构建镜像；不会自动拉取原项目镜像。"
   fi
+  info "启动 Kexra 容器（镜像：$image）"
+  docker compose up -d || die "Docker Compose 启动失败，请检查容器日志"
   ok "기동을 완료했습니다 → http://localhost:8787"
-  info "로그 확인: docker compose logs -f artex"
+  info "로그 확인: docker compose logs -f kexra"
 }
 
 # ── ② 로컬 컴파일 실행 ────────────────────────────
@@ -103,19 +104,19 @@ JSON
     ( cd web && npm ci && npm run build:static )
     rm -rf server/webui/dist && mkdir -p server/webui && cp -r web/out server/webui/dist
     info "프런트엔드를 내장한 단일 바이너리를 컴파일합니다…"
-    CGO_ENABLED=0 go build -tags embedui -trimpath -o artex ./cmd/artex
+    CGO_ENABLED=0 go build -tags embedui -trimpath -o kexra ./cmd/kexra
   else
     warn "npm 을 찾을 수 없습니다: 프런트엔드를 내장하지 않은 백엔드만 컴파일합니다 (프런트엔드는 npm run dev 로 따로 실행)"
-    CGO_ENABLED=0 go build -o artex ./cmd/artex
+    CGO_ENABLED=0 go build -o kexra ./cmd/kexra
   fi
-  ok "컴파일을 완료했습니다 → ./artex"
+  ok "컴파일을 완료했습니다 → ./kexra"
 
   info "기동합니다… (Ctrl-C 로 종료)"
-  ./artex
+  ./kexra
 }
 
 echo "=============================="
-echo "  ARTEX 설치"
+echo "  KEXRA 安装"
 echo "  1) 전부 Docker 설치"
 echo "  2) 로컬 실행 (go 컴파일)"
 echo "=============================="

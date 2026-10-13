@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/mcphttp"
+	"github.com/ForceMind/Kexra/db"
+	"github.com/ForceMind/Kexra/mcphttp"
 )
 
 // 자산 동기화(ScopeSentry 데이터 소스).

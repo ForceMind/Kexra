@@ -12,9 +12,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/intercept"
+	"github.com/ForceMind/Kexra/agent"
+	"github.com/ForceMind/Kexra/db"
+	"github.com/ForceMind/Kexra/intercept"
 	actool "github.com/Autumn-27/norma/tool"
 )
 

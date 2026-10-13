@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ARTEX cross-platform release builder.
+# KEXRA cross-platform release builder.
 #
 # The default mode builds one target and embeds the already-exported frontend.
 # `./build.sh --release` builds and packages all supported desktop/server targets.
@@ -9,7 +9,7 @@
 #   ARTEX_TARGET_ARCH=amd64           One target arch in single-target mode.
 #   ARTEX_TARGETS=linux/amd64,...     Comma-separated targets for multi-target mode.
 #   ARTEX_BUILD_VERSION=v0.3.3        Version embedded in the binary and archive name.
-#   ARTEX_OUTPUT=/path/to/artex       Explicit binary path in single-target mode.
+#   ARTEX_OUTPUT=/path/to/kexra       Explicit binary path in single-target mode.
 #   ARTEX_OUTPUT_DIR=dist             Directory for default binary paths.
 #   ARTEX_PACKAGE=1                   Create a zip archive for each target.
 #   ARTEX_PACKAGE_DIR=dist            Directory for release archives.
@@ -165,7 +165,7 @@ package_binary() {
   binary="$1"
   goos="$2"
   goarch="$3"
-  package_name="artex-${ARTEX_BUILD_VERSION}-${goos}-${goarch}"
+  package_name="kexra-${ARTEX_BUILD_VERSION}-${goos}-${goarch}"
   package_root="${ARTEX_PACKAGE_DIR}/${package_name}"
   archive="${ARTEX_PACKAGE_DIR}/${package_name}.zip"
 
@@ -174,7 +174,7 @@ package_binary() {
   mkdir -p "$package_root"
   cp "$binary" "$package_root/"
   # 데몬 시작 스크립트가 정식 진입점입니다. 화면의 원클릭 업데이트는 프로세스가 종료된 뒤 이 스크립트가 다시 띄워 줘야 동작하고,
-  # artex 본체를 직접 실행하면 업데이트 후 다시 기동되지 않습니다. 대상 시스템에 맞는 한 벌만 포함합니다.
+  # kexra 본체를 직접 실행하면 업데이트 후 다시 기동되지 않습니다. 대상 시스템에 맞는 한 벌만 포함합니다.
   if [ "$goos" = "windows" ]; then
     cp start.bat "$package_root/"
   else
@@ -202,12 +202,12 @@ build_target() {
     *) die "지원하지 않는 시스템입니다: $goos(linux, darwin, windows 를 지원합니다)" ;;
   esac
 
-  binary_name="artex"
-  [ "$goos" = "windows" ] && binary_name="artex.exe"
+  binary_name="kexra"
+  [ "$goos" = "windows" ] && binary_name="kexra.exe"
   if [ -n "${ARTEX_OUTPUT:-}" ] && [ "$ARTEX_RELEASE" != "1" ]; then
     output="$ARTEX_OUTPUT"
   else
-    output="${ARTEX_OUTPUT_DIR}/artex-${goos}-${goarch}/${binary_name}"
+    output="${ARTEX_OUTPUT_DIR}/kexra-${goos}-${goarch}/${binary_name}"
   fi
   mkdir -p "$(dirname "$output")"
 
@@ -221,7 +221,7 @@ build_target() {
     -trimpath \
     -ldflags "-s -w -buildid= -X main.version=${ARTEX_BUILD_VERSION}" \
     -o "$output" \
-    ./cmd/artex
+    ./cmd/kexra
 
   compress_binary "$output" "$goos"
   if command -v file >/dev/null 2>&1; then file "$output"; fi

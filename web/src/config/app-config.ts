@@ -8,18 +8,18 @@ const currentYear = new Date().getFullYear();
 // 必须与 src/i18n/config.ts 的 locale 保持一致。
 const META_BY_LOCALE = {
   ko: {
-    title: "ARTEX: 자율 침투 테스트 콘솔",
+    title: "Kexra: 자율 침투 테스트 콘솔",
     description: "LLM 기반으로 자율 침투 테스트를 수행하는 시스템 콘솔",
   },
   zh: {
-    title: "ARTEX — 自主渗透测试控制台",
-    description: "LLM 驱动的自主渗透测试系统控制台",
+    title: "Kexra — 自主渗透测试控制台",
+    description: "多智能体驱动的授权安全评估与证据管理平台",
   },
 } as const;
 
 export const APP_CONFIG = {
-  name: "ARTEX",
+  name: "Kexra",
   version: packageJson.version,
-  copyright: `© ${currentYear}, ARTEX.`,
+  copyright: `© ${currentYear}, Kexra.`,
   meta: META_BY_LOCALE[resolveLocale()],
 };

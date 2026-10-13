@@ -15,10 +15,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/llmrec"
-	"github.com/Autumn-27/artex/sidequestion"
+	"github.com/ForceMind/Kexra/agent"
+	"github.com/ForceMind/Kexra/db"
+	"github.com/ForceMind/Kexra/llmrec"
+	"github.com/ForceMind/Kexra/sidequestion"
 	"github.com/Autumn-27/norma/llm"
 	"github.com/Autumn-27/norma/transcript"
 )

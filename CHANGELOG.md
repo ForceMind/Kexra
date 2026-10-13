@@ -15,7 +15,7 @@
 ### 尚未完成
 
 - 品牌代码仍在 [Draft PR #1](https://github.com/ForceMind/Kexra/pull/1)，未合入 `main`。
-- `build.sh` 使用 `cmd/kexra`，实际目录仍是 `cmd/artex`，需要修复并完成构建/发布验收。
+- 品牌分支已将目录由 `cmd/artex` 迁移到 `cmd/kexra`，并调整 Go module/内部 import；构建、数据库集成与发布仍未完成验收。
 - GitHub Actions 环境异常导致品牌分支部分工作流未实际执行测试。
 - 尚无经过验证发布的 Kexra 官方二进制、容器镜像或自动更新流程。
 

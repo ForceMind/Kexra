@@ -33,6 +33,13 @@ Thumbs.db
 
 # 内嵌前端的单二进制产物
 /artex
+/kexra
+/kexra.exe
+/kexra.new
+/kexra.new.sha256
+/kexra.old
+/kexra.failed
+/kexra.upgrade.json
 # 一键更新在可执行文件旁留下的中间产物（暂存件 / 备份 / 失败版本 / 升级标记）
 /artex.new
 /artex.new.sha256

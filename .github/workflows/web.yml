@@ -1,6 +1,6 @@
 name: web
 # 简体中文版前端验证：检查静态导出、页面中文默认配置和 Biome 代码质量。
-# Temporary cost-control: manual runs only; re-enable after repository is public and release safety verified.
+# Temporary cost-control: dispatch by hand only; no push/PR/schedule/tag automation.
 on:
   workflow_dispatch:
 

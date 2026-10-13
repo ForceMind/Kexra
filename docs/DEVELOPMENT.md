@@ -12,7 +12,7 @@
 
 | 目录 | 代码职责 |
 | --- | --- |
-| `cmd/artex/` | 当前 Go CLI 入口（品牌迁移尚未完成路径切换） |
+| `cmd/kexra/` | 品牌分支中的 Go CLI 入口，需执行 Go 1.26 完整回归 |
 | `server/` | HTTP API、会话和认证 |
 | `agent/` | Agent 计划、执行、上下文与工具调用 |
 | `db/`、`evidence/`、`report/` | 数据、证据和报告 |
@@ -22,6 +22,8 @@
 | `detections/` | 防御规则与独立测试 |
 
 ## 快速验证命令
+
+更名与许可证的低成本静态检查：`python3 -I scripts/check-kexra-migration.py`（不访问网络、不调用 GitHub Actions）。
 
 ~~~bash
 # 根目录（不依赖本地 DB 的测试可能跳过 DB 集成路径）
@@ -43,6 +45,8 @@ python3 -I scripts/check-doc-links.py
 ~~~
 
 `check-web-zh.py` 需要先生成 `web/out`；其静态 HTML 检查**不能证明**运行时 API/Mock/Agent 输出已全部中文化。
+
+**GitHub Actions 节省额度状态**：当前 `main` 与品牌分支的 CI、文档、前端、检测规则、外链周检及 Release 工作流均已暂时改为手动触发（`workflow_dispatch`）。除非用户主动执行，否则不会因 push、PR 或定时计划运行。恢复自动门禁应等仓库公开、额度规则确认、代码通过人工验收以后再处理。
 
 CI 通过 `.github/workflows/ci.yml`、`web.yml`、`docs.yml` 和 `detections.yml` 组织。使用 PostgreSQL 16 的集成测试 job 按包隔离，不能以无数据库的普通 `go test` 代替它们。
 
@@ -66,7 +70,7 @@ CI 通过 `.github/workflows/ci.yml`、`web.yml`、`docs.yml` 和 `detections.ym
 
 ## 需要重点审查
 
-- 改名后 `cmd/kexra` 目录与实际 `cmd/artex` 的不一致；
+- 已迁移的 `cmd/kexra` 及 `github.com/ForceMind/Kexra` 内部导入路径是否通过完整构建；
 - Release 工作流、Dockerfile、启动脚本和二进制文件名；
 - 登录名新旧兼容、Cookie 过渡、JWT 密钥位置；
 - `config.example.json` 与 Docker 的不同默认端口；

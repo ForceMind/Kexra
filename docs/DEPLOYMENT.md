@@ -14,7 +14,7 @@
 
 ## 2. 手动构建 Linux amd64 本地镜像（隔离测试）
 
-本次品牌迁移的 `build.sh` 已切换产物为 `kexra`，但目前仍引用未创建的 `cmd/kexra` 路径；因此它**不能在修复前被认定为可执行的发布脚本**。以下示例直接使用仓库现存 Go 入口 `cmd/artex`，只作为人工构建检查路径：
+品牌迁移分支已创建 `cmd/kexra` 并统一 Go 模块导入；但**源码迁移并不等于编译已通过**。以下命令仅为受控实验室的待验收构建步骤：
 
 ~~~bash
 cd web
@@ -24,7 +24,7 @@ cd ..
 
 mkdir -p server/webui/dist dist/amd64
 cp -a web/out/. server/webui/dist/
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags embedui -o dist/amd64/kexra ./cmd/artex
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags embedui -o dist/amd64/kexra ./cmd/kexra
 
 docker build --build-arg TARGETARCH=amd64 -t kexra:local .
 ~~~

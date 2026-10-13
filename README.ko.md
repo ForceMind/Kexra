@@ -3,7 +3,7 @@
 > **ForceMind/Artex · 中文入口**
 >
 > 本仓库是从 [jiwoochris/artex-ko](https://github.com/jiwoochris/artex-ko) 的固定版本导入的韩语本地化 ARTEX 工程。源码、原作者署名和 AGPL-3.0 许可证均予保留。
-> **[中文仓库说明与开发指南](docs/REPOSITORY_GUIDE.zh-CN.md)** · [中文技术说明](README.zh.md) · [English](README.en.md) · [导入来源与版本校验](docs/IMPORT_PROVENANCE.md)
+> **[中文仓库说明与开发指南](docs/REPOSITORY_GUIDE.zh-CN.md)** · [中文技术说明](README.md) · [English](README.en.md) · [导入来源与版本校验](docs/IMPORT_PROVENANCE.md)
 >
 > 下方保留原韩语版完整说明。请只在自有或取得明确授权的隔离环境中使用。
 
@@ -13,9 +13,9 @@
 
 **LLM 멀티 에이전트가 자율적으로 침투 테스트를 수행하는 시스템** (Go 백엔드 + Next.js 프런트엔드)
 
-한국어 · [中文](README.zh.md) · [English](README.en.md)
+한국어 · [中文](README.md) · [English](README.en.md)
 
-[![ci](https://github.com/ForceMind/Artex/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ForceMind/Artex/actions/workflows/ci.yml) [![detections](https://github.com/ForceMind/Artex/actions/workflows/detections.yml/badge.svg?branch=main)](https://github.com/ForceMind/Artex/actions/workflows/detections.yml) [![web](https://github.com/ForceMind/Artex/actions/workflows/web.yml/badge.svg?branch=main)](https://github.com/ForceMind/Artex/actions/workflows/web.yml) [![license: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![ci](https://github.com/ForceMind/Kexra/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ForceMind/Kexra/actions/workflows/ci.yml) [![detections](https://github.com/ForceMind/Kexra/actions/workflows/detections.yml/badge.svg?branch=main)](https://github.com/ForceMind/Kexra/actions/workflows/detections.yml) [![web](https://github.com/ForceMind/Kexra/actions/workflows/web.yml/badge.svg?branch=main)](https://github.com/ForceMind/Kexra/actions/workflows/web.yml) [![license: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
 </div>
 
@@ -72,7 +72,7 @@ ARTEX 는 **자신이 소유하거나 서면으로 명시적 허가를 받은 �
 - **국내법 고지**: 정보통신망법·개인정보보호법 고지와 "권한 범위 안에서만 사용" 경고를 한국어로 분명히 제공합니다.
 - **국내 스택 대응**: LLM 공급자를 프런티어 모델뿐 아니라 OpenAI 호환 엔드포인트(국산·오픈 모델)로 교체할 수 있습니다. 아래 [설정](#설정)을 참고하십시오.
 
-> 현지화의 경계와 설계 방침은 저장소의 작업 문서에 더 자세히 적혀 있습니다. 상류(upstream) 저장소의 변경을 대조하기 쉽도록 원본 중국어 문서는 `README.zh.md` 로 보존합니다.
+> 현지화의 경계와 설계 방침은 저장소의 작업 문서에 더 자세히 적혀 있습니다. 상류(upstream) 저장소의 변경을 대조하기 쉽도록 과거 원본 중국어 문서는 Git 기록에서 확인할 수 있고, 현재 설명은 `README.md` 와 `docs/README.md` 로 옮겼습니다.
 
 ---
 
@@ -97,7 +97,7 @@ ARTEX 는 **자신이 소유하거나 서면으로 명시적 허가를 받은 �
   <sub><b>대화</b>: 자율 실행 중에 사람이 끼어들어 힌트를 주고, 에이전트가 공격 체인을 한국어로 요약합니다.</sub>
 </p>
 
-원본(중국어 UI) 전체 화면은 [`README.zh.md`](README.zh.md#截图预览) 에서 볼 수 있습니다.
+원본(중국어 UI) 전체 화면은 [`README.zh.md`](screenshots/README.md) 에서 볼 수 있습니다.
 
 ---
 
@@ -108,7 +108,7 @@ ARTEX 는 **자신이 소유하거나 서면으로 명시적 허가를 받은 �
 > **⚠️ 지금은 아래 `docker compose up -d` 빠른 시작이 바로 작동하지 않습니다.** `docker-compose.yml` 의 `artex` 서비스가 받도록 지정된 상류(원본) 이미지 `autumn27/artex` 는 현재 Docker Hub 에서 내려가 받을 수 없습니다(2026-10-09 확인). 그래서 이 명령은 이미지 pull 단계에서 `pull access denied`/`manifest unknown` 으로 실패합니다. 한국어판 화면과 출력은 아래 ["그 밖의 설치 방법"](#그-밖의-설치-방법)에 있는 **소스에서 단일 바이너리 컴파일** 경로로 빌드하면 바로 쓸 수 있습니다(현재 정상 작동을 확인했습니다). 한국어판 Docker 이미지의 배포는 준비 중입니다.
 
 ```bash
-git clone https://github.com/ForceMind/Artex.git
+git clone https://github.com/ForceMind/Kexra.git
 cd Artex
 cp .env.example .env          # POSTGRES_PASSWORD 설정, ANTHROPIC_API_KEY 는 선택
 docker compose up -d          # artex 이미지 + postgres 를 함께 기동
@@ -119,7 +119,7 @@ docker compose up -d          # artex 이미지 + postgres 를 함께 기동
 
 ### 그 밖의 설치 방법
 
-원본 저장소는 설치 스크립트(`./install.sh`), 사전 컴파일 바이너리(Releases), 소스 단일 바이너리 컴파일 등 여러 방법을 제공합니다. 명령과 절차는 [`README.zh.md`](README.zh.md#安装)의 "安装"(설치) 절에 정리되어 있으며, 아래 핵심만 옮깁니다.
+원본 저장소는 설치 스크립트(`./install.sh`), 사전 컴파일 바이너리(Releases), 소스 단일 바이너리 컴파일 등 여러 방법을 제공합니다. 명령과 절차는 [`README.zh.md`](docs/INSTALLATION.md)의 "安装"(설치) 절에 정리되어 있으며, 아래 핵심만 옮깁니다.
 
 - **설치 스크립트:** `./install.sh` 를 실행하면 Docker 감지·설치 후 "① 전부 Docker" 또는 "② 로컬 컴파일 실행"을 고르게 합니다. 다만 기본값인 "① 전부 Docker" 는 위 빠른 시작과 같은 상류 이미지(`autumn27/artex`)를 받으려 하는데, 그 이미지가 현재 Docker Hub 에서 내려가 받을 수 없으므로(위 경고 참조) 이 경로는 지금 이미지 pull 에서 실패합니다. 스크립트도 그 상황을 감지하면 같은 안내를 내고 중단합니다. 한국어판 화면·출력은 "② 로컬 컴파일 실행"을 고르거나 아래 **소스에서 단일 바이너리 컴파일** 경로로 빌드하십시오.
 - **소스에서 단일 바이너리 컴파일:**
@@ -127,7 +127,7 @@ docker compose up -d          # artex 이미지 + postgres 를 함께 기동
   ```bash
   cd web && npm ci && npm run build:static && cd ..   # 1) 프런트엔드 정적 빌드
   rm -rf server/webui/dist && mkdir -p server/webui/dist && cp -a web/out/. server/webui/dist/   # 2) 내장 디렉터리로 동기화(재빌드 시 중첩 방지)
-  CGO_ENABLED=0 go build -tags embedui -o artex ./cmd/artex   # 3) 프런트 내장 컴파일
+  CGO_ENABLED=0 go build -tags embedui -o kexra ./cmd/kexra   # 3) 프런트 내장 컴파일
   ./start.sh                                          # → http://localhost:8787
   ```
 
@@ -171,7 +171,7 @@ docker compose up -d          # artex 이미지 + postgres 를 함께 기동
 
 프런트엔드와 API/SSE 모두 같은 백엔드 포트(기본 `:8787`)가 제공하고, 실시간 활동 스트림은 기본적으로 **동일 출처(same-origin)** 로 연결합니다. 따라서 `NEXT_PUBLIC_SSE_BASE` 를 따로 설정할 필요 없이, 공개망에는 443 만 열고 8787 은 내부망에 두면 됩니다.
 
-SSE 는 장시간 연결로 이벤트를 계속 밀어 주므로, 리버스 프록시에서 **버퍼링을 반드시 꺼야** 합니다. 끄지 않으면 브라우저가 연결은 되지만 이벤트를 못 받습니다(활동 스트림이 계속 로딩 상태로 보임). Nginx 설정 예시는 [`README.zh.md`](README.zh.md#反向代理部署https--只开放-443)에 있습니다.
+SSE 는 장시간 연결로 이벤트를 계속 밀어 주므로, 리버스 프록시에서 **버퍼링을 반드시 꺼야** 합니다. 끄지 않으면 브라우저가 연결은 되지만 이벤트를 못 받습니다(활동 스트림이 계속 로딩 상태로 보임). Nginx 설정 예시는 [`README.zh.md`](docs/DEPLOYMENT.md)에 있습니다.
 
 ---
 
@@ -372,12 +372,12 @@ flowchart TB
 ./dev.sh    # 백엔드(:8787) + 트래픽 프록시(:8788) + 프런트엔드 next dev(:5173) → http://localhost:5173
 ```
 
-- 백엔드: `go run ./cmd/artex` (`-tags embedui` 없으면 프런트엔드를 내장하지 않음)
+- 백엔드: `go run ./cmd/kexra` (`-tags embedui` 없으면 프런트엔드를 내장하지 않음)
 - 프런트엔드: `cd web && npm run dev` (`/api` 를 백엔드로 프록시, 핫 리로드)
 - 테스트: `go test ./...`
 - Mock 미리 보기(백엔드 없이): `cd web && NEXT_PUBLIC_MOCK=1 npm run dev`
 
-그 밖의 개발 항목(수동 취약점 재검증 등)은 [`README.zh.md`](README.zh.md#开发)의 "开发"(개발) 절을 참고하십시오.
+그 밖의 개발 항목(수동 취약점 재검증 등)은 [`README.zh.md`](docs/DEVELOPMENT.md)의 "开发"(개발) 절을 참고하십시오.
 
 이 한국어판이 상류 ARTEX 에 더한 변경은 [변경 이력(CHANGELOG.md)](CHANGELOG.md)에 정리되어 있습니다.
 
@@ -411,6 +411,6 @@ flowchart TB
 ## 원본 프로젝트
 
 - 원본 저장소: [Autumn-27/ARTEX](https://github.com/Autumn-27/ARTEX)
-- 원본 README(중국어): [README.zh.md](README.zh.md)
+- 원본 README(중국어): [README.zh.md](README.md)
 - 원본 온라인 데모(중국어 UI): [https://artex-demo.vercel.app/](https://artex-demo.vercel.app/)
 - 에이전트 SDK: [Autumn-27/norma](https://github.com/Autumn-27/norma)

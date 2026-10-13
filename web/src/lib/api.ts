@@ -107,7 +107,7 @@ import type {
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("artex_token");
+  return localStorage.getItem("kexra_token") ?? localStorage.getItem("artex_token");
 }
 
 export async function http<T>(path: string, init?: RequestInit): Promise<T> {
@@ -123,7 +123,9 @@ export async function http<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (r.status === 401) {
     if (typeof window !== "undefined") {
+      localStorage.removeItem("kexra_token");
       localStorage.removeItem("artex_token");
+      document.cookie = "kexra_token=; path=/; max-age=0";
       document.cookie = "artex_token=; path=/; max-age=0";
       window.location.href = "/login";
     }
@@ -164,7 +166,7 @@ export async function http<T>(path: string, init?: RequestInit): Promise<T> {
 // Token is appended as ?token= because SSE can't carry cookies cross-origin.
 // mockReport returns a canned Markdown report for the demo.
 function mockReport(_task?: string): string {
-  return `# ARTEX 安全测试报告：Acme Corp
+  return `# Kexra 安全测试报告：Acme Corp
 
 ## 概要
 - 范围：acme.com（包括 www / admin / api / shop / vpn 子域名）

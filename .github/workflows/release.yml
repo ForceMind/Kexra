@@ -1,5 +1,5 @@
-name: release
-# Temporary cost-control: manual runs only; re-enable after repository is public and release safety verified.
+name: Kexra Release
+# Temporary cost-control: dispatch by hand only; no push/PR/schedule/tag automation.
 on:
   workflow_dispatch:
 
@@ -66,7 +66,7 @@ jobs:
           ./build.sh --target "${ARTEX_TARGET_OS}/${ARTEX_TARGET_ARCH}"
       - name: Smoke test Linux amd64 binary
         if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
-        run: dist/artex-linux-amd64/artex -h
+        run: dist/kexra-linux-amd64/kexra -h
       - uses: actions/upload-artifact@v4
         with:
           name: pkg-${{ matrix.goos }}-${{ matrix.goarch }}
@@ -76,7 +76,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bin-linux-${{ matrix.goarch }}
-          path: dist/artex-linux-${{ matrix.goarch }}/artex
+          path: dist/kexra-linux-${{ matrix.goarch }}/kexra
 
   # ③ 모든 zip 을 모아 → GitHub Release 생성
   release:
@@ -114,13 +114,13 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          ARTEX_DOCKER_IMAGE: ${{ vars.ARTEX_DOCKER_IMAGE }}
+          KEXRA_DOCKER_IMAGE: ${{ vars.KEXRA_DOCKER_IMAGE }}
         run: |
-          if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ] && [ -n "$ARTEX_DOCKER_IMAGE" ]; then
+          if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ] && [ -n "$KEXRA_DOCKER_IMAGE" ]; then
             echo "publish=true" >> "$GITHUB_OUTPUT"
           else
             echo "publish=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::ARTEX_DOCKER_IMAGE 변수 또는 DOCKERHUB_USERNAME/DOCKERHUB_TOKEN 시크릿이 없어 Docker 이미지 발행(docker 잡)을 건너뜁니다. 바이너리 릴리스는 정상 진행됩니다."
+            echo "::notice::KEXRA_DOCKER_IMAGE 변수 또는 DOCKERHUB_USERNAME/DOCKERHUB_TOKEN 시크릿이 없어 Docker 이미지 발행(docker 잡)을 건너뜁니다. 바이너리 릴리스는 정상 진행됩니다."
           fi
 
   # ④ 다중 아키텍처 이미지 → Docker Hub 에 push(binaries 가 빌드한 Linux 바이너리를 재사용하고,
@@ -148,7 +148,7 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ${{ vars.ARTEX_DOCKER_IMAGE }}
+          images: ${{ vars.KEXRA_DOCKER_IMAGE }}
           tags: |
             type=ref,event=tag
             type=raw,value=latest

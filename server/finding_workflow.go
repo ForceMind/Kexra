@@ -8,9 +8,9 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/traffic"
+	"github.com/ForceMind/Kexra/agent"
+	"github.com/ForceMind/Kexra/db"
+	"github.com/ForceMind/Kexra/traffic"
 	actool "github.com/Autumn-27/norma/tool"
 )
 

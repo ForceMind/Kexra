@@ -41,7 +41,7 @@
 # (.github/workflows/detections.yml push/pull_request paths) and the local
 # pre-commit hook (.pre-commit-config.yaml files regex). Every upstream source file
 # this test reads must be covered by both, or a change touching only a newly pinned
-# source (as cmd/artex/main.go once was) would skip the test on one of them: on CI
+# source (as cmd/kexra/main.go once was) would skip the test on one of them: on CI
 # the drift sails through the merge gate green, on the hook it is never caught
 # locally even though the hook's comment promises "the same source scope as CI".
 # The check derives the required set from the indicators it already asserts, so
@@ -249,6 +249,20 @@ else:
                 bad("tested fingerprint %r is missing from %s" % (ind["value"], CSV_REL))
 
 
+def intentionally_manual_only(text):
+    """Accept a deliberate manual-only cost-control workflow, never a silently disabled CI.
+
+    Automatic trigger mode is still checked by paths_for_trigger below.
+    Manual mode requires its explicit cost-control notice and workflow_dispatch;
+    source changes then require a human to run the checks.
+    """
+    return (
+        "# Temporary cost-control: dispatch by hand only" in text
+        and bool(re.search(r"(?m)^on:\s*$", text))
+        and bool(re.search(r"(?m)^  workflow_dispatch:\s*$", text))
+        and not bool(re.search(r"(?m)^  (?:push|pull_request|schedule|release):", text))
+    )
+
 def paths_for_trigger(text, trigger):
     """Collect the quoted entries of `<trigger>: ... paths: [...]` in the detection
     workflow. Returns the set of listed paths, or None if the trigger is absent.
@@ -291,7 +305,7 @@ def paths_for_trigger(text, trigger):
     return items
 
 
-print("== 5/5  CI and the pre-commit hook both fire this test on any pinned source ==")
+print("== 5/5  CI policy and pre-commit coverage of pinned sources ==")
 # Two gates run this test only when a file they filter on changes: the CI workflow's
 # paths filter and the pre-commit hook's files regex. Every upstream source this test
 # reads must be covered by both, or a change touching only that source skips the test
@@ -317,6 +331,8 @@ needed_sources = {s for s in needed_sources if not s.startswith("detections/")}
 wf_text = read(WORKFLOW_REL)
 if wf_text is None:
     bad("CI workflow missing: %s" % WORKFLOW_REL)
+elif intentionally_manual_only(wf_text):
+    ok("%s is explicitly manual-only; no automatic checks are falsely claimed" % WORKFLOW_REL)
 else:
     for trigger in ("push", "pull_request"):
         listed = paths_for_trigger(wf_text, trigger)
@@ -324,21 +340,17 @@ else:
             bad("%s has no %s: trigger" % (WORKFLOW_REL, trigger))
             continue
         if "detections/**" not in listed:
-            bad("%s %s paths is missing 'detections/**' "
-                "(rule/CSV/test changes would not trigger the detection tests)"
-                % (WORKFLOW_REL, trigger))
+            bad("%s %s paths is missing detections/**" % (WORKFLOW_REL, trigger))
         for s in sorted(needed_sources):
             if s in listed:
                 ok("%s %s paths covers %s" % (WORKFLOW_REL, trigger, s))
             else:
-                bad("%s %s paths is missing %s — a PR touching only that source "
-                    "would skip this test and let source drift pass the merge gate"
-                    % (WORKFLOW_REL, trigger, s))
+                bad("%s %s paths missing %s; source drift could skip CI" % (WORKFLOW_REL, trigger, s))
 
 # The local hook gates on a files regex, not a paths list. Its comment promises the
 # "same source scope as CI", so the same required set must match that regex. This is
 # the sibling drift the CI check above does not see: CI paths can carry a source the
-# hook's regex omits (as cmd/artex/main.go once did), leaving the local gate a false
+# hook's regex omits (as cmd/kexra/main.go once did), leaving the local gate a false
 # promise even while the merge gate is sound.
 pc_text = read(PRECOMMIT_REL)
 if pc_text is None:
