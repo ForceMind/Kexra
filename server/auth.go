@@ -22,23 +22,21 @@ const (
 	keyChars       = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
-// 인증 엔드포인트가 HTTP 응답으로 돌려주는 사용자 노출 문구다. 한국어 UI 에서 로그인·
-// 비밀번호 설정이 실패하면 이 문구가 그대로 토스트로 뜨므로 한국어로 둔다. 자격 증명
-// 오류 문구는 로그인 화면(web messages auth.login.errorCredential)과 표기를 맞췄다.
-// token 은 기술 용어라 원문 그대로 둔다(로그·주석은 BRIEF 방침상 최하위라 손대지 않음).
+// 认证 API 默认返回简体中文错误提示，与 Web 中文登录页面的提示保持一致。
+// 文案变更不影响 HTTP 状态码、账号兼容、JWT 和 Cookie。
 const (
-	authErrUnauthorized         = "인증이 필요합니다"
-	authErrTokenInvalid         = "token 이 유효하지 않거나 만료되었습니다"
-	authErrPasswordAlreadySet   = "비밀번호가 이미 설정되어 있습니다"
-	authErrPasswordEmpty        = "비밀번호를 입력해 주세요"
-	authErrNewPasswordEmpty     = "새 비밀번호를 입력해 주세요"
-	authErrPasswordHash         = "비밀번호 암호화에 실패했습니다"
-	authErrSaveFailedPrefix     = "저장에 실패했습니다: "
-	authErrTokenGen             = "token 생성에 실패했습니다"
-	authErrBadRequest           = "요청 형식이 올바르지 않습니다"
-	authErrPasswordNotInit      = "비밀번호가 초기화되지 않았습니다. 먼저 비밀번호를 설정해 주세요"
-	authErrCurrentPasswordWrong = "현재 비밀번호가 올바르지 않습니다"
-	authErrBadCredential        = "사용자 이름 또는 비밀번호가 올바르지 않습니다"
+	authErrUnauthorized         = "请先登录"
+	authErrTokenInvalid         = "登录凭证无效或已过期"
+	authErrPasswordAlreadySet   = "管理员密码已设置"
+	authErrPasswordEmpty        = "请输入密码"
+	authErrNewPasswordEmpty     = "请输入新密码"
+	authErrPasswordHash         = "密码加密失败"
+	authErrSaveFailedPrefix     = "保存失败："
+	authErrTokenGen             = "生成 Token 失败"
+	authErrBadRequest           = "请求格式不正确"
+	authErrPasswordNotInit      = "尚未设置管理员密码，请先初始化密码"
+	authErrCurrentPasswordWrong = "当前密码不正确"
+	authErrBadCredential        = "用户名或密码错误"
 )
 
 // loadOrCreateJWTKey reads the 32-byte signing key from keyDir/jwt.key. keyDir is
@@ -56,7 +54,7 @@ func loadOrCreateJWTKey(keyDir, dataDir string) ([]byte, error) {
 			if data, rerr := os.ReadFile(legacy); rerr == nil {
 				if werr := os.WriteFile(path, data, 0o600); werr == nil {
 					_ = os.Remove(legacy)
-					log.Printf("[auth] JWT 키를 %s 에서 %s 로 이전(탐색 가능한 워크스페이스 밖으로 이동)", legacy, path)
+					log.Printf("[auth] 已将 JWT 密钥从 %s 迁移到 %s（移出可浏览的工作空间）", legacy, path)
 				}
 			}
 		}
@@ -75,7 +73,7 @@ func loadOrCreateJWTKey(keyDir, dataDir string) ([]byte, error) {
 	if err := os.WriteFile(path, buf, 0600); err != nil {
 		return nil, fmt.Errorf("write jwt key: %w", err)
 	}
-	log.Printf("[auth] 새 JWT 키를 %s 에 기록", path)
+	log.Printf("[auth] 已将新 JWT 密钥写入 %s", path)
 	return buf, nil
 }
 

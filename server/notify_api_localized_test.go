@@ -30,13 +30,13 @@ func TestNotifyErrorConstantsLocalized(t *testing.T) {
 		"notifyTestSummary":        notifyTestSummary,
 	}
 	for label, msg := range cases {
-		assertKoreanError(t, label, msg)
+		assertChineseError(t, label, msg)
 	}
 }
 
 // TestNotifyChannelLookupErrLocalized 는 「채널 없음 → 404」 경로를 실제 코드로 검사한다.
 // notifyChannelLookupErr 는 Server/DB 없이 w 와 err 만으로 도는 패키지 함수라, 센티넬
-// 오류를 그대로 넘기면 404 응답 본문에 한국어 상수가 실리는 연결까지 DB 없이 확인된다.
+// 오류를 그대로 넘기면 404 응답 본문에 한국어 상수가 실리는 连接까지 DB 없이 확인된다.
 func TestNotifyChannelLookupErrLocalized(t *testing.T) {
 	rec := httptest.NewRecorder()
 	notifyChannelLookupErr(rec, db.ErrNotificationChannelNotFound)
@@ -47,10 +47,10 @@ func TestNotifyChannelLookupErrLocalized(t *testing.T) {
 	if got != notifyErrChannelNotFound {
 		t.Fatalf("응답 문구 = %q, 기대 = %q", got, notifyErrChannelNotFound)
 	}
-	assertKoreanError(t, "channel_not_found", got)
+	assertChineseError(t, "channel_not_found", got)
 }
 
-// TestNotifyTestMessageLocalized 는 채널 연결 점검용 테스트 메시지를 순수 함수로 조립해
+// TestNotifyTestMessageLocalized 는 채널 连接 점검용 테스트 메시지를 순수 함수로 조립해
 // 사용자에게 발송되는 본문(제목·분류·요약)이 한국어임을 검사한다. DB·네트워크가 필요 없다.
 func TestNotifyTestMessageLocalized(t *testing.T) {
 	const base = "https://artex.example.test"
@@ -59,9 +59,9 @@ func TestNotifyTestMessageLocalized(t *testing.T) {
 		t.Fatalf("테스트 메시지 항목 수 = %d, 기대 = 1", len(msg.Items))
 	}
 	item := msg.Items[0]
-	assertKoreanError(t, "test.name", item.Name)
-	assertKoreanError(t, "test.class", item.VulnClass)
-	assertKoreanError(t, "test.summary", item.Summary)
+	assertChineseError(t, "test.name", item.Name)
+	assertChineseError(t, "test.class", item.VulnClass)
+	assertChineseError(t, "test.summary", item.Summary)
 	if msg.HomeURL != base || item.DetailURL != base {
 		t.Fatalf("링크 보존 실패: HomeURL=%q DetailURL=%q (기대 %q)", msg.HomeURL, item.DetailURL, base)
 	}
