@@ -20,7 +20,7 @@ go version
 node --version
 ~~~
 
-若你要测试尚未合入的独立品牌版本，明确切换到 `feat/kexra-independent-brand`；`main` 在迁移验收前仍可能使用历史产品标识。
+`main` 已包含 Kexra 品牌、`cmd/kexra` 与 Go 模块迁移，无需切换旧品牌迁移分支。
 
 ## 3. 配置数据库
 
@@ -48,7 +48,7 @@ cd ..
 
 ## 5. 启动本地开发服务
 
-品牌迁移分支现使用 `cmd/kexra` 作为 Go 启动入口。旧 `cmd/artex` 已从该分支移除；不要用旧路径构建。
+主分支使用 `cmd/kexra` 作为 Go 启动入口。旧 `cmd/artex` 已移除；不要用旧路径构建。
 
 ~~~bash
 # 先在独立终端启动 PostgreSQL，并确保连接参数已经配置。
@@ -62,7 +62,7 @@ cd web
 npm run dev
 ~~~
 
-Next.js 默认开发端口通常为 **3000**（实际以控制台输出为准）。`dev.sh` 仍有旧的固定端口文案，应在品牌迁移验收时同步修正。首次使用可能进入 `/setup` 初始化管理员口令；切勿把测试环境暴露到公网。
+Next.js 默认开发端口通常为 **3000**（实际以控制台输出为准）。如果使用 `dev.sh`，请以实际终端监听输出为准，不要依赖旧项目的端口说明。首次使用可能进入 `/setup` 初始化管理员口令；切勿把测试环境暴露到公网。
 
 ## 6. 检查与关闭
 
@@ -77,4 +77,4 @@ python3 -I scripts/check-doc-links.py
 
 ## Docker
 
-当前 `docker-compose.yml` 的应用服务使用 `KEXRA_IMAGE`，默认 `kexra:local`，**不存在可默认拉取的官方镜像**。先阅读 [部署说明](DEPLOYMENT.md)，确认本地镜像已经按对应架构构建；不要运行旧版“一键安装”而默认从上游拉取镜像。
+当前 `docker-compose.yml` 的应用服务使用 `KEXRA_IMAGE`，默认 `kexra:local`，**不存在可默认拉取的官方镜像**。先阅读 [部署说明](DEPLOYMENT.md)，确认本地镜像已按对应架构构建，默认管理界面仅允许本机访问，且 JWT 密钥独立持久化；不要运行旧版“一键安装”而默认从上游拉取镜像。
