@@ -92,3 +92,6 @@ secrets.env
 .npmrc
 web/.turbo/
 web/coverage/
+
+# Docker JWT private persistent volume / local secrets
+/private/

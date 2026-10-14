@@ -30,6 +30,9 @@ RUN npm install -g @playwright/mcp@latest @playwright/cli@latest playwright@late
     && playwright install --with-deps chromium \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
+# Separate, non-browsable JWT key store; docker-compose attaches a named volume.
+RUN mkdir -p /app/private && chmod 0700 /app/private
+ENV KEXRA_JWT_KEY_DIR=/app/private
 # 미리 컴파일한 해당 아키텍처 바이너리(dist/amd64/kexra 또는 dist/arm64/kexra)
 COPY dist/${TARGETARCH}/kexra /app/kexra
 # 감시 기동 스크립트: 프로세스 종료 후 종료 코드에 따라 다시 띄울지 결정하며, 화면의 원클릭 업데이트가 이 스크립트로 교체를 완료한다.
@@ -39,7 +42,7 @@ COPY start.sh /app/start.sh
 RUN chmod +x /app/kexra /app/start.sh
 COPY skills/ /app/skills/
 # data/(SQLite + jwt.key) 영속화 지점
-VOLUME ["/app/data"]
+VOLUME ["/app/data", "/app/private"]
 EXPOSE 8787 8788
 ENTRYPOINT ["/app/start.sh"]
 CMD ["-addr", ":8787", "-proxy", ":8788"]
