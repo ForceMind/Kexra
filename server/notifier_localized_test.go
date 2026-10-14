@@ -32,7 +32,7 @@ func TestNotifierDeliveryReasonsLocalized(t *testing.T) {
 		{"batchAllUnparseable", fmt.Sprintf(errDeliveryBatchAllUnparseable, 2)},
 	}
 	for _, c := range cases {
-		assertKoreanError(t, c.label, c.msg)
+		assertChineseError(t, c.label, c.msg)
 	}
 }
 
@@ -44,7 +44,7 @@ func TestNotifierParseSnapshotErrorsLocalized(t *testing.T) {
 	if _, err := parseSnapshot(&db.NotificationDelivery{ID: 7}); err == nil {
 		t.Fatal("빈 스냅샷이 오류 없이 통과해서는 안 됩니다")
 	} else {
-		assertKoreanError(t, "parseSnapshot.empty", err.Error())
+		assertChineseError(t, "parseSnapshot.empty", err.Error())
 		if !strings.Contains(err.Error(), "7") {
 			t.Fatalf("parseSnapshot.empty: 전달 항목 ID 7 이 메시지에 없습니다: %q", err.Error())
 		}
@@ -53,7 +53,7 @@ func TestNotifierParseSnapshotErrorsLocalized(t *testing.T) {
 	if _, err := parseSnapshot(&db.NotificationDelivery{ID: 9, Snapshot: []byte("{bad")}); err == nil {
 		t.Fatal("깨진 JSON 스냅샷이 오류 없이 통과해서는 안 됩니다")
 	} else {
-		assertKoreanError(t, "parseSnapshot.malformed", err.Error())
+		assertChineseError(t, "parseSnapshot.malformed", err.Error())
 	}
 }
 
@@ -67,6 +67,6 @@ func TestNotifierRenderBatchAllUnparseableLocalized(t *testing.T) {
 	if _, _, err := n.renderBatch(context.Background(), deliveries, "", 30); err == nil {
 		t.Fatal("모든 스냅샷이 해석 불가일 때 오류가 나와야 합니다")
 	} else {
-		assertKoreanError(t, "renderBatch.allUnparseable", err.Error())
+		assertChineseError(t, "renderBatch.allUnparseable", err.Error())
 	}
 }
