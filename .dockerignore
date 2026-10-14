@@ -16,3 +16,11 @@ bench/.env
 bench/scheduler.py
 bench/entrypoint_v2.sh
 bench/seed_v2.sh
+# Sensitive local deployment material must never enter the build context.
+.env
+.env.*
+config.json
+jwt.key
+private/
+*.pem
+*.key

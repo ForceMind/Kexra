@@ -2,6 +2,7 @@ package server
 
 import (
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -39,42 +40,80 @@ const (
 	authErrBadCredential        = "用户名或密码错误"
 )
 
-// loadOrCreateJWTKey reads the 32-byte signing key from keyDir/jwt.key. keyDir is
-// the project base dir (next to the executable), NOT the browsable workspace root
-// (dataDir) — the signing key must never be listable/downloadable via the file
-// manager. Legacy installs kept it at dataDir/jwt.key; if present there and not yet
-// at the new location, it is migrated (key preserved, so sessions stay valid) and
-// the old file removed so it disappears from the workspace. On first run a random
-// key is generated and persisted.
+// loadOrCreateJWTKey 把 JWT 密钥保存在 Web 文件管理器不可浏览的目录中。
+// 未设置 KEXRA_JWT_KEY_DIR 时保持原有路径；Docker 应指定独立持久卷。
+// 已有密钥优先迁移，读写或迁移失败时必须报错，禁止静默轮换密钥。
 func loadOrCreateJWTKey(keyDir, dataDir string) ([]byte, error) {
-	path := filepath.Join(keyDir, jwtKeyFilename)
-	// one-time migration out of the old in-workspace location.
-	if legacy := filepath.Join(dataDir, jwtKeyFilename); legacy != path {
-		if _, err := os.Stat(path); os.IsNotExist(err) {
-			if data, rerr := os.ReadFile(legacy); rerr == nil {
-				if werr := os.WriteFile(path, data, 0o600); werr == nil {
-					_ = os.Remove(legacy)
-					log.Printf("[auth] 已将 JWT 密钥从 %s 迁移到 %s（移出可浏览的工作空间）", legacy, path)
-				}
-			}
-		}
-	}
-	if data, err := os.ReadFile(path); err == nil && len(strings.TrimSpace(string(data))) >= 32 {
-		return []byte(strings.TrimSpace(string(data))), nil
-	}
-	buf := make([]byte, 32)
-	for i := range buf {
-		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(keyChars))))
-		if err != nil {
-			return nil, fmt.Errorf("generate jwt key: %w", err)
-		}
-		buf[i] = keyChars[n.Int64()]
-	}
-	if err := os.WriteFile(path, buf, 0600); err != nil {
-		return nil, fmt.Errorf("write jwt key: %w", err)
-	}
-	log.Printf("[auth] 已将新 JWT 密钥写入 %s", path)
-	return buf, nil
+    originalDir := keyDir
+    if configured := strings.TrimSpace(os.Getenv("KEXRA_JWT_KEY_DIR")); configured != "" {
+        if !filepath.IsAbs(configured) {
+            return nil, fmt.Errorf("KEXRA_JWT_KEY_DIR 必须使用绝对路径")
+        }
+        configured = filepath.Clean(configured)
+        if configured == string(filepath.Separator) {
+            return nil, fmt.Errorf("KEXRA_JWT_KEY_DIR 不能指向文件系统根目录")
+        }
+        dataAbs, err := filepath.Abs(dataDir)
+        if err != nil { return nil, fmt.Errorf("检查数据目录失败：%w", err) }
+        rel, err := filepath.Rel(dataAbs, configured)
+        if err != nil { return nil, fmt.Errorf("检查 JWT 密钥目录失败：%w", err) }
+        if rel == "." || (rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))) {
+            return nil, fmt.Errorf("KEXRA_JWT_KEY_DIR 不能位于可浏览的数据目录内")
+        }
+        if err := os.MkdirAll(configured, 0o700); err != nil {
+            return nil, fmt.Errorf("创建 JWT 密钥目录失败：%w", err)
+        }
+        if err := os.Chmod(configured, 0o700); err != nil {
+            return nil, fmt.Errorf("设置 JWT 密钥目录权限失败：%w", err)
+        }
+        keyDir = configured
+    }
+
+    path := filepath.Join(keyDir, jwtKeyFilename)
+    if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+        // 兼容旧二进制旁的密钥、以及更旧版本 dataDir 中的密钥。
+        // 容器升级前仍需备份旧容器的 /app/jwt.key，镜像重建不会保存容器层文件。
+        for _, legacy := range []string{filepath.Join(originalDir, jwtKeyFilename), filepath.Join(dataDir, jwtKeyFilename)} {
+            if legacy == path { continue }
+            b, readErr := os.ReadFile(legacy)
+            if errors.Is(readErr, os.ErrNotExist) { continue }
+            if readErr != nil { return nil, fmt.Errorf("读取旧 JWT 密钥失败：%w", readErr) }
+            key := []byte(strings.TrimSpace(string(b)))
+            if len(key) < 32 { return nil, fmt.Errorf("旧 JWT 密钥 %s 长度不足，拒绝自动轮换", legacy) }
+            if err := os.WriteFile(path, key, 0o600); err != nil {
+                return nil, fmt.Errorf("迁移 JWT 密钥失败：%w", err)
+            }
+            if err := os.Remove(legacy); err != nil {
+                return nil, fmt.Errorf("JWT 密钥已复制，但无法清理旧路径 %s：%w", legacy, err)
+            }
+            log.Printf("[auth] 已将 JWT 密钥从 %s 迁移到 %s", legacy, path)
+            break
+        }
+    } else if err != nil {
+        return nil, fmt.Errorf("检查 JWT 密钥失败：%w", err)
+    }
+
+    if b, err := os.ReadFile(path); err == nil {
+        key := []byte(strings.TrimSpace(string(b)))
+        if len(key) < 32 {
+            return nil, fmt.Errorf("JWT 密钥 %s 内容无效，拒绝静默轮换", path)
+        }
+        return key, nil
+    } else if !errors.Is(err, os.ErrNotExist) {
+        return nil, fmt.Errorf("读取 JWT 密钥失败：%w", err)
+    }
+
+    buf := make([]byte, 32)
+    for i := range buf {
+        n, err := rand.Int(rand.Reader, big.NewInt(int64(len(keyChars))))
+        if err != nil { return nil, fmt.Errorf("generate jwt key: %w", err) }
+        buf[i] = keyChars[n.Int64()]
+    }
+    if err := os.WriteFile(path, buf, 0o600); err != nil {
+        return nil, fmt.Errorf("write jwt key: %w", err)
+    }
+    log.Printf("[auth] 已将新 JWT 密钥写入 %s", path)
+    return buf, nil
 }
 
 // signJWT issues a 7-day HS256 token for Kexra.

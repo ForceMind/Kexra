@@ -37,6 +37,11 @@ cd ..
 | Scope | 授权测试范围 |
 | Retest | 复测 |
 
+## 已合并的中文化增量
+
+- [PR #4](https://github.com/ForceMind/Kexra/pull/4)：认证 API、数据库配置与 CLI 启动提示、通知模板和六种通知渠道错误消息已改为默认简体中文。
+- 已有 Go 单元测试断言这些路径实际输出中文；其他 `server/`、`selfupdate/` 与第三方工具输出仍需单独检查，不能把本批迁移视为所有界面已翻译。
+
 ## 回归验证
 
 ~~~bash

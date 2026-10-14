@@ -15,6 +15,7 @@
 | `ARTEX_LLM_PROVIDER`、`ARTEX_LLM_MODEL` | 历史模型配置接口 | 实际支持项须查代码和界面 |
 | `ARTEX_LLM_BASE_URL`、`ARTEX_LLM_PROXY` | 模型服务地址与代理 | 审计 URL，防止误发敏感数据 |
 | `KEXRA_IMAGE` | Compose 应用镜像名 | 默认 `kexra:local`；尚无官方镜像 |
+| `KEXRA_JWT_KEY_DIR` | 可选 JWT 签名密钥专用目录 | Docker 默认 `/app/private`（独立 `jwtkeys` 卷），必须为绝对路径，且不能位于可浏览的 `data/` 中；裸机不设置时继续使用原路径 |
 | `POSTGRES_USER`、`POSTGRES_PASSWORD`、`POSTGRES_DB` | Compose PostgreSQL 参数 | 更换已有数据库凭据前必须做迁移 |
 | `NEXT_PUBLIC_LOCALE` | Web 前端构建语言 | 默认 `zh`；设置 `ko` 为韩语 |
 | `NEXT_PUBLIC_MOCK` | 无后端的 UI 演示模式 | 仅演示，不代表实时测试 |
@@ -39,7 +40,8 @@
 
 ## 存储与密钥
 
-- `data/`：运行数据与认证密钥等，包含不能上传到仓库的敏感文件。
+- `data/`：SQLite、工作区及运行数据，部分内容可能通过文件管理器浏览；不要把 JWT 签名密钥放在这里。
+- 裸机默认 JWT 密钥位于程序所在目录的 `jwt.key`；Docker 使用 `KEXRA_JWT_KEY_DIR=/app/private` 与独立 `jwtkeys` 持久卷。必须备份该卷，严禁删除后静默重新生成密钥。
 - `config.json` 和 `.env`：可能包含数据库与模型密钥；不应加入 Git。
 - `skills/`：可能包含可执行工具说明和操作权限，安装第三方技能前应审计来源。
 - Web 浏览器兼容使用新的 `kexra_token` 与旧 `artex_token`；迁移完成前不要直接废弃后者。
