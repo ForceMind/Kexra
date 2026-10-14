@@ -1,0 +1,46 @@
+name: Kexra One-Time Docker Key Verification
+on:
+  push:
+    branches:
+      - verify/kexra-docker-key-20261014
+permissions:
+  contents: read
+jobs:
+  go-and-compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Verify migration and documentation
+        run: |
+          python3 -I scripts/check-kexra-migration.py
+          python3 -I scripts/check-doc-links.py
+      - name: Go build and vet
+        run: |
+          go build ./...
+          go vet ./...
+      - name: Go unit tests
+        run: go test ./... -count=1
+      - name: Validate Compose key persistence and loopback binding
+        env:
+          POSTGRES_PASSWORD: "ci-dummy-password-only"
+        run: |
+          docker compose config --format json > /tmp/kexra-compose.json
+          python3 - <<'PY'
+          import json
+          with open('/tmp/kexra-compose.json', encoding='utf-8') as f:
+              obj=json.load(f)
+          svc=obj['services']['kexra']
+          ports=svc['ports']
+          assert len(ports)==2, ports
+          assert all(p.get('host_ip') == '127.0.0.1' for p in ports), ports
+          mounts=svc['volumes']
+          assert any(v['target']=='/app/private' and v['type']=='volume' for v in mounts), mounts
+          assert any(v['target']=='/app/data' for v in mounts), mounts
+          assert svc['environment']['KEXRA_JWT_KEY_DIR']=='/app/private',svc['environment']
+          print('Compose localhost ports, isolated data and private JWT volume: verified')
+          PY
