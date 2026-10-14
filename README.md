@@ -23,7 +23,7 @@ Kexra 将目标管理、AI 任务规划、并行执行、资产与探索图谱�
 
 ## 验证与 CI 状态
 
-为避免私有仓库 GitHub Actions 额度持续消耗，全部工作流已暂时切换为手动触发（`workflow_dispatch`）。当前迁移通过静态一致性检查准备验收，完整 Go 1.26、前端和数据库 CI 尚未运行；不要将手动模式理解为测试通过。
+仓库目前公开。为控制 GitHub Actions 运行成本，六套正式工作流仅允许手动触发（`workflow_dispatch`），不会因推送或 PR 自动执行。品牌迁移的 Go、前端、PostgreSQL、检测规则、五平台打包和本地启动已通过各自专项验证，详见下列证据；**这些历史验证不等于每次提交都自动运行 CI**，也不能证明 Docker 正式部署、自动更新回滚或 Release 已验收。
 
 本地先运行 `python3 -I scripts/check-kexra-migration.py` 检查更名契约，再执行下方构建命令。
 

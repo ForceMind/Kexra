@@ -46,9 +46,9 @@ func main() {
 
 func run() int {
 	var (
-		addr    = flag.String("addr", ":8787", "HTTP listen address")
-		dataDir = flag.String("data", filepath.Join(config.BaseDir(), "data"), "data directory for SQLite stores (default: data/ next to the executable)")
-		proxy   = flag.String("proxy", "127.0.0.1:8788", "traffic recording proxy address (empty to disable)")
+		addr    = flag.String("addr", ":8787", "HTTP 监听地址")
+		dataDir = flag.String("data", filepath.Join(config.BaseDir(), "data"), "SQLite 数据目录（默认是可执行文件旁的 data/）")
+		proxy   = flag.String("proxy", "127.0.0.1:8788", "流量记录代理地址（留空则禁用）")
 	)
 	flag.Parse()
 
@@ -79,9 +79,9 @@ func run() int {
 		cfgPath = abs
 	}
 	if _, e := os.Stat(cfgPath); e == nil {
-		log.Printf("[config] 설정 파일: %s", cfgPath)
+		log.Printf("[config] 配置文件：%s", cfgPath)
 	} else {
-		log.Printf("[config] 설정 파일: %s (파일 없음 · 환경 변수 ARTEX_PG_DSN 만 사용)", cfgPath)
+		log.Printf("[config] 配置文件：%s（不存在，仅使用环境变量 ARTEX_PG_DSN）", cfgPath)
 	}
 
 	sigCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -91,7 +91,7 @@ func run() int {
 
 	mgr, err := server.NewManager(*dataDir, *proxy)
 	if err != nil {
-		log.Fatalf("open stores: %v", err)
+		log.Fatalf("打开数据存储失败：%v", err)
 	}
 	defer mgr.Close()
 
@@ -105,7 +105,7 @@ func run() int {
 	if abs, err := filepath.Abs(skillDir); err == nil {
 		skillDir = abs
 	}
-	log.Printf("[config] skill 디렉터리: %s", skillDir)
+	log.Printf("[config] Skills 目录：%s", skillDir)
 	srv := server.New(ctx, mgr, skillDir, *dataDir, config.BaseDir())
 	httpSrv := &http.Server{
 		Addr:              *addr,
@@ -114,9 +114,9 @@ func run() int {
 	}
 
 	go func() {
-		log.Printf("ARTEX %s backend listening on %s (data=%s, workers=%d)", version, *addr, *dataDir, mgr.Workers())
+		log.Printf("Kexra %s 后端监听 %s（数据目录=%s，Worker 数=%d）", version, *addr, *dataDir, mgr.Workers())
 		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("serve: %v", err)
+			log.Fatalf("启动 HTTP 服务失败：%v", err)
 		}
 	}()
 
@@ -131,7 +131,7 @@ func run() int {
 		shutdown(agent.AbortShutdown)
 	}
 
-	log.Println("shutting down...")
+	log.Println("正在关闭服务…")
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_ = httpSrv.Shutdown(shutdownCtx)
