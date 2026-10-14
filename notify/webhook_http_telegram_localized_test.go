@@ -15,7 +15,7 @@ import (
 // 되돌아가면 잡아낸다. 헬퍼 hasHan·hasHangul·assertKorean 은
 // notify_localized_test.go 에 있다(같은 패키지).
 //
-// 데이터(제목·유형·자산·개요)는 전부 ASCII 로 둔다. 그래야 "출력 전체에 한자 0"
+// 데이터(제목·类型·资产·摘要)는 전부 ASCII 로 둔다. 그래야 "출력 전체에 한자 0"
 // 이라는 단언이 콘텐츠가 아니라 골격 라벨의 회귀만 정확히 포착한다. 심각도·상태
 // 라벨은 F4 ①에서 이미 한국어라 출력에 한글로 나오며(한자 아님) 단언을 통과한다.
 
@@ -26,12 +26,12 @@ func TestTelegramItemLabelsLocalized(t *testing.T) {
 		HomeURL: "https://example.com/panel",
 		Items: []Item{{
 			Name:       "sqli-login", // Title() = Name
-			VulnClass:  "injection",  // Title() 과 달라야 유형 줄이 렌더됨
-			Severity:   "high",       // SeverityLabel → 높음(한글)
+			VulnClass:  "injection",  // Title() 과 달라야 类型 줄이 렌더됨
+			Severity:   "high",       // SeverityLabel → 高危(한글)
 			Summary:    "login form is injectable",
 			Assets:     []string{"host-a.example.com"},
 			DetailURL:  "https://example.com/f/1",
-			FromStatus: "pending", // IsStatusChange()=true → 상태 변경 줄
+			FromStatus: "pending", // IsStatusChange()=true → 状态变更 줄
 			ToStatus:   "fixed",
 		}},
 	}
@@ -39,10 +39,10 @@ func TestTelegramItemLabelsLocalized(t *testing.T) {
 	if kept != 1 {
 		t.Fatalf("단건 메시지는 1 을 보고해야 합니다, 받은 값 %d", kept)
 	}
-	if hasHan(out) {
+	if hasHangul(out) {
 		t.Errorf("Telegram 본문에 중국어 한자가 남아 있습니다:\n%s", out)
 	}
-	for _, want := range []string{"상태 변경", "유형", "자산", "개요", "상세 보기"} {
+	for _, want := range []string{"状态变更", "类型", "资产", "摘要", "查看详情"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("Telegram 본문에 %q 라벨이 없습니다:\n%s", want, out)
 		}
@@ -55,23 +55,23 @@ func TestTelegramItemLabelsLocalized(t *testing.T) {
 func TestTelegramBatchTitleLocalized(t *testing.T) {
 	items := []Item{{Name: "a", Severity: "high"}, {Name: "b", Severity: "low"}}
 
-	// 넘침 있음 + 시간창: 요약·총건수·앞 N건·나머지·다음 메시지·최근 N분간.
+	// 넘침 있음 + 시간창: 요약·총건수·앞 N건·其余·下一条消息·최근 N분간.
 	over := telegramBatchTitle(Message{WindowMinutes: 30}, items, 5)
-	assertKorean(t, "telegramBatchTitle(넘침)", over)
-	for _, want := range []string{"취약점 요약 · 총 5건", "앞 2건만 표시", "나머지 3건", "다음 메시지", "최근 30분간"} {
+	assertChinese(t, "telegramBatchTitle(넘침)", over)
+	for _, want := range []string{"漏洞汇总 · 共 5 条", "仅显示前 2 条", "其余 3 条", "下一条消息", "最近 30 分钟"} {
 		if !strings.Contains(over, want) {
 			t.Errorf("넘침 제목에 %q 가 없습니다: %q", want, over)
 		}
 	}
 
-	// 넘침 없음 + 시간창 없음: 다음 메시지 안내가 없어야 한다.
+	// 넘침 없음 + 시간창 없음: 下一条消息 안내가 없어야 한다.
 	full := telegramBatchTitle(Message{}, items, 2)
-	assertKorean(t, "telegramBatchTitle(전량)", full)
-	if !strings.Contains(full, "취약점 요약 · 총 2건") {
-		t.Errorf("전량 제목에 '취약점 요약 · 총 2건' 이 있어야 합니다: %q", full)
+	assertChinese(t, "telegramBatchTitle(전량)", full)
+	if !strings.Contains(full, "漏洞汇总 · 共 2 条") {
+		t.Errorf("전량 제목에 '漏洞汇总 · 共 2 条' 이 있어야 합니다: %q", full)
 	}
-	if strings.Contains(full, "다음 메시지") {
-		t.Errorf("넘치지 않았는데 '다음 메시지' 안내가 들어갔습니다: %q", full)
+	if strings.Contains(full, "下一条消息") {
+		t.Errorf("넘치지 않았는데 '下一条消息' 안내가 들어갔습니다: %q", full)
 	}
 }
 
@@ -81,7 +81,7 @@ func TestTelegramValidateLocalized(t *testing.T) {
 	if err := (telegramChannel{}).Validate(map[string]any{}); err == nil {
 		t.Fatal("bot_token 누락은 검증 실패여야 합니다")
 	} else {
-		assertKorean(t, "telegram Validate(bot_token)", err.Error())
+		assertChinese(t, "telegram Validate(bot_token)", err.Error())
 		if !strings.Contains(err.Error(), "Bot Token") {
 			t.Errorf("Bot Token 누락을 알려줘야 합니다: %q", err.Error())
 		}
@@ -89,7 +89,7 @@ func TestTelegramValidateLocalized(t *testing.T) {
 	if err := (telegramChannel{}).Validate(map[string]any{"bot_token": "t"}); err == nil {
 		t.Fatal("chat_id 누락은 검증 실패여야 합니다")
 	} else {
-		assertKorean(t, "telegram Validate(chat_id)", err.Error())
+		assertChinese(t, "telegram Validate(chat_id)", err.Error())
 		if !strings.Contains(err.Error(), "Chat ID") {
 			t.Errorf("Chat ID 누락을 알려줘야 합니다: %q", err.Error())
 		}
@@ -102,27 +102,27 @@ func TestWebhookValidateLocalized(t *testing.T) {
 	if err := (webhookChannel{}).Validate(map[string]any{}); err == nil {
 		t.Fatal("url 누락은 검증 실패여야 합니다")
 	} else {
-		assertKorean(t, "webhook Validate(url)", err.Error())
-		if !strings.Contains(err.Error(), "대상 URL") {
-			t.Errorf("대상 URL 누락을 알려줘야 합니다: %q", err.Error())
+		assertChinese(t, "webhook Validate(url)", err.Error())
+		if !strings.Contains(err.Error(), "目标 URL") {
+			t.Errorf("目标 URL 누락을 알려줘야 합니다: %q", err.Error())
 		}
 	}
 	// 지원하지 않는 메서드: 한국어 + 허용 목록 노출.
 	if err := (webhookChannel{}).Validate(map[string]any{"url": "https://example.com/hook", "method": "DELETE"}); err == nil {
 		t.Fatal("DELETE 는 검증 실패여야 합니다")
 	} else {
-		assertKorean(t, "webhook Validate(method)", err.Error())
+		assertChinese(t, "webhook Validate(method)", err.Error())
 		if !strings.Contains(err.Error(), "GET/POST/PUT/PATCH") {
 			t.Errorf("허용 메서드 목록을 알려줘야 합니다: %q", err.Error())
 		}
 	}
-	// 템플릿 문법 오류: 한국어(래핑된 원인은 Go 템플릿 오류라 한자가 없다).
+	// 模板 문법 오류: 한국어(래핑된 원인은 Go 模板 오류라 한자가 없다).
 	if err := (webhookChannel{}).Validate(map[string]any{"url": "https://example.com/hook", "body_template": "{{"}); err == nil {
-		t.Fatal("깨진 템플릿은 검증 실패여야 합니다")
+		t.Fatal("깨진 模板은 검증 실패여야 합니다")
 	} else {
-		assertKorean(t, "webhook Validate(template)", err.Error())
-		if !strings.Contains(err.Error(), "템플릿") {
-			t.Errorf("템플릿 오류임을 알려줘야 합니다: %q", err.Error())
+		assertChinese(t, "webhook Validate(template)", err.Error())
+		if !strings.Contains(err.Error(), "模板") {
+			t.Errorf("模板 오류임을 알려줘야 합니다: %q", err.Error())
 		}
 	}
 }
@@ -135,7 +135,7 @@ func TestValidateHTTPURLLocalized(t *testing.T) {
 	if err := validateHTTPURL("ftp://example.com/x"); err == nil {
 		t.Fatal("ftp 스킴은 거부되어야 합니다")
 	} else {
-		assertKorean(t, "validateHTTPURL(scheme)", err.Error())
+		assertChinese(t, "validateHTTPURL(scheme)", err.Error())
 		if !strings.Contains(err.Error(), "http") {
 			t.Errorf("지원 스킴(http/https)을 알려줘야 합니다: %q", err.Error())
 		}
@@ -144,7 +144,7 @@ func TestValidateHTTPURLLocalized(t *testing.T) {
 	if err := validateHTTPURL("http://"); err == nil {
 		t.Fatal("호스트 없는 주소는 거부되어야 합니다")
 	} else {
-		assertKorean(t, "validateHTTPURL(host)", err.Error())
+		assertChinese(t, "validateHTTPURL(host)", err.Error())
 	}
 }
 
@@ -156,25 +156,25 @@ func TestHTTPLocalTargetBlockedLocalized(t *testing.T) {
 	if err == nil {
 		t.Fatal("로컬 주소는 기본적으로 차단되어야 합니다")
 	}
-	assertKorean(t, "blockInternalDial", err.Error())
+	assertChinese(t, "blockInternalDial", err.Error())
 	if !strings.Contains(err.Error(), AllowLocalTargetsEnv) {
 		t.Errorf("차단 오류는 우회 방법(%s)을 알려줘야 합니다: %q", AllowLocalTargetsEnv, err.Error())
 	}
 }
 
 // TestHTTPRedactHelpersLocalized 는 주소 탈감(redact) 자리표시자와 전송 오류의
-// "알 수 없는 오류" 분기가 한국어인지 확인한다.
+// "未知错误" 분기가 한국어인지 확인한다.
 func TestHTTPRedactHelpersLocalized(t *testing.T) {
-	if got := redactRequestTarget(""); !strings.Contains(got, "해석할 수 없") {
+	if got := redactRequestTarget(""); !strings.Contains(got, "无法解析") {
 		t.Errorf("해석 불가 주소는 한국어 자리표시자여야 합니다, 받은 값 %q", got)
 	}
 	// *url.Error 의 Err 가 nil 인 분기.
 	got := redactTransportError(&url.Error{Op: "Get", URL: "http://api.example", Err: nil})
-	if hasHan(got) {
+	if hasHangul(got) {
 		t.Errorf("전송 오류 탈감 결과에 한자가 남았습니다: %q", got)
 	}
-	if !strings.Contains(got, "알 수 없는 오류") {
-		t.Errorf("Err 가 nil 이면 '알 수 없는 오류' 여야 합니다, 받은 값 %q", got)
+	if !strings.Contains(got, "未知错误") {
+		t.Errorf("Err 가 nil 이면 '未知错误' 여야 합니다, 받은 값 %q", got)
 	}
 }
 
@@ -187,9 +187,9 @@ func TestHTTPStatusErrorsLocalized(t *testing.T) {
 		code int
 		want string
 	}{
-		{http.StatusForbidden, "요청을 거부했습니다"},
-		{http.StatusInternalServerError, "오류가 발생했습니다"},
-		{http.StatusTooManyRequests, "요청을 제한하거나"},
+		{http.StatusForbidden, "拒绝了请求"},
+		{http.StatusInternalServerError, "发生错误"},
+		{http.StatusTooManyRequests, "限流或"},
 	}
 	for _, tc := range cases {
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -201,7 +201,7 @@ func TestHTTPStatusErrorsLocalized(t *testing.T) {
 		if err == nil {
 			t.Fatalf("HTTP %d 는 오류여야 합니다", tc.code)
 		}
-		assertKorean(t, "doJSON(HTTP status)", err.Error())
+		assertChinese(t, "doJSON(HTTP status)", err.Error())
 		if !strings.Contains(err.Error(), tc.want) {
 			t.Errorf("HTTP %d 오류에 %q 가 있어야 합니다, 받은 값 %q", tc.code, tc.want, err.Error())
 		}
