@@ -1,0 +1,117 @@
+name: Kexra One-Time Docker End-To-End Validation
+on:
+  push:
+    branches: [verify/kexra-docker-e2e-20261014]
+permissions:
+  contents: read
+jobs:
+  docker-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      POSTGRES_USER: artex
+      POSTGRES_PASSWORD: one-time-local-only-20261014
+      POSTGRES_DB: artex
+      KEXRA_IMAGE: kexra:local
+      COMPOSE_PROJECT_NAME: kexra_isolated_ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Build Chinese Web UI
+        working-directory: web
+        run: |
+          npm ci
+          npm run check
+          npm run build:static
+      - name: Build embedded Linux binary
+        run: |
+          mkdir -p server/webui/dist dist/amd64
+          cp -a web/out/. server/webui/dist/
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags embedui -o dist/amd64/kexra ./cmd/kexra
+          dist/amd64/kexra -h
+      - name: Build actual Docker image (no push)
+        run: docker build --build-arg TARGETARCH=amd64 -t kexra:local .
+      - name: Compose isolated start and auth/session persistence
+        run: |
+          docker compose config -q
+          docker compose up -d
+          python3 - <<'PY'
+          import json,time,urllib.request,urllib.error,pathlib
+          base='http://127.0.0.1:8787'
+          def request(path,method='GET',payload=None,token=None,legacy=False):
+              data=None if payload is None else json.dumps(payload).encode()
+              headers={'Content-Type':'application/json'}
+              if token and not legacy: headers['Authorization']='Bearer '+token
+              if token and legacy: headers['Cookie']='artex_token='+token
+              req=urllib.request.Request(base+path,data=data,method=method,headers=headers)
+              with urllib.request.urlopen(req,timeout=10) as res:
+                  return res.status,json.loads(res.read().decode())
+          for _ in range(60):
+              try:
+                  status,data=request('/api/health')
+                  if status==200:
+                      print('healthy:',data)
+                      break
+              except Exception:
+                  time.sleep(2)
+          else: raise AssertionError('API not healthy')
+          status,state=request('/api/auth/status')
+          assert status==200 and not state['initialized'],state
+          _,init=request('/api/auth/init','POST',{'password':'CI-only-strong-password-2026'})
+          token=init['token']
+          _,login=request('/api/auth/login','POST',{'username':'Kexra','password':'CI-only-strong-password-2026'})
+          assert login['token']
+          _,legacy=request('/api/auth/login','POST',{'username':'ARTEX','password':'CI-only-strong-password-2026'})
+          assert legacy['token']
+          status,_=request('/api/tasks',token=token)
+          assert status==200
+          status,_=request('/api/tasks',token=token,legacy=True)
+          assert status==200
+          pathlib.Path('/tmp/kexra-ci-token').write_text(token)
+          print('first boot/admin/new+legacy login and legacy cookie: OK')
+          PY
+          docker compose exec -T kexra sh -c 'test -s /app/private/jwt.key && test ! -e /app/data/jwt.key'
+          docker compose exec -T kexra sha256sum /app/private/jwt.key | cut -d' ' -f1 > /tmp/key-before
+          docker compose stop kexra
+          docker compose rm -sf kexra
+          docker compose up -d kexra
+          python3 - <<'PY'
+          import time,json,urllib.request,pathlib
+          token=pathlib.Path('/tmp/kexra-ci-token').read_text()
+          for _ in range(45):
+              try:
+                  req=urllib.request.Request('http://127.0.0.1:8787/api/tasks',headers={'Authorization':'Bearer '+token})
+                  with urllib.request.urlopen(req,timeout=10) as res:
+                      assert res.status==200
+                      json.load(res)
+                  print('previous JWT remains valid after container replacement')
+                  break
+              except Exception: time.sleep(2)
+          else: raise AssertionError('previous JWT is invalid after recreating Kexra container')
+          PY
+          docker compose exec -T kexra sha256sum /app/private/jwt.key | cut -d' ' -f1 > /tmp/key-after
+          diff -u /tmp/key-before /tmp/key-after
+      - name: PostgreSQL logical backup and isolated restore rehearsal
+        run: |
+          docker compose exec -T postgres pg_dump -U artex -d artex -Fc > /tmp/kexra-db-backup.dump
+          test -s /tmp/kexra-db-backup.dump
+          docker compose exec -T postgres psql -U artex -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE kexra_restore_test;"
+          docker compose exec -T postgres pg_restore -U artex -d kexra_restore_test --no-owner --no-privileges < /tmp/kexra-db-backup.dump
+          docker compose exec -T postgres psql -U artex -d kexra_restore_test -v ON_ERROR_STOP=1 -c 'SELECT COUNT(*) FROM pg_tables WHERE schemaname = '\''public'\'';'
+          echo 'isolated PostgreSQL restore: OK'
+      - name: Local container diagnostic (on failure)
+        if: failure()
+        run: |
+          docker compose ps || true
+          docker compose logs --tail=70 || true
+      - name: Clean isolated containers and data
+        if: always()
+        run: docker compose down -v --remove-orphans || true
