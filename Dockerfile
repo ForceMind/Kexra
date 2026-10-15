@@ -21,14 +21,15 @@ COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
 COPY --from=node-runtime /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
 RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
-    && node --version && npm --version
+
 # 随镜像安装授权实验室中可能用到的基础网络诊断工具。
 # Node 已从上方精确版本的官方镜像复制，不执行远程 setup 脚本。
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates ripgrep curl wget vim git jq unzip \
       dnsutils iputils-ping netcat-openbsd inetutils-telnet whois nmap \
       libstdc++6 libgcc-s1 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && node --version && npm --version
 # 锁定直接安装的 Playwright 工具版本，避免每次重建都自动跳到最新版本。
 # 注意：npm 传递依赖和 Debian apt 包尚未形成完整锁定文件；发布仍需要 SBOM/漏洞审计。
 # 浏览器由固定 playwright 包提供，在镜像构建时提前安装，运行时不下载。
