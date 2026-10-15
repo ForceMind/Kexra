@@ -1,0 +1,29 @@
+name: Kexra One-Time Update Marker Safety Verification
+on:
+  push:
+    branches:
+      - verify/kexra-selfupdate-marker-20261015
+permissions:
+  contents: read
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.3"
+          cache: true
+      - name: Check formatting and focused Go build
+        run: |
+          unformatted=$(gofmt -l selfupdate/bootstrap.go selfupdate/stage.go selfupdate/stage_safety_test.go selfupdate/selfupdate_test.go)
+          if [ -n "$unformatted" ]; then echo "$unformatted"; exit 1; fi
+          go build ./selfupdate
+          go vet ./selfupdate
+      - name: Update marker, checksum and rollback tests
+        run: go test ./selfupdate -count=1 -v
+      - name: Project and docs integrity
+        run: |
+          python3 -I scripts/check-kexra-migration.py
+          python3 -I scripts/check-doc-links.py
