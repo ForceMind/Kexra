@@ -184,7 +184,10 @@ func TestApplyStagedKeepsCurrentWhenVerifyFails(t *testing.T) {
 	p := testPaths(t)
 	fakeBin(t, p.Current, "old", 0)
 	stage(t, p, "new", 0)
-	fakeBin(t, p.New, "tampered", 0) // 破坏校验和
+	if err := writeMarker(p.Marker, marker{From: "0.3.7", To: "0.3.8"}); err != nil {
+		t.Fatal(err)
+	}
+	fakeBin(t, p.New, "tampered", 0) // 标记合法但文件校验和不匹配
 
 	action, st := applyStaged(p)
 	if action != Continue {
