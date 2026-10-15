@@ -114,16 +114,26 @@ func Stage(ctx context.Context, c *http.Client, rel *Release, currentVersion str
 		return fmt.Errorf("暂存新版本失败：%w", err)
 	}
 
-	if err := writeMarker(p.Marker, marker{
-		From:     currentVersion,
-		To:       strings.TrimPrefix(rel.TagName, "v"),
-		StagedAt: time.Now().Unix(),
-	}); err != nil {
-		// 标记只影响自动回滚能力，暂存件本身已就位，不因此中断升级。
-		prog(PhaseStaged, -1, "警告：写入升级标记失败，本次升级不具备自动回滚保护")
+	if err := saveRollbackMarkerOrDiscard(p, currentVersion, rel.TagName); err != nil {
+		return err
 	}
 
 	prog(PhaseStaged, 100, "新版本已准备就绪，即将重启…")
+	return nil
+}
+
+// saveRollbackMarkerOrDiscard 在通知服务重启前写入回滚保护标记。
+// 如果持久化标记失败，就删除已暂存的二进制与校验和，并向调用者返回错误。
+// 绝不允许无法自动回滚的版本通过正常的一键更新入口继续安装。
+func saveRollbackMarkerOrDiscard(p Paths, from, tag string) error {
+	if err := writeMarker(p.Marker, marker{
+		From:     from,
+		To:       strings.TrimPrefix(tag, "v"),
+		StagedAt: time.Now().Unix(),
+	}); err != nil {
+		cleanStaged(p)
+		return fmt.Errorf("无法写入升级标记，已取消更新以保留自动回滚保护：%w", err)
+	}
 	return nil
 }
 

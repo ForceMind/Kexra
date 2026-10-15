@@ -74,7 +74,15 @@ func Bootstrap() (Action, State) {
 // 下载损坏、架构选错、动态链接缺失这类问题。一旦放行一个跑不起来的二进制，
 // 守护脚本会不知疲倦地反复拉起它，而 Go 代码根本没机会运行，自动回滚也就无从谈起。
 func applyStaged(p Paths) (Action, State) {
-	m, _ := readMarker(p.Marker)
+	m, ok := readMarker(p.Marker)
+	if !ok {
+		// 暂存件必须属于一次已记录的升级。缺失/损坏的标记意味着
+		// 版本号和回滚信息不可追溯，不能仅凭新二进制和校验和继续换装。
+		log.Printf("[update] 暂存文件缺少有效升级标记，拒绝换装并保留当前版本")
+		cleanStaged(p)
+		_ = os.Remove(p.Marker)
+		return Continue, State{FailedStage: true, Detail: "升级标记丢失或无效，已拒绝安装暂存版本"}
+	}
 
 	if err := verifyStaged(p); err != nil {
 		log.Printf("[update] 暂存的新版本未通过校验，已丢弃，继续运行当前版本：%v", err)
