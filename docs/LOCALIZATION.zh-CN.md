@@ -40,7 +40,14 @@ cd ..
 ## 已合并的中文化增量
 
 - [PR #4](https://github.com/ForceMind/Kexra/pull/4)：认证 API、数据库配置与 CLI 启动提示、通知模板和六种通知渠道错误消息已改为默认简体中文。
-- 已有 Go 单元测试断言这些路径实际输出中文；其他 `server/`、`selfupdate/` 与第三方工具输出仍需单独检查，不能把本批迁移视为所有界面已翻译。
+- 已有 Go 单元测试断言上述路径实际输出中文；其余服务端模块与第三方工具输出仍需单独审查。
+
+## 升级模块的中文化边界
+
+- `selfupdate/`：发布检查、下载、SHA256 校验、解压、暂存、启动验证、自动/手动回滚的进度和错误文本使用简体中文，保留 JSON 字段、阶段值、HTTP 状态码和更新资产的名字。
+- `server/update.go`：一键升级接口及 SSE 直接展示的状态文案使用简体中文；历史保留的 `ARTEX_SELFUPDATE_SMOKE`、`artex-selfupdate` User-Agent 属于兼容/技术标识，不进行批量更名。
+- 对应测试位于 `selfupdate/selfupdate_localized_test.go` 和 `server/update_localized_test.go`，检查中文展示及缺失发布包、错误状态和更新期间禁止回滚等路径。
+- **发布安全性独立评估**：只调整可见文案不证明真实 Release 下载、自更新/回滚端到端已经通过；正式镜像发布仍需供应链审计。
 
 ## 回归验证
 
