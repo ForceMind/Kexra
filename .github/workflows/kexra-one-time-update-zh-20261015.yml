@@ -1,0 +1,36 @@
+name: Kexra One-Time zh-CN Update Verification
+on:
+  push:
+    branches:
+      - verify/kexra-selfupdate-zh-20261015
+permissions:
+  contents: read
+jobs:
+  update-zh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.3"
+          cache: true
+      - name: Ensure modified Go files are gofmt-clean
+        run: |
+          changed="selfupdate/github.go selfupdate/bootstrap.go selfupdate/stage.go selfupdate/selfupdate.go selfupdate/selfupdate_localized_test.go server/update.go server/update_localized_test.go"
+          unformatted=$(gofmt -l $changed)
+          if [ -n "$unformatted" ]; then
+            echo "Unformatted files:"
+            echo "$unformatted"
+            exit 1
+          fi
+      - name: Build and vet changed packages
+        run: |
+          go build ./selfupdate ./server
+          go vet ./selfupdate ./server
+      - name: Unit and regression tests (no real database/network)
+        run: go test ./selfupdate ./server -count=1
+      - name: Check brand and internal docs links
+        run: |
+          python3 -I scripts/check-kexra-migration.py
+          python3 -I scripts/check-doc-links.py
