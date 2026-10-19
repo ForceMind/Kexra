@@ -23,12 +23,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 833b67f8dfda66bb94b134008882bbf5434211bd
+          ref: 1b94e759a078a405d4cce1dea7ea04bb816f6bda
       - uses: actions/setup-go@v5
         with:
           go-version: "1.26.9"
           cache: true
-      - name: Diagnose server failures with full per-test output
+      - name: Validate server database and Chinese notification output
         env:
           PGPASSWORD: isolated-ci-only-20261019
         run: |
