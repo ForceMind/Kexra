@@ -1,0 +1,89 @@
+name: Kexra One-Time Update Safety and Dependency Inventory
+on:
+  push:
+    branches: ["verify/kexra-update-safety-20261019"]
+    paths: [".github/workflows/kexra-update-safety-once.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: kexra-update-safety-20261019
+  cancel-in-progress: false
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: f4f937838356591cad0a13b3566381ca7450191f
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.3"
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.2"
+      - name: Exact source and low-cost checks
+        run: |
+          test "$(git rev-parse HEAD)" = f4f937838356591cad0a13b3566381ca7450191f
+          python3 -I scripts/check-kexra-migration.py
+          python3 -I scripts/check-docker-toolchain.py
+          python3 -I scripts/check-doc-links.py
+          test -z "$(gofmt -l selfupdate)"
+          git diff --check
+      - name: Go build, vet and non-database tests
+        run: |
+          go build ./...
+          go vet ./...
+          go test ./... -count=1
+          go test -race ./selfupdate -count=1
+          go mod verify
+      - name: npm locked dependency audit (inventory, not release approval)
+        id: npm_audit
+        continue-on-error: true
+        working-directory: web
+        run: |
+          npm audit --package-lock-only --ignore-scripts --json > ../npm-audit.json
+      - name: Print npm findings
+        if: always()
+        run: |
+          node -e 'const fs=require("fs"); if (!fs.existsSync("npm-audit.json")) process.exit(0); const r=JSON.parse(fs.readFileSync("npm-audit.json","utf8")); console.log(JSON.stringify({metadata:r.metadata,error:r.error})); for(const [name,v] of Object.entries(r.vulnerabilities||{})) console.log(JSON.stringify({name,severity:v.severity,range:v.range,fixAvailable:v.fixAvailable,via:v.via}));'
+      - name: npm lockfile SBOM
+        continue-on-error: true
+        working-directory: web
+        run: npm sbom --package-lock-only --sbom-format cyclonedx > ../web-sbom.cdx.json
+      - name: Go vulnerability audit (inventory, not release approval)
+        id: go_audit
+        continue-on-error: true
+        run: |
+          go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./... > go-vuln.txt 2>&1
+      - name: Print audit status and Go findings
+        if: always()
+        env:
+          NPM_OUTCOME: ${{ steps.npm_audit.outcome }}
+          GO_OUTCOME: ${{ steps.go_audit.outcome }}
+        run: |
+          echo "npm audit outcome: $NPM_OUTCOME"
+          echo "govulncheck outcome: $GO_OUTCOME"
+          if [ -f go-vuln.txt ]; then cat go-vuln.txt; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: update-safety-dependency-inventory
+          path: |
+            npm-audit.json
+            web-sbom.cdx.json
+            go-vuln.txt
+          retention-days: 7
+  windows-marker:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: f4f937838356591cad0a13b3566381ca7450191f
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.3"
+          cache: false
+      - run: go test ./selfupdate -count=1 -v
