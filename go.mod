@@ -1,6 +1,6 @@
 module github.com/ForceMind/Kexra
 
-go 1.26.3
+go 1.26.9
 
 require (
 	github.com/Autumn-27/norma v0.4.3
