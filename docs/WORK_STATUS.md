@@ -36,14 +36,16 @@ PR [#9](https://github.com/ForceMind/Kexra/pull/9) 已合并，合并提交 `307
 | [Linux 隔离验证](https://github.com/ForceMind/Kexra/actions/runs/39208895700) | 全仓库 build/vet/非 DB 单测、selfupdate race、go mod verify、文档与迁移检查通过 |
 | 同次 Windows 原生测试 | 标记覆盖替换及不依赖 sh 的测试通过；shell 冒烟场景明确跳过 |
 
-## 开发中：P0 依赖安全
+## 已实现并通过隔离验证：P0 Go / Web 依赖安全
 
 分支 `codex/dependency-security-20261019`；跟踪 [Issue #10](https://github.com/ForceMind/Kexra/issues/10)。上述隔离运行的审计步骤仅作 inventory，并使用 continue-on-error：**整个运行成功不代表安全审计通过**。
 
 - npm 实际失败：24 项，严重 2、高危 17、中危 5；前端 CycloneDX SBOM 已生成，但不是 Docker 镜像 SBOM。
 - govulncheck v1.1.4 实际失败：报告 Go 1.26.3 标准库及 x/net v0.58.0 的可达漏洞；还需复核未调用的导入依赖。
-- 正在固定 Go 1.26.9、升级 x/net、Next.js/PostCSS，使用保留许可的原样 CSS 替代 shadcn CLI。锁文件重建与完整回归尚未完成。
-- 下载限额及模拟更新回归已在本地分支 `codex/update-download-limits-20261019` 保存，macOS 单测/vet/race 通过，尚未提交远程 PR；P0 依赖修复优先。
+- 修复提交 `5831ba106ef3403aa292c7a7bff2f839a3a46e58`，PR [#12](https://github.com/ForceMind/Kexra/pull/12)；[最终隔离验证](https://github.com/ForceMind/Kexra/actions/runs/39210043032) 的完整 Go/Web/中文/文档门禁通过。npm 24 项降至 0；Go 可达与导入包漏洞为 0，保留一项未导入 OpenPGP 的模块告警，详见 [依赖安全记录](DEPENDENCY_SECURITY.md)。
+- 固定 Go 1.26.9、x/net v0.60.0、compress v1.18.7、Next.js 16.3.8 / PostCSS 8.5.23，原样 CSS 和 MIT 许可保留；新增第三方样式完整性门禁。没有数据或配置迁移。
+- 首次修复复扫已归零，但前端 vendor CSS 格式检查失败，未运行构建；修复来源哈希检查与 vendor 格式排除后最终回归通过，失败证据保留。
+- 下载限额、模拟更新与真实 Go 子进程回滚回归保存于 [Draft PR #11](https://github.com/ForceMind/Kexra/pull/11)，macOS 单测/vet/race 通过；Linux/Windows 新增原生进程演练仍待执行。
 
 ## 未验证与阻塞
 

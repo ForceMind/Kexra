@@ -11,6 +11,9 @@ Kexra 由 ForceMind 独立维护。以下记录不把继承的 ARTEX 历史版�
 
 ### 2026-10-19 开发增量
 
+- Go / Web 依赖安全修复：固定 Go 1.26.9、升级 x/net 与压缩库、Next.js/PostCSS 及传递依赖；移除仅为 CSS 引入的 CLI 并保留样式和 MIT 声明。
+- 完整 Go/Web/中文/文档门禁通过，npm 漏洞 24 → 0、Go 可达漏洞 → 0；未导入 OpenPGP 的模块告警保留记录，Docker 供应链尚未审计，见 [安全审计](docs/DEPENDENCY_SECURITY.md)。
+
 - 强化升级标记的语义校验、完整写入与换装前持久化；无法保存启动次数时立即尝试回滚。
 - 新增缺陷复现与恢复回归测试，建立开发路线、当前状态与发布清单。
 - 本次与历史验证范围分开记录，详见 [状态与交接](docs/WORK_STATUS.md)。尚无正式 Release。

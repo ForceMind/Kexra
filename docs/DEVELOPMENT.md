@@ -23,6 +23,8 @@
 
 ## 快速验证命令
 
+推荐构建工具链为 Go **1.26.9**（CI/Release 已固定）；Go 1.27 系列至少为 **1.27.2**。依赖漏洞结果、复现方法和未导入 OpenPGP 的保留告警见 [安全审计](DEPENDENCY_SECURITY.md)。
+
 更名与许可证的低成本静态检查：`python3 -I scripts/check-kexra-migration.py`（不访问网络、不调用 GitHub Actions）。
 
 ~~~bash
@@ -42,6 +44,7 @@ cd ..
 python3 -I scripts/check-i18n-keys.py
 python3 -I scripts/check-web-zh.py
 python3 -I scripts/check-doc-links.py
+python3 -I scripts/check-web-vendor.py
 ~~~
 
 `check-web-zh.py` 需要先生成 `web/out`；其静态 HTML 检查**不能证明**运行时 API/Mock/Agent 输出已全部中文化。
