@@ -1,0 +1,160 @@
+name: Kexra One-Time Locked MCP Invocation Validation
+on:
+  push:
+    branches: [verify/kexra-docker-mcp-20261019]
+    paths: [".github/workflows/kexra-docker-mcp-once.yml"]
+permissions:
+  contents: read
+jobs:
+  docker-e2e:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: ubuntu-latest, arch: amd64, machine: x86_64 }
+          - { runner: ubuntu-24.04-arm, arch: arm64, machine: aarch64 }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    env:
+      POSTGRES_USER: artex
+      POSTGRES_PASSWORD: one-time-local-only-20261019
+      POSTGRES_DB: artex
+      KEXRA_IMAGE: kexra:local
+      COMPOSE_PROJECT_NAME: kexra_mcp_${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 4acfd073f6b8da1871a08889fffaf1fe47766c44
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.2"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.9"
+          cache: true
+      - name: Verify native ARM64 host
+        run: |
+          test "$(uname -m)" = ${{ matrix.machine }}
+          test "$(git rev-parse HEAD)" = 4acfd073f6b8da1871a08889fffaf1fe47766c44
+      - name: Browser dependency security and integrity gates
+        run: |
+          npm audit --prefix docker/browser-tools --package-lock-only --ignore-scripts --json > docker-browser-npm-audit.json
+          cat docker-browser-npm-audit.json
+          python3 -I scripts/check-docker-toolchain.py
+          python3 -I scripts/check-web-vendor.py
+          python3 -I scripts/check-doc-links.py
+      - name: Build Chinese Web UI
+        working-directory: web
+        run: |
+          npm ci
+          npm run build:static
+      - name: Build embedded Linux binary
+        run: |
+          mkdir -p server/webui/dist dist/${{ matrix.arch }}
+          cp -a web/out/. server/webui/dist/
+          CGO_ENABLED=0 GOOS=linux GOARCH=${{ matrix.arch }} go build -tags embedui -o dist/${{ matrix.arch }}/kexra ./cmd/kexra
+          dist/${{ matrix.arch }}/kexra -h
+      - name: Build actual Docker image (no push)
+        run: |
+          docker build --build-arg TARGETARCH=${{ matrix.arch }} -t kexra:local .
+          test "$(docker image inspect kexra:local --format '{{.Architecture}}')" = ${{ matrix.arch }}
+      - name: Locked tool versions and network-free Chromium
+        run: |
+          docker run --rm --network none --entrypoint sh kexra:local -c 'node --version && playwright --version && playwright-cli --help && playwright-mcp --help && npx @playwright/mcp --headless --help && npx --version'
+          docker run --rm --network none --entrypoint node kexra:local -e 'const {chromium}=require(process.env.KEXRA_BROWSER_TOOLS_DIR+"/node_modules/playwright"); (async()=>{const b=await chromium.launch({headless:true,args:["--no-sandbox"]}); const p=await b.newPage(); await p.setContent("<h1>Kexra isolated browser</h1>"); if(await p.textContent("h1")!=="Kexra isolated browser") throw new Error("unexpected browser content"); await b.close(); console.log("network-free Chromium: OK");})().catch(e=>{console.error(e);process.exit(1)})'
+          docker run --rm --network none --entrypoint cat kexra:local /opt/kexra-browser-tools/package-lock.json > /tmp/image-browser-lock.json
+          cmp docker/browser-tools/package-lock.json /tmp/image-browser-lock.json
+          docker run --rm --network none --entrypoint npm kexra:local sbom --prefix /opt/kexra-browser-tools --omit=dev --sbom-format cyclonedx > docker-browser-sbom.cdx.json
+          docker run --rm --network none --entrypoint dpkg-query kexra:local -W > docker-dpkg-inventory.txt
+          docker image inspect kexra:local --format '{{.Id}}' > docker-image-id.txt
+          go version -m dist/${{ matrix.arch }}/kexra > go-buildinfo.txt
+      - name: Compose isolated start and auth/session persistence
+        run: |
+          docker compose config -q
+          docker compose up -d
+          python3 - <<'PY'
+          import json,time,urllib.request,urllib.error,pathlib
+          base='http://127.0.0.1:8787'
+          def request(path,method='GET',payload=None,token=None,legacy=False):
+              data=None if payload is None else json.dumps(payload).encode()
+              headers={'Content-Type':'application/json'}
+              if token and not legacy: headers['Authorization']='Bearer '+token
+              if token and legacy: headers['Cookie']='artex_token='+token
+              req=urllib.request.Request(base+path,data=data,method=method,headers=headers)
+              with urllib.request.urlopen(req,timeout=10) as res:
+                  return res.status,json.loads(res.read().decode())
+          for _ in range(60):
+              try:
+                  status,data=request('/api/health')
+                  if status==200:
+                      print('healthy:',data)
+                      break
+              except Exception:
+                  time.sleep(2)
+          else: raise AssertionError('API not healthy')
+          status,state=request('/api/auth/status')
+          assert status==200 and not state['initialized'],state
+          _,init=request('/api/auth/init','POST',{'password':'CI-only-strong-password-2026'})
+          token=init['token']
+          _,login=request('/api/auth/login','POST',{'username':'Kexra','password':'CI-only-strong-password-2026'})
+          assert login['token']
+          _,legacy=request('/api/auth/login','POST',{'username':'ARTEX','password':'CI-only-strong-password-2026'})
+          assert legacy['token']
+          status,_=request('/api/tasks',token=token)
+          assert status==200
+          status,_=request('/api/tasks',token=token,legacy=True)
+          assert status==200
+          pathlib.Path('/tmp/kexra-ci-token').write_text(token)
+          print('first boot/admin/new+legacy login and legacy cookie: OK')
+          PY
+          docker compose exec -T kexra sh -c 'test -s /app/private/jwt.key && test ! -e /app/data/jwt.key'
+          docker compose exec -T kexra sha256sum /app/private/jwt.key | cut -d' ' -f1 > /tmp/key-before
+          docker compose stop kexra
+          docker compose rm -sf kexra
+          docker compose up -d kexra
+          python3 - <<'PY'
+          import time,json,urllib.request,pathlib
+          token=pathlib.Path('/tmp/kexra-ci-token').read_text()
+          for _ in range(45):
+              try:
+                  req=urllib.request.Request('http://127.0.0.1:8787/api/tasks',headers={'Authorization':'Bearer '+token})
+                  with urllib.request.urlopen(req,timeout=10) as res:
+                      assert res.status==200
+                      json.load(res)
+                  print('previous JWT remains valid after container replacement')
+                  break
+              except Exception: time.sleep(2)
+          else: raise AssertionError('previous JWT is invalid after recreating Kexra container')
+          PY
+          docker compose exec -T kexra sha256sum /app/private/jwt.key | cut -d' ' -f1 > /tmp/key-after
+          diff -u /tmp/key-before /tmp/key-after
+      - name: PostgreSQL logical backup and isolated restore rehearsal
+        run: |
+          docker compose exec -T postgres pg_dump -U artex -d artex -Fc > /tmp/kexra-db-backup.dump
+          test -s /tmp/kexra-db-backup.dump
+          docker compose exec -T postgres psql -U artex -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE kexra_restore_test;"
+          docker compose exec -T postgres pg_restore -U artex -d kexra_restore_test --no-owner --no-privileges < /tmp/kexra-db-backup.dump
+          docker compose exec -T postgres psql -U artex -d kexra_restore_test -v ON_ERROR_STOP=1 -c 'SELECT COUNT(*) FROM pg_tables WHERE schemaname = '\''public'\'';'
+          echo 'isolated PostgreSQL restore: OK'
+      - name: Local container diagnostic (on failure)
+        if: failure()
+        run: |
+          docker compose ps || true
+          docker compose logs --tail=70 || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: locked-mcp-${{ matrix.arch }}-evidence
+          path: |
+            docker-browser-repair.txt
+            docker-browser-npm-audit.json
+            docker-browser-sbom.cdx.json
+            docker-dpkg-inventory.txt
+            docker-image-id.txt
+            go-buildinfo.txt
+          retention-days: 14
+      - name: Clean isolated containers and data
+        if: always()
+        run: docker compose down -v --remove-orphans || true
