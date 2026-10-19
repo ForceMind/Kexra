@@ -45,7 +45,15 @@ PR [#9](https://github.com/ForceMind/Kexra/pull/9) 已合并，合并提交 `307
 - 修复提交 `5831ba106ef3403aa292c7a7bff2f839a3a46e58`，PR [#12](https://github.com/ForceMind/Kexra/pull/12)；[最终隔离验证](https://github.com/ForceMind/Kexra/actions/runs/39210043032) 的完整 Go/Web/中文/文档门禁通过。npm 24 项降至 0；Go 可达与导入包漏洞为 0，保留一项未导入 OpenPGP 的模块告警，详见 [依赖安全记录](DEPENDENCY_SECURITY.md)。
 - 固定 Go 1.26.9、x/net v0.60.0、compress v1.18.7、Next.js 16.3.8 / PostCSS 8.5.23，原样 CSS 和 MIT 许可保留；新增第三方样式完整性门禁。没有数据或配置迁移。
 - 首次修复复扫已归零，但前端 vendor CSS 格式检查失败，未运行构建；修复来源哈希检查与 vendor 格式排除后最终回归通过，失败证据保留。
-- 下载限额、模拟更新与真实 Go 子进程回滚回归保存于 [Draft PR #11](https://github.com/ForceMind/Kexra/pull/11)，macOS 单测/vet/race 通过；Linux/Windows 新增原生进程演练仍待执行。
+- 下载限额、模拟更新与真实 Go 子进程回滚回归保存于 [PR #11](https://github.com/ForceMind/Kexra/pull/11)，精确代码提交 `6c7d48de899c5adfd1f0d31f3a6567bb02f4efc9` 已通过 [Linux/Windows 验证与五平台源码编译](https://github.com/ForceMind/Kexra/actions/runs/39210813606)。实际范围、失败恢复与边界见 [更新与回滚](UPDATING.md)。
+
+## 已实现并验证：下载边界及原生更新回滚
+
+PR #11 为压缩包、元数据及校验和设置有界读取，拒绝歧义条目；自动回滚失败时恢复当前程序，双重失败保留诊断。新增内存模拟发布、真实 Go 子进程、故障注入及业务手动回滚测试。无数据库/密钥/配置迁移。
+
+本轮通过 macOS、Linux、Windows 的对应测试；完整 Go 非 DB 门禁及五平台 CLI 交叉编译通过。未完成真实 Release 下载、产品 HTTP 重启、数据库升级兼容、Docker 镜像升级、断电恢复或生产验收。
+
+后续进行中的 Docker 浏览器工具锁定工作单独保留于 [PR #13](https://github.com/ForceMind/Kexra/pull/13)；只有真实镜像验证结束后才合并，不以锁文件生成当作部署完成。
 
 ## 未验证与阻塞
 
