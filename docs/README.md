@@ -19,6 +19,7 @@
 
 - [开发路线](ROADMAP.md) · [当前状态与交接](WORK_STATUS.md) · [发布验收清单](RELEASE_CHECKLIST.md)
 - [依赖安全审计与复现](DEPENDENCY_SECURITY.md)
+- [更新与回滚的实现、验证与边界](UPDATING.md)
 
 - [检测规则维护](../detections/MAINTENANCE.zh-CN.md)；原有 [规则资料](../detections/README.md) 中的历史技术特征不能为了改品牌而擅自替换
 - [Side Question 技术说明](../sidequestion/README.zh.md)；偏工程实现的历史资料，可能仍使用原模块命名

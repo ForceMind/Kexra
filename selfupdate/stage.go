@@ -21,6 +21,10 @@ const sumsAsset = "SHA256SUMS"
 // maxBinarySize 限制解压出来的二进制体积，防止畸形 zip 把磁盘写满。
 const maxBinarySize = 512 << 20 // 512 MiB
 
+// 压缩包下载与元数据也必须有界，不能等写满磁盘后才发现大小不符。
+const maxArchiveSize = 512 << 20 // 512 MiB
+const maxSumsSize = 1 << 20      // 1 MiB
+
 // Phase 是升级过程中的阶段，直接用作 SSE 事件里的 phase 字段。
 type Phase string
 
@@ -45,12 +49,23 @@ type Progress func(ph Phase, pct int, msg string)
 //
 // 函数返回即代表暂存完成，调用方随后优雅关闭并以 ExitRestart 退出。
 func Stage(ctx context.Context, c *http.Client, rel *Release, currentVersion string, prog Progress) error {
-	if prog == nil {
-		prog = func(Phase, int, string) {}
-	}
 	p, err := ResolvePaths()
 	if err != nil {
 		return err
+	}
+	return stageAt(ctx, c, rel, currentVersion, prog, p)
+}
+
+// stageAt 使用显式目录，供隔离演练调用真实下载/暂存流程，避免测试改动自身程序。
+func stageAt(ctx context.Context, c *http.Client, rel *Release, currentVersion string, prog Progress, p Paths) error {
+	if prog == nil {
+		prog = func(Phase, int, string) {}
+	}
+	if err := validateRelease(rel); err != nil {
+		return err
+	}
+	if cmp, ok := CompareVersions(currentVersion, rel.TagName); !ok || cmp >= 0 {
+		return fmt.Errorf("只能从可识别的正式版本升级到更新版本")
 	}
 	if err := checkWritable(p.Dir); err != nil {
 		return err
@@ -149,7 +164,7 @@ func fetchSums(ctx context.Context, c *http.Client, rel *Release) (map[string]st
 	}
 	defer body.Close()
 
-	raw, err := io.ReadAll(io.LimitReader(body, 1<<20))
+	raw, err := readBounded(body, maxSumsSize)
 	if err != nil {
 		return nil, fmt.Errorf("读取 %s 失败：%w", sumsAsset, err)
 	}
@@ -167,6 +182,7 @@ func fetchSums(ctx context.Context, c *http.Client, rel *Release) (map[string]st
 // 真正的资产反而可能匹配到错误的摘要。
 func parseSums(raw string) map[string]string {
 	out := map[string]string{}
+	ambiguous := map[string]bool{}
 	for line := range strings.Lines(raw) {
 		// 格式为 "<sha256>  <filename>"（sha256sum 用双空格；shasum 的二进制
 		// 模式会给文件名加 * 前缀）。
@@ -176,6 +192,11 @@ func parseSums(raw string) map[string]string {
 		}
 		name := strings.TrimPrefix(fields[1], "*")
 		if name == "" {
+			continue
+		}
+		if _, exists := out[name]; exists || ambiguous[name] {
+			delete(out, name)
+			ambiguous[name] = true
 			continue
 		}
 		out[name] = strings.ToLower(fields[0])
@@ -199,6 +220,13 @@ func isHexSHA256(s string) bool {
 
 // download 把资产写入 dst，同时计算 SHA256 并按 Content-Length 汇报进度。
 func download(ctx context.Context, c *http.Client, a Asset, dst string, prog Progress) (string, error) {
+	if a.Size < 0 || a.Size > maxArchiveSize {
+		return "", fmt.Errorf("安装包大小无效或超过 %s 上限，已拒绝下载", humanSize(maxArchiveSize))
+	}
+	limit := int64(maxArchiveSize)
+	if a.Size > 0 {
+		limit = a.Size
+	}
 	body, err := get(ctx, c, a.URL)
 	if err != nil {
 		return "", fmt.Errorf("下载 %s 失败：%w", a.Name, err)
@@ -209,11 +237,17 @@ func download(ctx context.Context, c *http.Client, a Asset, dst string, prog Pro
 	if err != nil {
 		return "", fmt.Errorf("创建临时文件失败：%w", err)
 	}
-	defer f.Close()
+	complete := false
+	defer func() {
+		_ = f.Close()
+		if !complete {
+			_ = os.Remove(dst)
+		}
+	}()
 
 	h := sha256.New()
 	pw := &progressWriter{total: a.Size, prog: prog, name: a.Name, last: time.Now()}
-	if _, err := io.Copy(io.MultiWriter(f, h, pw), body); err != nil {
+	if _, err := copyBounded(io.MultiWriter(f, h, pw), body, limit); err != nil {
 		return "", fmt.Errorf("下载中断：%w", err)
 	}
 	if err := f.Sync(); err != nil {
@@ -222,7 +256,33 @@ func download(ctx context.Context, c *http.Client, a Asset, dst string, prog Pro
 	if a.Size > 0 && pw.written != a.Size {
 		return "", fmt.Errorf("下载不完整：预期 %d 字节，实际 %d 字节", a.Size, pw.written)
 	}
+	if err := f.Close(); err != nil {
+		return "", fmt.Errorf("关闭下载文件失败：%w", err)
+	}
+	complete = true
 	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+func copyBounded(dst io.Writer, src io.Reader, limit int64) (int64, error) {
+	n, err := io.Copy(dst, io.LimitReader(src, limit+1))
+	if err != nil {
+		return n, err
+	}
+	if n > limit {
+		return n, fmt.Errorf("响应内容超过允许的 %d 字节上限", limit)
+	}
+	return n, nil
+}
+
+func readBounded(src io.Reader, limit int64) ([]byte, error) {
+	raw, err := io.ReadAll(io.LimitReader(src, limit+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(raw)) > limit {
+		return nil, fmt.Errorf("响应内容超过允许的 %d 字节上限", limit)
+	}
+	return raw, nil
 }
 
 // get 发起一个受白名单约束的 GET，返回响应体。
@@ -261,35 +321,46 @@ func extractBinary(zipPath, dst string) error {
 	}
 	defer zr.Close()
 
+	var binary *zip.File
 	for _, entry := range zr.File {
 		if entry.FileInfo().IsDir() || !strings.EqualFold(path.Base(entry.Name), want) {
 			continue
 		}
-		rc, err := entry.Open()
-		if err != nil {
-			return fmt.Errorf("读取 %s 失败：%w", entry.Name, err)
+		if !entry.Mode().IsRegular() || binary != nil {
+			return fmt.Errorf("Release 压缩包内的 %s 必须是唯一普通文件", want)
 		}
-		defer rc.Close()
-
-		f, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755)
-		if err != nil {
-			return fmt.Errorf("写入新版本程序失败：%w", err)
-		}
-		defer f.Close()
-
-		n, err := io.Copy(f, io.LimitReader(rc, maxBinarySize+1))
-		if err != nil {
-			return fmt.Errorf("解压 %s 失败：%w", entry.Name, err)
-		}
-		if n > maxBinarySize {
-			return fmt.Errorf("Release 压缩包内的可执行文件超过 %s，已拒绝解压", humanSize(maxBinarySize))
-		}
-		if n == 0 {
-			return fmt.Errorf("Release 压缩包内的 %s 文件为空", want)
-		}
-		return f.Sync()
+		binary = entry
 	}
-	return fmt.Errorf("Release 压缩包中找不到 %s 文件", want)
+	if binary == nil {
+		return fmt.Errorf("Release 压缩包中找不到 %s 文件", want)
+	}
+	entry := binary
+	if entry.UncompressedSize64 > maxBinarySize {
+		return fmt.Errorf("Release 压缩包内的可执行文件超过 %s，已拒绝解压", humanSize(maxBinarySize))
+	}
+	rc, err := entry.Open()
+	if err != nil {
+		return fmt.Errorf("读取 %s 失败：%w", entry.Name, err)
+	}
+	defer rc.Close()
+
+	f, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755)
+	if err != nil {
+		return fmt.Errorf("写入新版本程序失败：%w", err)
+	}
+	defer f.Close()
+
+	n, err := io.Copy(f, io.LimitReader(rc, maxBinarySize+1))
+	if err != nil {
+		return fmt.Errorf("解压 %s 失败：%w", entry.Name, err)
+	}
+	if n > maxBinarySize {
+		return fmt.Errorf("Release 压缩包内的可执行文件超过 %s，已拒绝解压", humanSize(maxBinarySize))
+	}
+	if n == 0 {
+		return fmt.Errorf("Release 压缩包内的 %s 文件为空", want)
+	}
+	return f.Sync()
 }
 
 // checkWritable 提前确认目录可写。没有这一步，非 root 运行、或二进制被放在系统

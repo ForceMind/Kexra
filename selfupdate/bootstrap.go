@@ -241,16 +241,29 @@ func swap(p Paths) error {
 
 // rollback 把 swap 备份的旧版本换回来。
 func rollback(p Paths) error {
-	if _, err := os.Stat(p.Old); err != nil {
+	return rollbackWithRename(p, os.Rename)
+}
+
+// 显式文件操作边界允许隔离演练模拟第二次 rename 失败，验证恢复行为。
+func rollbackWithRename(p Paths, rename func(string, string) error) error {
+	info, err := os.Lstat(p.Old)
+	if err != nil {
 		return fmt.Errorf("找不到可用于回滚的备份（%s）：%w", p.Old, err)
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("回滚备份必须是普通文件：%s", p.Old)
 	}
 	// 把起不来的新版挪到 .failed 留作排查，而不是直接删掉。
 	failed := p.Current + ".failed"
 	_ = os.Remove(failed)
-	if err := os.Rename(p.Current, failed); err != nil {
+	if err := rename(p.Current, failed); err != nil {
 		return fmt.Errorf("移动启动失败的新版本失败：%w", err)
 	}
-	if err := os.Rename(p.Old, p.Current); err != nil {
+	if err := rename(p.Old, p.Current); err != nil {
+		// 恢复失败时至少把仍可执行的当前程序放回原路径，避免留下空入口。
+		if rerr := rename(failed, p.Current); rerr != nil {
+			return fmt.Errorf("恢复上一版本失败（%v），恢复当前程序也失败：%w", err, rerr)
+		}
 		return fmt.Errorf("恢复上一版本失败：%w", err)
 	}
 	return nil
@@ -263,8 +276,16 @@ func Rollback() error {
 	if err != nil {
 		return err
 	}
-	if _, err := os.Stat(p.Old); err != nil {
+	return manualRollback(p)
+}
+
+func manualRollback(p Paths) error {
+	info, err := os.Lstat(p.Old)
+	if err != nil {
 		return errors.New("找不到可回滚的上一版本（" + p.Old + " 不存在）")
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("回滚备份必须是普通文件：%s", p.Old)
 	}
 	cleanStaged(p)
 	if err := smokeTest(p.Old); err != nil {
@@ -277,7 +298,9 @@ func Rollback() error {
 		return fmt.Errorf("移动当前版本失败：%w", err)
 	}
 	if err := os.Rename(p.Old, p.Current); err != nil {
-		_ = os.Rename(tmp, p.Current)
+		if rerr := os.Rename(tmp, p.Current); rerr != nil {
+			return fmt.Errorf("安装上一版本失败（%v），恢复当前程序也失败：%w", err, rerr)
+		}
 		return fmt.Errorf("安装上一版本失败：%w", err)
 	}
 	if err := os.Rename(tmp, p.Old); err != nil {
