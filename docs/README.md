@@ -17,6 +17,8 @@
 
 ## 专题资料
 
+- [开发路线](ROADMAP.md) · [当前状态与交接](WORK_STATUS.md) · [发布验收清单](RELEASE_CHECKLIST.md)
+
 - [检测规则维护](../detections/MAINTENANCE.zh-CN.md)；原有 [规则资料](../detections/README.md) 中的历史技术特征不能为了改品牌而擅自替换
 - [Side Question 技术说明](../sidequestion/README.zh.md)；偏工程实现的历史资料，可能仍使用原模块命名
 - [漏洞与流量证据的原始设计说明](finding-traffic-evidence-zh.md)；属于继承的参考资料，不等于新品牌功能已重新验收

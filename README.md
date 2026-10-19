@@ -2,7 +2,7 @@
 
 **面向授权安全评估的 AI 多智能体任务协作与证据管理平台**
 
-Kexra 将目标管理、AI 任务规划、并行执行、资产与探索图谱、证据关联、人工审查和报告整理集中在一个 Web 工作台。前端默认使用简体中文；项目由 ForceMind 独立维护。
+Kexra 将目标管理、AI 任务规划、并行执行、资产与探索图谱、证据关联、人工审查和报告整理集中在一个 Web 工作台。前端默认使用简体中文。
 
 > **使用范围**：仅用于自有资产、书面授权的测试环境或隔离实验室。Kexra 的审批与拦截机制不等同于可信隔离边界，不应将其直接开放到公网。
 >
@@ -67,6 +67,7 @@ go test ./... -count=1
 - [文档总览](docs/README.md)：按使用角色定位资料
 - [安装与启动](docs/INSTALLATION.md) · [配置说明](docs/CONFIGURATION.md)
 - [系统架构](docs/ARCHITECTURE.md) · [开发与测试](docs/DEVELOPMENT.md)
+- [开发路线](docs/ROADMAP.md) · [当前状态与交接](docs/WORK_STATUS.md) · [发布验收清单](docs/RELEASE_CHECKLIST.md)
 - [安全边界](docs/SECURITY_MODEL.md) · [安全漏洞报告政策](SECURITY.md)
 - [仓库迁移与兼容性](docs/MIGRATION.md) · [旧文件清理清单](docs/PROJECT_CLEANUP.md)
 - [贡献指南](CONTRIBUTING.md) · [维护者指南](MAINTAINING.md) · [更新记录](CHANGELOG.md)
