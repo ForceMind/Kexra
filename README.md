@@ -19,7 +19,7 @@ Kexra 将目标管理、AI 任务规划、并行执行、资产与探索图谱�
 | 扩展能力 | 模型配置、MCP、Skills、通知和流量记录 |
 | 中文界面 | 基于 next-intl 的简体中文默认构建，保留韩语兼容资源 |
 
-**技术组成**：Go 1.26.x、Next.js 16 / React 19、PostgreSQL 16、TypeScript、MCP / Skills。有关实际依赖版本，以 `go.mod`、`web/package.json` 和 CI 定义为准。
+**技术组成**：Go 1.26.9、Next.js 16 / React 19、PostgreSQL 16、TypeScript、MCP / Skills。Go 1.27 系列至少使用 1.27.2；有关实际依赖版本及审计范围，见 `go.mod`、`web/package.json`、CI 定义和 [依赖安全记录](docs/DEPENDENCY_SECURITY.md)。
 
 ## 验证与 CI 状态
 
