@@ -17,6 +17,8 @@ const Repo = "ForceMind/Kexra"
 // latestURL 是 GitHub 的"最新正式版"接口。它会自动跳过 prerelease 和 draft。
 const latestURL = "https://api.github.com/repos/" + Repo + "/releases/latest"
 
+const maxReleaseSize = 2 << 20 // Release 元数据最多 2 MiB
+
 // allowedHosts 限定升级链路能访问的域名。配合下面的 checkRedirect，
 // 任何一跳被重定向到名单外的主机都会直接失败——这是防止 DNS 污染 / 中间人
 // 把二进制换掉的第一道闸门，第二道是 SHA256SUMS 比对。
@@ -81,6 +83,9 @@ func checkURL(u *url.URL) error {
 	if !allowedHosts[strings.ToLower(u.Hostname())] {
 		return fmt.Errorf("已拒绝非 GitHub 域名地址：%s", u.Hostname())
 	}
+	if u.User != nil || (u.Port() != "" && u.Port() != "443") {
+		return fmt.Errorf("GitHub 更新地址不得包含凭据或非标准 HTTPS 端口")
+	}
 	return nil
 }
 
@@ -113,13 +118,27 @@ func FetchLatest(ctx context.Context, c *http.Client) (*Release, error) {
 	}
 
 	var rel Release
-	if err := json.NewDecoder(resp.Body).Decode(&rel); err != nil {
+	raw, err := readBounded(resp.Body, maxReleaseSize)
+	if err != nil {
+		return nil, fmt.Errorf("读取 GitHub Release 失败：%w", err)
+	}
+	if err := json.Unmarshal(raw, &rel); err != nil {
 		return nil, fmt.Errorf("解析 GitHub Release 失败：%w", err)
 	}
-	if strings.TrimSpace(rel.TagName) == "" {
-		return nil, fmt.Errorf("Release 缺少 tag 字段")
+	if err := validateRelease(&rel); err != nil {
+		return nil, err
 	}
 	return &rel, nil
+}
+
+func validateRelease(rel *Release) error {
+	if rel == nil || strings.TrimSpace(rel.TagName) == "" {
+		return fmt.Errorf("Release 缺少 tag 字段")
+	}
+	if _, ok := parseVersion(rel.TagName); !ok || rel.Draft || rel.Prerelease {
+		return fmt.Errorf("Release 必须是有效的正式发布版本")
+	}
+	return nil
 }
 
 // AssetName 返回当前平台对应的发布包名，与 build.sh 的 package_binary 保持一致：
@@ -130,10 +149,15 @@ func AssetName(tag, goos, goarch string) string {
 
 // FindAsset 在 Release 里按名字找资产。
 func (r *Release) FindAsset(name string) (Asset, bool) {
+	var found Asset
+	matched := false
 	for _, a := range r.Assets {
 		if strings.EqualFold(a.Name, name) {
-			return a, true
+			if matched {
+				return Asset{}, false // 重复资产名称不可确定，不选择其中任意一个
+			}
+			found, matched = a, true
 		}
 	}
-	return Asset{}, false
+	return found, matched
 }
