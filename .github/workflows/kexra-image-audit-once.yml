@@ -1,0 +1,110 @@
+name: Kexra One-Time Full Image Inventory
+on:
+  push:
+    branches: [verify/kexra-image-audit-20261019]
+    paths: [".github/workflows/kexra-image-audit-once.yml"]
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 998d5082778b8a469fc48e3b6ec72fbb28eeeefb
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.2"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.9"
+          cache: true
+      - name: Verify exact source and native host
+        run: |
+          test "$(uname -m)" = x86_64
+          test "$(git rev-parse HEAD)" = 998d5082778b8a469fc48e3b6ec72fbb28eeeefb
+      - name: Browser dependency security and integrity gates
+        run: |
+          npm audit --prefix docker/browser-tools --package-lock-only --ignore-scripts --json > docker-browser-npm-audit.json
+          cat docker-browser-npm-audit.json
+          python3 -I scripts/check-docker-toolchain.py
+          python3 -I scripts/check-web-vendor.py
+          python3 -I scripts/check-doc-links.py
+      - name: Build Chinese Web UI
+        working-directory: web
+        run: |
+          npm ci
+          npm run build:static
+      - name: Build embedded Linux binary
+        run: |
+          mkdir -p server/webui/dist dist/amd64
+          cp -a web/out/. server/webui/dist/
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags embedui -o dist/amd64/kexra ./cmd/kexra
+          dist/amd64/kexra -h
+      - name: Build actual Docker image (no push)
+        run: |
+          docker build --build-arg TARGETARCH=amd64 -t kexra:local .
+          test "$(docker image inspect kexra:local --format '{{.Architecture}}')" = amd64
+      - name: Record bases, runtimes, browser versions and licenses
+        run: |
+          mkdir -p image-audit
+          git rev-parse HEAD > image-audit/source-sha.txt
+          docker buildx imagetools inspect node:22.23.2-bookworm-slim > image-audit/node-base.txt
+          docker buildx imagetools inspect python:3.12-slim-bookworm > image-audit/python-base.txt
+          cat image-audit/node-base.txt image-audit/python-base.txt
+          docker image inspect kexra:local > image-audit/image-inspect.json
+          docker run --rm --network none --entrypoint sh kexra:local -c 'node --version; npm --version; python --version; dpkg-query -W' > image-audit/runtime-dpkg.txt
+          docker run --rm --network none --entrypoint npm kexra:local sbom --prefix /opt/kexra-browser-tools --omit=dev --sbom-format cyclonedx > image-audit/browser-tools.cdx.json
+          docker run --rm --network none --entrypoint sh kexra:local -c 'find /root/.cache/ms-playwright -type f \( -name chrome -o -name headless_shell -o -name chrome-headless-shell \) -exec sh -c '\''"$1" --version; sha256sum "$1"'\'' sh {} \;' > image-audit/browser-binaries.txt
+          cat image-audit/browser-binaries.txt
+          docker run --rm --network none --entrypoint tar kexra:local -czf - /usr/share/doc /usr/local/lib/node_modules/npm/LICENSE /usr/local/lib/python3.12/LICENSE.txt > image-audit/installed-license-docs.tar.gz
+      - name: Install hash-verified Trivy 0.76.0
+        env:
+          TRIVY_ARCHIVE_SHA256: e24b1c51293c1b15e4ba8d45bbc7891ba053f90278ec2698f3562c993e145fe7
+        run: |
+          curl --fail --location --retry 2 --output /tmp/trivy.tgz https://github.com/aquasecurity/trivy/releases/download/v0.76.0/trivy_0.76.0_Linux-64bit.tar.gz
+          printf '%s  %s\n' "$TRIVY_ARCHIVE_SHA256" /tmp/trivy.tgz | sha256sum -c -
+          mkdir /tmp/kexra-trivy
+          tar -xzf /tmp/trivy.tgz -C /tmp/kexra-trivy trivy
+          /tmp/kexra-trivy/trivy --version
+      - name: Scan image and generate SPDX SBOM (inventory, no suppression)
+        run: |
+          /tmp/kexra-trivy/trivy image --timeout 10m --scanners vuln,license --list-all-pkgs --format json --output image-audit/trivy-image.json kexra:local
+          /tmp/kexra-trivy/trivy image --timeout 10m --format spdx-json --output image-audit/image.spdx.json kexra:local
+          /tmp/kexra-trivy/trivy --version > image-audit/scanner-database.txt
+          python3 - <<'PY'
+          import json,collections,pathlib
+          d=json.load(open('image-audit/trivy-image.json'))
+          counts=collections.Counter()
+          rows=[]
+          for result in d.get('Results',[]):
+              vs=result.get('Vulnerabilities',[])
+              print('COVERAGE',result.get('Target'),result.get('Type'),len(result.get('Packages',[])),'packages',len(vs),'findings')
+              for v in vs:
+                  counts[v['Severity']]+=1
+                  if v['Severity'] in ('HIGH','CRITICAL'):
+                      rows.append({k:v.get(k) for k in ('VulnerabilityID','PkgName','InstalledVersion','FixedVersion','Severity','Status','PrimaryURL')})
+          print('COUNTS',json.dumps(dict(counts)))
+          print('BLOCKERS',json.dumps(rows,ensure_ascii=False))
+          pathlib.Path('image-audit/summary.json').write_text(json.dumps({'counts':dict(counts),'blockers':rows},indent=2))
+          sbom=json.load(open('image-audit/image.spdx.json'))
+          assert sbom.get('packages'), 'empty image SBOM'
+          print('SPDX packages',len(sbom['packages']))
+          PY
+          (cd image-audit && sha256sum *.json *.txt *.tar.gz > SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kexra-full-image-audit-amd64
+          path: image-audit/
+          retention-days: 14
+      - name: Fail on recorded high or critical findings
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('image-audit/summary.json'))
+          assert not d['blockers'], 'image has HIGH/CRITICAL findings; see complete inventory'
+          PY
