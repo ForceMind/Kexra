@@ -15,12 +15,16 @@ import (
 func testPaths(t *testing.T) Paths {
 	t.Helper()
 	dir := t.TempDir()
+	ext := ""
+	if runtime.GOOS == "windows" {
+		ext = ".exe"
+	}
 	return Paths{
 		Dir:     dir,
-		Current: filepath.Join(dir, "kexra"),
-		New:     filepath.Join(dir, "kexra.new"),
-		Sum:     filepath.Join(dir, "kexra.new.sha256"),
-		Old:     filepath.Join(dir, "kexra.old"),
+		Current: filepath.Join(dir, "kexra"+ext),
+		New:     filepath.Join(dir, "kexra.new"+ext),
+		Sum:     filepath.Join(dir, "kexra.new"+ext+".sha256"),
+		Old:     filepath.Join(dir, "kexra.old"+ext),
 		Marker:  filepath.Join(dir, "kexra.upgrade.json"),
 	}
 }
@@ -271,15 +275,8 @@ func TestManualRollbackIsReversible(t *testing.T) {
 	fakeBin(t, p.Current, "v2", 0)
 	fakeBin(t, p.Old, "v1", 0)
 
-	// Rollback() 走 ResolvePaths()，这里直接测底层的交换语义。
-	tmp := p.Current + ".swap"
-	if err := os.Rename(p.Current, tmp); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Rename(p.Old, p.Current); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Rename(tmp, p.Old); err != nil {
+	// 调用真实手动回滚逻辑，避免在测试中重写一遍交换步骤。
+	if err := manualRollback(p); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(readAll(t, p.Current), "v1") {
@@ -287,6 +284,12 @@ func TestManualRollbackIsReversible(t *testing.T) {
 	}
 	if !strings.Contains(readAll(t, p.Old), "v2") {
 		t.Error("回滚后备份应变成 v2，这样还能再滚回去")
+	}
+	if err := manualRollback(p); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(readAll(t, p.Current), "v2") || !strings.Contains(readAll(t, p.Old), "v1") {
+		t.Fatal("真实手动回滚无法再次切回")
 	}
 }
 
