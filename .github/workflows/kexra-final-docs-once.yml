@@ -1,0 +1,37 @@
+name: Kexra One-Time Final Documentation and Contracts
+on:
+  push:
+    branches: ["verify/kexra-final-docs-20261019"]
+    paths: [".github/workflows/kexra-final-docs-once.yml"]
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 70432bd1104be911c1871f029e358ca688628f9f
+      - name: Documentation, licensing and deployment contracts
+        run: |
+          test "$(git rev-parse HEAD)" = 70432bd1104be911c1871f029e358ca688628f9f
+          git diff --check
+          test "$(git hash-object LICENSE)" = be3f7b28e564e7dd05eaf59d64adba1a4065ac0e
+          test "$(git hash-object web/LICENSE)" = 9022b24c1b37871e9a7d614f210d60be152c15e0
+          python3 -I scripts/check-kexra-migration.py
+          python3 -I scripts/check-docker-toolchain.py
+          python3 -I scripts/check-web-vendor.py
+          python3 -I scripts/check-doc-links.py
+          sh -n docker/browser-tools/npx-locked-browser.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          for name in ("ci", "web", "docs", "detections", "external-links", "release"):
+              source = Path(f".github/workflows/{name}.yml").read_text()
+              match = re.search(r"(?ms)^on:\n(.*?)(?=^\S|\Z)", source)
+              assert match, name
+              events = re.findall(r"^  ([a-z_]+):", match.group(1), re.M)
+              assert events == ["workflow_dispatch"], (name, events)
+          print("All six formal workflows remain manual-only; inherited licenses unchanged.")
+          PY
