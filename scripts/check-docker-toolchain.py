@@ -56,6 +56,10 @@ require("npm ci --prefix /opt/kexra-browser-tools --omit=dev --ignore-scripts" i
         "浏览器工具未通过禁用生命周期脚本的 npm ci 安装")
 require(not re.search(r"npm\s+install\s+-g", dockerfile),
         "镜像仍有不使用锁文件的全局 npm 安装")
+require("COPY docker/browser-tools/npx-locked-browser.sh /usr/local/bin/kexra-npx" in dockerfile,
+        "未保留内置 browser MCP 的锁定 npx 调用入口")
+require("ln -sf /usr/local/bin/kexra-npx /usr/local/bin/npx" in dockerfile,
+        "内置 browser MCP 的 npx 调用未连接到锁定入口")
 require("playwright install --with-deps chromium" in dockerfile,
         "镜像没有预装 Chromium 和系统依赖")
 for port in (8787, 8788):

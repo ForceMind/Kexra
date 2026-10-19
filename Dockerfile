@@ -42,6 +42,10 @@ RUN npm ci --prefix /opt/kexra-browser-tools --omit=dev --ignore-scripts \
     && playwright --version \
     && playwright install --with-deps chromium \
     && rm -rf /var/lib/apt/lists/*
+# 保留已有数据库中的 npx @playwright/mcp 调用，直接使用锁定包而非再次联网解析。
+COPY docker/browser-tools/npx-locked-browser.sh /usr/local/bin/kexra-npx
+RUN chmod +x /usr/local/bin/kexra-npx \
+    && ln -sf /usr/local/bin/kexra-npx /usr/local/bin/npx
 WORKDIR /app
 # Separate, non-browsable JWT key store; docker-compose attaches a named volume.
 RUN mkdir -p /app/private && chmod 0700 /app/private
