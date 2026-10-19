@@ -9,9 +9,9 @@
 - 六套正式工作流仅手动触发；未创建提醒、定时任务、发布标签或镜像。
 - 最近 Docker 工具链和更新标记专项运行分别为 [38737617057](https://github.com/ForceMind/Kexra/actions/runs/38737617057)、[38737705235](https://github.com/ForceMind/Kexra/actions/runs/38737705235)，均成功。更早失败记录不改写。
 
-## 开发中：升级标记可靠性
+## 已合并并验证：升级标记可靠性
 
-分支：`codex/update-marker-durability-20261019`，基于上述主线提交。
+PR [#9](https://github.com/ForceMind/Kexra/pull/9) 已合并，合并提交 `30783bfcfbf35bbbb8d73b8432fc1c15754cb8c8`；被验证的 PR 提交为 `f4f937838356591cad0a13b3566381ca7450191f`。
 
 修改范围：`selfupdate/selfupdate.go`、`selfupdate/bootstrap.go`、新增 `selfupdate/marker_durability_test.go`，以及本组维护文档。
 
@@ -33,17 +33,30 @@
 | 修改后 `go vet ./selfupdate` | 通过 |
 | 修改后 `go test -race ./selfupdate -count=1` | 通过 |
 | `git diff --check` | 通过 |
+| [Linux 隔离验证](https://github.com/ForceMind/Kexra/actions/runs/39208895700) | 全仓库 build/vet/非 DB 单测、selfupdate race、go mod verify、文档与迁移检查通过 |
+| 同次 Windows 原生测试 | 标记覆盖替换及不依赖 sh 的测试通过；shell 冒烟场景明确跳过 |
+
+## 已实现并通过隔离验证：P0 Go / Web 依赖安全
+
+分支 `codex/dependency-security-20261019`；跟踪 [Issue #10](https://github.com/ForceMind/Kexra/issues/10)。上述隔离运行的审计步骤仅作 inventory，并使用 continue-on-error：**整个运行成功不代表安全审计通过**。
+
+- npm 实际失败：24 项，严重 2、高危 17、中危 5；前端 CycloneDX SBOM 已生成，但不是 Docker 镜像 SBOM。
+- govulncheck v1.1.4 实际失败：报告 Go 1.26.3 标准库及 x/net v0.58.0 的可达漏洞；还需复核未调用的导入依赖。
+- 修复提交 `5831ba106ef3403aa292c7a7bff2f839a3a46e58`，PR [#12](https://github.com/ForceMind/Kexra/pull/12)；[最终隔离验证](https://github.com/ForceMind/Kexra/actions/runs/39210043032) 的完整 Go/Web/中文/文档门禁通过。npm 24 项降至 0；Go 可达与导入包漏洞为 0，保留一项未导入 OpenPGP 的模块告警，详见 [依赖安全记录](DEPENDENCY_SECURITY.md)。
+- 固定 Go 1.26.9、x/net v0.60.0、compress v1.18.7、Next.js 16.3.8 / PostCSS 8.5.23，原样 CSS 和 MIT 许可保留；新增第三方样式完整性门禁。没有数据或配置迁移。
+- 首次修复复扫已归零，但前端 vendor CSS 格式检查失败，未运行构建；修复来源哈希检查与 vendor 格式排除后最终回归通过，失败证据保留。
+- 下载限额、模拟更新与真实 Go 子进程回滚回归保存于 [Draft PR #11](https://github.com/ForceMind/Kexra/pull/11)，macOS 单测/vet/race 通过；Linux/Windows 新增原生进程演练仍待执行。
 
 ## 未验证与阻塞
 
 - 本机终端 GitHub DNS 不可用，已通过 GitHub 连接读取固定提交并缓存必要源码；本地 Git 是源码子集的验证快照，不能把它的提交 SHA 当成远程完整仓库 SHA。
 - 本机没有 Docker 或 PostgreSQL，缺少完整 Web/Go 依赖，未在本机运行全仓库、Web、数据库或容器验收。
-- 尚未重新验证 Linux/Windows 原生标记替换；文件 Sync 和同目录替换不等于已经完成断电/文件系统故障演练。
+- Linux/Windows 标记替换已有上述专项验证；Windows shell 流程、断电/文件系统故障演练尚未完成。
 - 发布供应链、镜像 arm64、真实 Release 更新、数据库/配置兼容与生产环境均未通过本次验收。
 
 ## 恢复步骤
 
 1. 回读 GitHub `main`、开放 PR、Issue #2/#3 和最新验证运行；先核对是否已有后续工作。
 2. 阅读 `AGENTS.md`、本文件和路线，避免把历史验收当成当前提交的测试结果。
-3. 继续完成本分支的 Linux 验证、PR 审查与安全合并；随后推进下载边界及模拟升级端到端测试。
+3. 优先完成 Issue #10 的依赖修复、锁文件审计和完整回归，再恢复下载边界及模拟升级端到端测试。
 4. 有客观阻塞时保留分支和真实结果，继续处理独立任务。六套正式 Actions 不恢复自动触发。

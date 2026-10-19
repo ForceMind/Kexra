@@ -14,6 +14,16 @@
 
 ## 其他依赖和资产
 
+### shadcn Tailwind 样式
+
+`web/src/styles/vendor/shadcn-tailwind.css` 保留自项目此前安装的 `shadcn@4.12.0` 所含样式，以避免仅为 CSS 引入整套 CLI 依赖树。运行时 `@shadcn/react` 组件保留。
+
+- 固定来源：`shadcn-ui/ui` 提交 `8055a12f462788f008bf5d746c9c6a585f552b29`，`packages/shadcn/src/tailwind.css`；该版本构建脚本原样复制到发布包 `dist/tailwind.css`。
+- 文件 SHA256：`bc7d83425702955b4cb67cb14ede9d603f9d912376d57a2d81d661094d2a782a`。
+- [MIT 许可及 Copyright (c) 2023 shadcn](web/licenses/shadcn-MIT.txt) 一并保留。样式文件未改写。
+
+### 其他材料
+
 项目还包含 Go/npm 第三方依赖、Skills、检测规则、图像与历史参考文档。每项组件都可能存在独立许可或来源要求；根目录和前端许可不保证覆盖所有文件。后续引入、替换、发布前需要分别审查依赖许可和第三方资产来源。
 
 本声明不表示任何原作者对 Kexra 新品牌或今后开发进行背书。产品界面与宣传允许采用自有品牌，但法律义务不可借品牌更名消除。

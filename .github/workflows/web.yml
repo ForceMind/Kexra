@@ -22,6 +22,8 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - name: npm ci
         run: npm ci
+      - name: 固定第三方样式与许可校验
+        run: python3 -I ../scripts/check-web-vendor.py
       - name: 中文静态导出（含 TypeScript 检查）
         env:
           NEXT_PUBLIC_LOCALE: zh
