@@ -39,6 +39,7 @@
       "!.next",
       "!dist",
       "!out",
+      "!src/styles/vendor",
       "!src/components/ui",
       "!src/components/calendar"
     ]
