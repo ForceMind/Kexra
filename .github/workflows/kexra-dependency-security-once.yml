@@ -1,0 +1,111 @@
+name: Kexra One-Time Dependency Security Repair
+on:
+  push:
+    branches: ["verify/kexra-dependency-security-20261019"]
+    paths: [".github/workflows/kexra-dependency-security-once.yml"]
+permissions:
+  contents: write
+concurrency:
+  group: kexra-dependency-security-20261019
+  cancel-in-progress: false
+jobs:
+  repair-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: d54ec9247a864b4fb337c7ae86b99becd9edb3d0
+          fetch-depth: 1
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.9"
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.2"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Rebuild only affected dependency locks
+        run: |
+          test "$(git rev-parse HEAD)" = d54ec9247a864b4fb337c7ae86b99becd9edb3d0
+          go get golang.org/x/net@v0.60.0
+          cd web
+          npm install --package-lock-only --ignore-scripts --audit=false
+          set +e
+          npm audit fix --package-lock-only --ignore-scripts > ../npm-repair.txt 2>&1
+          result=$?
+          set -e
+          cat ../npm-repair.txt
+          echo "npm repair exit code: $result (remaining findings are checked below)"
+      - name: Preserve generated locks on the authorized feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add go.mod go.sum web/package-lock.json
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git commit -m "fix: resolve patched Go and npm lockfile dependencies"
+            git push origin HEAD:refs/heads/codex/dependency-security-20261019
+          fi
+          git rev-parse HEAD
+      - name: Go build, vet, tests and module integrity
+        run: |
+          go build ./...
+          go vet ./...
+          go test ./... -count=1
+          go test -race ./selfupdate -count=1
+          go mod verify
+      - name: Go vulnerability gate
+        id: go_audit
+        continue-on-error: true
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 -show verbose ./... > go-vuln.txt 2>&1
+      - name: npm vulnerability gate
+        id: npm_audit
+        continue-on-error: true
+        working-directory: web
+        run: npm audit --package-lock-only --ignore-scripts --json > ../npm-audit.json
+      - name: Print exact security outcomes
+        if: always()
+        env:
+          GO_OUTCOME: ${{ steps.go_audit.outcome }}
+          NPM_OUTCOME: ${{ steps.npm_audit.outcome }}
+        run: |
+          echo "govulncheck outcome: $GO_OUTCOME"
+          echo "npm audit outcome: $NPM_OUTCOME"
+          if [ -f go-vuln.txt ]; then cat go-vuln.txt; fi
+          node -e 'const fs=require("fs"); if(!fs.existsSync("npm-audit.json")) process.exit(0); const r=JSON.parse(fs.readFileSync("npm-audit.json","utf8")); console.log(JSON.stringify({metadata:r.metadata,error:r.error})); for(const [name,v] of Object.entries(r.vulnerabilities||{})) console.log(JSON.stringify({name,...v}));'
+      - name: Install locked frontend and verify production export
+        working-directory: web
+        run: |
+          npm ci
+          npm run check
+          npm run build:static
+      - name: Static migration, localization and documentation gates
+        run: |
+          python3 -I scripts/check-kexra-migration.py
+          python3 -I scripts/check-docker-toolchain.py
+          python3 -I scripts/check-i18n-keys.py
+          python3 -I scripts/check-web-zh.py
+          python3 -I scripts/check-doc-links.py
+      - name: Generate Web SBOM
+        working-directory: web
+        run: npm sbom --package-lock-only --sbom-format cyclonedx > ../web-sbom.cdx.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-security-repair-evidence
+          path: |
+            npm-repair.txt
+            npm-audit.json
+            go-vuln.txt
+            web-sbom.cdx.json
+          retention-days: 7
+      - name: Enforce both security gate results
+        if: always()
+        env:
+          GO_OUTCOME: ${{ steps.go_audit.outcome }}
+          NPM_OUTCOME: ${{ steps.npm_audit.outcome }}
+        run: |
+          test "$GO_OUTCOME" = success
+          test "$NPM_OUTCOME" = success
