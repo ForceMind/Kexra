@@ -94,6 +94,12 @@ func readMarker(path string) (marker, bool) {
 	if json.Unmarshal(b, &m) != nil {
 		return marker{}, false
 	}
+	// 可解析的 JSON 不等于有效升级记录。兼容旧记录未填写 staged_at（0），
+	// 但空记录、非发布版本和无效计数不能授予二进制换装权限。
+	cmp, comparable := CompareVersions(m.From, m.To)
+	if !comparable || cmp >= 0 || m.Attempts < 0 || m.Attempts > maxAttempts || m.StagedAt < 0 {
+		return marker{}, false
+	}
 	return m, true
 }
 
@@ -102,7 +108,26 @@ func writeMarker(path string, m marker) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, b, 0o644)
+	// 先在同目录完整写入并同步，再替换旧记录。直接截断原文件会在写入
+	// 中断时同时丢失版本信息与启动计数。CreateTemp 默认使用 0600 权限。
+	f, err := os.CreateTemp(filepath.Dir(path), ".kexra-marker-*")
+	if err != nil {
+		return err
+	}
+	tmp := f.Name()
+	defer os.Remove(tmp)
+	if _, err := f.Write(b); err != nil {
+		_ = f.Close()
+		return err
+	}
+	if err := f.Sync(); err != nil {
+		_ = f.Close()
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmp, path)
 }
 
 // cleanStaged 清掉暂存件。换装成功、校验失败、用户取消都走它，避免残留的

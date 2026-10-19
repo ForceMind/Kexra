@@ -91,6 +91,17 @@ func applyStaged(p Paths) (Action, State) {
 		return Continue, State{FailedStage: true, Detail: "新版本校验失败，已丢弃暂存文件：" + err.Error()}
 	}
 
+	// 换装前完成最后一次标记持久化。失败时保留当前程序，不能换装后
+	// 才发现自动回滚状态不可写。
+	m.Attempts = 0
+	if m.StagedAt == 0 {
+		m.StagedAt = time.Now().Unix()
+	}
+	if err := writeMarker(p.Marker, m); err != nil {
+		cleanStaged(p)
+		return Continue, State{FailedStage: true, Detail: "无法持久化升级标记，已取消换装：" + err.Error()}
+	}
+
 	if err := swap(p); err != nil {
 		log.Printf("[update] 换装失败，继续运行当前版本：%v", err)
 		cleanStaged(p)
@@ -99,13 +110,6 @@ func applyStaged(p Paths) (Action, State) {
 	}
 
 	// 换装成功。保留标记，交给下一次启动（跑的就是新版）确认是否稳定。
-	m.Attempts = 0
-	if m.StagedAt == 0 {
-		m.StagedAt = time.Now().Unix()
-	}
-	if err := writeMarker(p.Marker, m); err != nil {
-		log.Printf("[update] 写升级标记失败（失去自动回滚能力）：%v", err)
-	}
 	log.Printf("[update] 已换装到 %s，退出以重启（exit %d）", orUnknown(m.To), ExitRestart)
 	return Restart, State{Pending: true}
 }
@@ -131,7 +135,14 @@ func confirmOrRollback(p Paths, m marker) (Action, State) {
 		return Restart, State{RolledBack: true, Detail: fmt.Sprintf("新版本连续启动失败，已回滚至上一版本（%s）", orUnknown(m.From))}
 	}
 	if err := writeMarker(p.Marker, m); err != nil {
-		log.Printf("[update] 更新升级标记失败：%v", err)
+		// 不能可靠累计次数时，继续启动可能造成永久崩溃循环。
+		// 立即使用已有备份恢复；失败时仍保留原标记供人工排查。
+		log.Printf("[update] 无法保存启动尝试次数，立即回滚：%v", err)
+		if rerr := rollback(p); rerr != nil {
+			return Continue, State{Detail: fmt.Sprintf("无法保存升级状态（%v），自动回滚也失败：%v", err, rerr)}
+		}
+		_ = os.Remove(p.Marker)
+		return Restart, State{RolledBack: true, Detail: "无法保存升级状态，已回滚至上一版本（" + orUnknown(m.From) + "）"}
 	}
 	log.Printf("[update] 新版本启动中（第 %d/%d 次尝试），稳定运行后将确认升级",
 		m.Attempts, maxAttempts)
