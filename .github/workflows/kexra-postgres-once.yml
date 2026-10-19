@@ -28,15 +28,20 @@ jobs:
         with:
           go-version: "1.26.9"
           cache: true
-      - name: Six packages, each with a fresh isolated database
+      - name: Diagnose server failures with full per-test output
         env:
           PGPASSWORD: isolated-ci-only-20261019
         run: |
           mkdir -p /tmp/kexra-pg-results
-          for pkg in agent config db evidence llmrec server; do
+          for pkg in server; do
             database="kexra_ci_$pkg"
             psql -h 127.0.0.1 -U artex -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE $database;"
+            set +e
             ARTEX_PG_DSN="postgres://artex:isolated-ci-only-20261019@127.0.0.1:5432/$database?sslmode=disable" go test "./$pkg/" -json -count=1 > "/tmp/kexra-pg-results/$pkg.jsonl"
+            result=$?
+            set -e
+            python3 -c 'import json,sys; events=[json.loads(x) for x in open(sys.argv[1])]; failed={e.get("Test") for e in events if e.get("Action")=="fail" and e.get("Test")}; print("FAILED TESTS", sorted(failed)); [print(e.get("Output",""),end="") for e in events if e.get("Action")=="output" and (e.get("Test") in failed or (not e.get("Test") and "FAIL" in e.get("Output","")))]' "/tmp/kexra-pg-results/$pkg.jsonl"
+            test "$result" = 0
             python3 -c 'import json,sys; events=[json.loads(x) for x in open(sys.argv[1])]; print(sys.argv[1], {a:sum(e.get("Action")==a and "Test" in e for e in events) for a in ("pass","fail","skip")}); [print("SKIP:",e.get("Test"),e.get("Output","")) for e in events if e.get("Action")=="skip"]' "/tmp/kexra-pg-results/$pkg.jsonl"
           done
       - name: Report failed test output
