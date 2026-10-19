@@ -6,6 +6,7 @@
 """
 
 from pathlib import Path
+import json
 import re
 import sys
 
@@ -30,8 +31,31 @@ require("deb.nodesource.com" not in dockerfile and "setup_20.x" not in dockerfil
         "仍然依赖远程 NodeSource 安装脚本")
 require(not re.search(r"npm\s+install[^\n]*@latest", dockerfile),
         "Playwright 工具依赖仍使用浮动 @latest 版本")
-for package in ("@playwright/mcp@0.0.83", "@playwright/cli@0.1.22", "playwright@1.64.1"):
-    require(package in dockerfile, f"未固定直接依赖：{package}")
+tool_dir = root / "docker/browser-tools"
+try:
+    manifest = json.loads((tool_dir / "package.json").read_text(encoding="utf-8"))
+    lock = json.loads((tool_dir / "package-lock.json").read_text(encoding="utf-8"))
+    require(lock.get("lockfileVersion") == 3, "浏览器工具必须使用 npm v3 锁文件")
+    packages = lock.get("packages", {})
+    expected = {"@playwright/mcp": "0.0.83", "@playwright/cli": "0.1.22", "playwright": "1.64.1"}
+    require(manifest.get("dependencies") == expected, "浏览器工具直接版本与已审查组合不同")
+    require(packages.get("", {}).get("dependencies") == expected, "浏览器工具清单与锁文件不同步")
+    for name, version in expected.items():
+        require(packages.get(f"node_modules/{name}", {}).get("version") == version,
+                f"浏览器工具锁文件未固定 {name}@{version}")
+    for name, package in packages.items():
+        if not name or package.get("link"):
+            continue
+        require(str(package.get("resolved", "")).startswith("https://registry.npmjs.org/"),
+                f"工具依赖不来自 npm HTTPS 注册表：{name}")
+        require(str(package.get("integrity", "")).startswith("sha512-"),
+                f"工具依赖缺少 SHA512 完整性字段：{name}")
+except (OSError, ValueError) as exc:
+    errors.append(f"无法读取浏览器工具锁文件：{exc}")
+require("npm ci --prefix /opt/kexra-browser-tools --omit=dev --ignore-scripts" in dockerfile,
+        "浏览器工具未通过禁用生命周期脚本的 npm ci 安装")
+require(not re.search(r"npm\s+install\s+-g", dockerfile),
+        "镜像仍有不使用锁文件的全局 npm 安装")
 require("playwright install --with-deps chromium" in dockerfile,
         "镜像没有预装 Chromium 和系统依赖")
 for port in (8787, 8788):
@@ -47,5 +71,5 @@ if errors:
         print("❌", message)
     sys.exit(1)
 
-print("✅ Docker 直接依赖版本和 Compose 默认隔离静态检查通过。")
-print("注意：apt/npm 传递依赖和基础镜像 digest 尚未完全锁定；必须执行真实镜像构建和安全审计。")
+print("✅ Docker 浏览器工具锁文件、完整性字段和 Compose 默认隔离静态检查通过。")
+print("注意：apt 和基础镜像 digest 尚未完全锁定；静态检查不替代镜像构建与安全审计。")
