@@ -30,15 +30,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libstdc++6 libgcc-s1 \
     && rm -rf /var/lib/apt/lists/* \
     && node --version && npm --version
-# 锁定直接安装的 Playwright 工具版本，避免每次重建都自动跳到最新版本。
-# 注意：npm 传递依赖和 Debian apt 包尚未形成完整锁定文件；发布仍需要 SBOM/漏洞审计。
+# 使用独立锁文件同时固定 Playwright 工具及其传递依赖。
+# Debian apt、浏览器和基础镜像仍需独立的 SBOM/漏洞审计。
 # 浏览器由固定 playwright 包提供，在镜像构建时提前安装，运行时不下载。
-RUN npm install -g @playwright/mcp@0.0.83 @playwright/cli@0.1.22 playwright@1.64.1 \
+COPY docker/browser-tools/package.json docker/browser-tools/package-lock.json /opt/kexra-browser-tools/
+ENV KEXRA_BROWSER_TOOLS_DIR=/opt/kexra-browser-tools
+ENV PATH="/opt/kexra-browser-tools/node_modules/.bin:${PATH}"
+RUN npm ci --prefix /opt/kexra-browser-tools --omit=dev --ignore-scripts \
     && playwright-cli --help \
     && playwright-mcp --help \
     && playwright --version \
     && playwright install --with-deps chromium \
     && rm -rf /var/lib/apt/lists/*
+# 保留已有数据库中的 npx @playwright/mcp 调用，直接使用锁定包而非再次联网解析。
+COPY docker/browser-tools/npx-locked-browser.sh /usr/local/bin/kexra-npx
+RUN chmod +x /usr/local/bin/kexra-npx \
+    && ln -sf /usr/local/bin/kexra-npx /usr/local/bin/npx
 WORKDIR /app
 # Separate, non-browsable JWT key store; docker-compose attaches a named volume.
 RUN mkdir -p /app/private && chmod 0700 /app/private

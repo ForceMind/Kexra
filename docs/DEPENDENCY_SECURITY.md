@@ -10,7 +10,8 @@
 | Go 可达调用 | 19 项报告，包含旧工具链和 x/net | **0 项**，已导入包告警也为 0 | 同上，govulncheck v1.1.4 |
 | Go 未导入包所在模块 | 含旧压缩库及 OpenPGP 告警 | 1 项：GO-2026-5932，未导入的 `golang.org/x/crypto/openpgp` | 见下方保留事项 |
 | Web CycloneDX SBOM | 已生成 | 基于修复后锁文件重新生成 | 复扫运行的 `dependency-security-repair-evidence` artifact |
-| Docker / apt / Playwright 工具链 | 未审计 | **未审计** | 不在本次结论范围内 |
+| Docker 浏览器工具 npm 锁文件 | 原先未形成锁文件 | **0 项**，已在两架构镜像验证 | [PR #13 验证](https://github.com/ForceMind/Kexra/actions/runs/39212481678) |
+| apt / 基础镜像 / 浏览器二进制 | 未审计 | **未完成 CVE 审计** | 不把工具 npm 审计当成完整镜像审计 |
 
 复扫使用 Go 1.26.9、Node 22.23.2。完整 Go build/vet/非数据库单测、selfupdate race、模块校验，以及 npm ci、Biome、Next 静态导出（30 页）、中韩键集、中文默认页面、第三方样式哈希、迁移和文档门禁均成功。此记录不包含数据库集成、Docker 镜像、生产或外部目标测试。
 
