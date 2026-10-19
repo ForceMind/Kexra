@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: d54ec9247a864b4fb337c7ae86b99becd9edb3d0
+          ref: 297ad9bd0555fe7c4bb8d9a4250c6dfa457a0b68
           fetch-depth: 1
       - uses: actions/setup-go@v5
         with:
@@ -28,8 +28,8 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - name: Rebuild only affected dependency locks
         run: |
-          test "$(git rev-parse HEAD)" = d54ec9247a864b4fb337c7ae86b99becd9edb3d0
-          go get golang.org/x/net@v0.60.0
+          test "$(git rev-parse HEAD)" = 297ad9bd0555fe7c4bb8d9a4250c6dfa457a0b68
+          go get github.com/klauspost/compress@v1.18.7
           cd web
           npm install --package-lock-only --ignore-scripts --audit=false
           set +e
@@ -85,6 +85,7 @@ jobs:
         run: |
           python3 -I scripts/check-kexra-migration.py
           python3 -I scripts/check-docker-toolchain.py
+          python3 -I scripts/check-web-vendor.py
           python3 -I scripts/check-i18n-keys.py
           python3 -I scripts/check-web-zh.py
           python3 -I scripts/check-doc-links.py
