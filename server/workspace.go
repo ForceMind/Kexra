@@ -15,7 +15,7 @@ import (
 
 // Workspace file manager — browse / view / edit / download / upload / delete the
 // shared work dir (s.m.dir), where all agents write their artifacts. Every path is
-// confined to the work dir root (traversal via ".." is neutralised). All routes sit
+// confined through os.Root, including symlinks and concurrent path changes. All routes sit
 // behind requireAuth (see Handler()).
 
 const (
@@ -38,9 +38,8 @@ const (
 	errWsNoUploadFile     = "업로드할 파일이 없습니다(폼 필드 file)"
 )
 
-// wsResolve maps a user-supplied relative path to an absolute path INSIDE the work
-// dir. It returns ok=false if the path would escape the root. filepath.Clean on a
-// rooted copy collapses any ".." so nothing can climb above the root.
+// wsResolve preserves lexical normalization and existing API paths.
+// It is not a filesystem security boundary: all I/O must use wsOpenRoot.
 func (s *Server) wsResolve(rel string) (string, bool) {
 	base := filepath.Clean(s.m.dir)
 	rel = strings.TrimPrefix(strings.TrimSpace(rel), "/")
@@ -62,6 +61,23 @@ func (s *Server) wsRel(abs string) string {
 	return filepath.ToSlash(rel)
 }
 
+func (s *Server) wsRootName(abs string) string {
+	name := filepath.FromSlash(s.wsRel(abs))
+	if name == "" {
+		return "."
+	}
+	return name
+}
+
+func (s *Server) wsOpenRoot(w http.ResponseWriter) (*os.Root, bool) {
+	root, err := os.OpenRoot(s.m.dir)
+	if err != nil {
+		writeErr(w, 500, err.Error())
+		return nil, false
+	}
+	return root, true
+}
+
 type wsEntry struct {
 	Name  string `json:"name"`
 	Path  string `json:"path"`
@@ -77,7 +93,12 @@ func (s *Server) wsList(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, errWsIllegalPath)
 		return
 	}
-	fi, err := os.Stat(abs)
+	root, ok := s.wsOpenRoot(w)
+	if !ok {
+		return
+	}
+	defer root.Close()
+	fi, err := root.Stat(s.wsRootName(abs))
 	if err != nil {
 		writeErr(w, 404, errWsPathNotFound)
 		return
@@ -86,14 +107,20 @@ func (s *Server) wsList(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, errWsNotDir)
 		return
 	}
-	ents, err := os.ReadDir(abs)
+	directory, err := root.Open(s.wsRootName(abs))
+	if err != nil {
+		writeErr(w, 500, err.Error())
+		return
+	}
+	defer directory.Close()
+	ents, err := directory.ReadDir(-1)
 	if err != nil {
 		writeErr(w, 500, err.Error())
 		return
 	}
 	out := make([]wsEntry, 0, len(ents))
 	for _, e := range ents {
-		info, err := e.Info()
+		info, err := root.Lstat(filepath.Join(s.wsRootName(abs), e.Name()))
 		if err != nil {
 			continue
 		}
@@ -123,9 +150,20 @@ func (s *Server) wsRead(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, errWsIllegalPath)
 		return
 	}
-	fi, err := os.Stat(abs)
+	root, ok := s.wsOpenRoot(w)
+	if !ok {
+		return
+	}
+	defer root.Close()
+	file, err := root.Open(s.wsRootName(abs))
 	if err != nil {
 		writeErr(w, 404, errWsFileNotFound)
+		return
+	}
+	defer file.Close()
+	fi, err := file.Stat()
+	if err != nil {
+		writeErr(w, 500, err.Error())
 		return
 	}
 	if fi.IsDir() {
@@ -136,9 +174,13 @@ func (s *Server) wsRead(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, map[string]any{"path": s.wsRel(abs), "size": fi.Size(), "too_large": true, "binary": true})
 		return
 	}
-	data, err := os.ReadFile(abs)
+	data, err := io.ReadAll(io.LimitReader(file, maxWorkspaceRead+1))
 	if err != nil {
 		writeErr(w, 500, err.Error())
+		return
+	}
+	if len(data) > maxWorkspaceRead {
+		writeJSON(w, 200, map[string]any{"path": s.wsRel(abs), "size": len(data), "too_large": true, "binary": true})
 		return
 	}
 	if bytes.IndexByte(data, 0) >= 0 || !utf8.Valid(data) {
@@ -163,15 +205,20 @@ func (s *Server) wsWrite(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, errWsIllegalPath)
 		return
 	}
-	if fi, err := os.Stat(abs); err == nil && fi.IsDir() {
+	root, ok := s.wsOpenRoot(w)
+	if !ok {
+		return
+	}
+	defer root.Close()
+	if fi, err := root.Stat(s.wsRootName(abs)); err == nil && fi.IsDir() {
 		writeErr(w, 400, errWsTargetIsDir)
 		return
 	}
-	if err := os.MkdirAll(filepath.Dir(abs), 0o755); err != nil {
+	if err := root.MkdirAll(s.wsRootName(filepath.Dir(abs)), 0o755); err != nil {
 		writeErr(w, 500, err.Error())
 		return
 	}
-	if err := os.WriteFile(abs, []byte(req.Content), 0o644); err != nil {
+	if err := root.WriteFile(s.wsRootName(abs), []byte(req.Content), 0o644); err != nil {
 		writeErr(w, 500, err.Error())
 		return
 	}
@@ -192,7 +239,12 @@ func (s *Server) wsMkdir(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, errWsIllegalPath)
 		return
 	}
-	if err := os.MkdirAll(abs, 0o755); err != nil {
+	root, ok := s.wsOpenRoot(w)
+	if !ok {
+		return
+	}
+	defer root.Close()
+	if err := root.MkdirAll(s.wsRootName(abs), 0o755); err != nil {
 		writeErr(w, 500, err.Error())
 		return
 	}
@@ -211,11 +263,16 @@ func (s *Server) wsDelete(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, errWsCannotDeleteRoot)
 		return
 	}
-	if _, err := os.Stat(abs); err != nil {
+	root, ok := s.wsOpenRoot(w)
+	if !ok {
+		return
+	}
+	defer root.Close()
+	if _, err := root.Stat(s.wsRootName(abs)); err != nil {
 		writeErr(w, 404, errWsPathNotFound)
 		return
 	}
-	if err := os.RemoveAll(abs); err != nil {
+	if err := root.RemoveAll(s.wsRootName(abs)); err != nil {
 		writeErr(w, 500, err.Error())
 		return
 	}
@@ -229,15 +286,27 @@ func (s *Server) wsDownload(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, errWsIllegalPath)
 		return
 	}
-	fi, err := os.Stat(abs)
-	if err != nil || fi.IsDir() {
+	root, ok := s.wsOpenRoot(w)
+	if !ok {
+		return
+	}
+	defer root.Close()
+	file, err := root.Open(s.wsRootName(abs))
+	if err != nil {
+		writeErr(w, 404, errWsFileNotFound)
+		return
+	}
+	defer file.Close()
+	fi, err := file.Stat()
+	if err != nil || !fi.Mode().IsRegular() {
 		writeErr(w, 404, errWsFileNotFound)
 		return
 	}
 	name := filepath.Base(abs)
 	// RFC 5987 filename* keeps non-ASCII names intact; plain filename is the fallback.
 	w.Header().Set("Content-Disposition", "attachment; filename=\""+sanitizeFilename(name)+"\"; filename*=UTF-8''"+url.PathEscape(name))
-	http.ServeFile(w, r, abs)
+	// Serve the confined descriptor; ServeFile would reopen an unsafe path.
+	http.ServeContent(w, r, name, fi.ModTime(), file)
 }
 
 // POST /api/workspace/upload?path=<dir> — multipart form field "file" (one or more).
@@ -247,7 +316,12 @@ func (s *Server) wsUpload(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, errWsIllegalPath)
 		return
 	}
-	if fi, err := os.Stat(dirAbs); err != nil || !fi.IsDir() {
+	root, ok := s.wsOpenRoot(w)
+	if !ok {
+		return
+	}
+	defer root.Close()
+	if fi, err := root.Stat(s.wsRootName(dirAbs)); err != nil || !fi.IsDir() {
 		writeErr(w, 400, errWsUploadDirMissing)
 		return
 	}
@@ -256,6 +330,7 @@ func (s *Server) wsUpload(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, errWsUploadParse+err.Error())
 		return
 	}
+	defer r.MultipartForm.RemoveAll()
 	files := r.MultipartForm.File["file"]
 	if len(files) == 0 {
 		writeErr(w, 400, errWsNoUploadFile)
@@ -271,7 +346,7 @@ func (s *Server) wsUpload(w http.ResponseWriter, r *http.Request) {
 		if !okd {
 			continue
 		}
-		if err := saveUpload(hdr, destAbs); err != nil {
+		if err := saveUpload(root, hdr, s.wsRootName(destAbs)); err != nil {
 			writeErr(w, 500, err.Error())
 			return
 		}
@@ -280,13 +355,13 @@ func (s *Server) wsUpload(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, map[string]any{"uploaded": saved})
 }
 
-func saveUpload(hdr *multipart.FileHeader, dest string) error {
+func saveUpload(root *os.Root, hdr *multipart.FileHeader, dest string) error {
 	src, err := hdr.Open()
 	if err != nil {
 		return err
 	}
 	defer src.Close()
-	out, err := os.Create(dest)
+	out, err := root.Create(dest)
 	if err != nil {
 		return err
 	}
