@@ -1,0 +1,37 @@
+name: Kexra One-Time Session Handoff Gates
+on:
+  push:
+    branches: [verify/kexra-session-handoff-20261020]
+    paths: [".github/workflows/kexra-session-handoff-once.yml"]
+permissions:
+  contents: read
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: aeeb711cc2bbef5da8aaca7a6c0d44138da5f40b
+          fetch-depth: 0
+      - name: Final documentation, compatibility, tool integrity and license gates
+        run: |
+          test "$(git rev-parse HEAD)" = aeeb711cc2bbef5da8aaca7a6c0d44138da5f40b
+          python3 -I scripts/check-kexra-migration.py
+          python3 -I scripts/check-doc-links.py
+          python3 -I scripts/check-docker-toolchain.py
+          python3 -I scripts/check-web-vendor.py
+          python3 -I scripts/check-i18n-keys.py
+          sh -n docker/browser-tools/npx-locked-browser.sh
+          git diff --check 998d5082778b8a469fc48e3b6ec72fbb28eeeefb HEAD
+          git diff --exit-code 998d5082778b8a469fc48e3b6ec72fbb28eeeefb HEAD -- LICENSE web/LICENSE
+          python3 - <<'PY'
+          import pathlib,re
+          files=list(pathlib.Path('.github/workflows').glob('*.yml'))
+          assert len(files)==6,[str(p) for p in files]
+          for p in files:
+              text=p.read_text()
+              event=text.split('\non:\n',1)[1].split('\npermissions:',1)[0].split('\njobs:',1)[0]
+              assert 'workflow_dispatch:' in event and not re.search(r'^  (push|pull_request|schedule|release):',event,re.M),p
+          print('Original six workflows remain manual; root and Web licenses unchanged')
+          PY
