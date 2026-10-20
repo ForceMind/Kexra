@@ -23,19 +23,18 @@ const (
 	maxWorkspaceUpload = 512 << 20 // 512 MiB per upload request
 )
 
-// 사용자에게 노출되는 오류 문구(한국어). 경로·페이로드·err.Error() 원문은 그대로 둔다.
-// workspace → "작업 공간"(용어집 정본).
+// 用户可见的默认错误使用简体中文；路径、参数、证据和 err.Error() 原文保留。
 const (
-	errWsIllegalPath      = "잘못된 경로입니다"
-	errWsPathNotFound     = "경로가 존재하지 않습니다"
-	errWsNotDir           = "디렉터리가 아닙니다"
-	errWsFileNotFound     = "파일이 존재하지 않습니다"
-	errWsIsDir            = "디렉터리이므로 파일로 읽을 수 없습니다"
-	errWsTargetIsDir      = "대상 경로가 디렉터리입니다"
-	errWsCannotDeleteRoot = "작업 공간 루트 디렉터리는 삭제할 수 없습니다"
-	errWsUploadDirMissing = "대상 디렉터리가 존재하지 않습니다"
-	errWsUploadParse      = "업로드 처리에 실패했거나 크기 제한을 초과했습니다: " // 뒤에 err.Error() 를 이어 붙인다
-	errWsNoUploadFile     = "업로드할 파일이 없습니다(폼 필드 file)"
+	errWsIllegalPath      = "路径无效"
+	errWsPathNotFound     = "路径不存在"
+	errWsNotDir           = "不是目录"
+	errWsFileNotFound     = "文件不存在"
+	errWsIsDir            = "该路径是目录，无法作为文件读取"
+	errWsTargetIsDir      = "目标路径是目录"
+	errWsCannotDeleteRoot = "不能删除工作空间根目录"
+	errWsUploadDirMissing = "目标目录不存在"
+	errWsUploadParse      = "上传处理失败或超过大小限制： " // 뒤에 err.Error() 를 이어 붙인다
+	errWsNoUploadFile     = "没有可上传的文件（表单字段 file）"
 )
 
 // wsResolve preserves lexical normalization and existing API paths.
