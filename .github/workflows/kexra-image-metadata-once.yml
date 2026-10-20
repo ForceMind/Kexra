@@ -13,6 +13,6 @@ jobs:
       - name: Resolve explicit candidate bases and npm package
         run: |
           docker buildx imagetools inspect python:3.12.15-slim-trixie
-          docker buildx imagetools inspect node:22.23.2-bookworm-slim
+          docker buildx imagetools inspect node:22.23.3-bookworm-slim
           npm view npm@12.2.1 version engines dist --json
           curl --fail --head --max-time 30 https://snapshot.debian.org/archive/debian/20261019T000000Z/dists/trixie/Release
