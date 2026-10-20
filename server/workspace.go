@@ -3,7 +3,6 @@ package server
 import (
 	"bytes"
 	"io"
-	"io/fs"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -108,7 +107,13 @@ func (s *Server) wsList(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, errWsNotDir)
 		return
 	}
-	ents, err := fs.ReadDir(root.FS(), s.wsRootName(abs))
+	directory, err := root.Open(s.wsRootName(abs))
+	if err != nil {
+		writeErr(w, 500, err.Error())
+		return
+	}
+	defer directory.Close()
+	ents, err := directory.ReadDir(-1)
 	if err != nil {
 		writeErr(w, 500, err.Error())
 		return

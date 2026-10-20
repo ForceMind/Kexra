@@ -124,6 +124,8 @@ func TestWorkspaceConfinedFileLifecycle(t *testing.T) {
 	}
 	request(s.wsMkdir, httptest.NewRequest("POST", "/api/workspace/mkdir", strings.NewReader("{\"path\":\"sub/nested\"}")), 200)
 	request(s.wsWrite, httptest.NewRequest("POST", "/api/workspace/write", strings.NewReader("{\"path\":\"sub/nested/evidence.txt\",\"content\":\"unchanged evidence\"}")), 200)
+	request(s.wsList, httptest.NewRequest("GET", "/api/workspace/list?path=sub/nested", nil), 200)
+	request(s.wsList, httptest.NewRequest("GET", "/api/workspace/list?path=", nil), 200)
 	read := request(s.wsRead, httptest.NewRequest("GET", "/api/workspace/read?path=sub/nested/evidence.txt", nil), 200)
 	if !strings.Contains(read.Body.String(), "unchanged evidence") {
 		t.Fatalf("content changed: %s", read.Body.String())
