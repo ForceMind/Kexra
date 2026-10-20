@@ -2,6 +2,15 @@
 
 更新时间：2026-10-20，北京时间。此文件记录事实与恢复入口；长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
 
+## 当前恢复入口（2026-10-20）
+
+- 已合并并验证：PR #16（默认 MCP 实际运行，合并 `6287962a736114ca270d8d074baafae2170ea1ac`）、PR #17（工作空间/附件文件边界，合并 `300f1958518cddd601e7438ca0bfeae0a41e78e4`）。恢复时必须重新回读 GitHub main，不能把这些历史 SHA 当成永远最新。
+- 工作空间默认 10 条 API 错误的中文化保存在 [PR #18](https://github.com/ForceMind/Kexra/pull/18)。代码 `5fe6ad790c43ed98d90f62258bcfb53e56909a62` 的 [专项验证](https://github.com/ForceMind/Kexra/actions/runs/39360407124) 为 **22 pass / 0 fail / 0 skip**，格式与 server vet 通过。真实 HTTP 固定中文断言和韩语原始证据/文件名原样保留均验证；不代表其余后端已全部中文化。
+- 未合并的供应链工作保存在 `codex/image-supply-chain-20261020` / [草稿 PR #15](https://github.com/ForceMind/Kexra/pull/15)。完整基线严重 8 / 高危 229，首个 Debian 13/npm 候选严重 4 / 高危 150，均未通过发布安全门槛；最新 Node 22.23.3 和后续合并主线没有重新执行镜像复扫，不能转移旧结果。
+- 本机 exec-server 连接已中断，最终分支/文档/验证都保存在 GitHub；本地是未同步的部分源码快照，不是完整远程仓库。不要据此覆盖远程，也不要将本地 synthetic SHA 当作远程 SHA。
+- 下一 P0：JWT 配置目录的真实路径与符号链接、管理员初始化并发、工具调用/出站权限；并继续 PR #15 的可修复系统补丁方案、浏览器/Node 内嵌组件及许可复核。P2 继续聊天附件及其他默认后端文案。
+- 仍不可正式发布；六套原工作流仍手动，没有镜像推送、正式标签、生产迁移或 ChatGPT 定时任务。
+
 ## 本次接管基线
 
 - 已回读 GitHub：`main` 为 `e4e5285698b075ccd8edba8cafcdb361b8d501c2`，与 10 月 15 日记录一致。
@@ -96,3 +105,20 @@ Linux amd64/arm64 原生镜像真实构建、Chromium 无网络页面、命令�
 P0 完整镜像审计仍阻塞发布：[初审](https://github.com/ForceMind/Kexra/actions/runs/39268345885) 严重 8 / 高危 229；[候选复扫](https://github.com/ForceMind/Kexra/actions/runs/39358072868) 严重 4 / 高危 150。升级/固定方案和完整审计门禁保存在 `codex/image-supply-chain-20261020` / [草稿 PR #15](https://github.com/ForceMind/Kexra/pull/15)，没有合并失败的候选，也没有忽略漏洞。
 
 工作空间符号链接越界已用临时文件复现，正在独立修复；本机 exec-server 连接中断后，本地编译/新文件写入不可用，后续通过 GitHub 保存代码并执行隔离验证。恢复时必须先回读远程 SHA，不依赖本地部分源码快照。
+
+## 已实现并通过隔离验证：工作空间与附件文件边界
+
+[PR #17](https://github.com/ForceMind/Kexra/pull/17)，代码 `055a3fbeef1e8f6f19d7f09dbe92b6f5e1241519`，[最终验证](https://github.com/ForceMind/Kexra/actions/runs/39360052527)。所有工作空间文件 I/O 与聊天附件创建/上传都通过 `os.Root`；下载使用受限文件句柄，不再由 ServeFile 重新打开路径；相对内部符号链接、中文文件名、二进制证据、Range 下载与正常文件生命周期保留。
+
+- 完整 server 上原始 handler 的 8 个越界回归全部失败，真实复现；修复后 Linux 全仓库 build/vet、server PostgreSQL 16 的 **407 pass / 0 fail / 1 skip**、工作空间/附件 race 回归通过。唯一跳过仍是需要私有外部模型配置的 `TestLiveContextReview`，没有调用外部模型。
+- Windows 原生完整 server 包的工作空间/附件定向回归通过，包括符号链接越界、嵌套目录和文件生命周期。没有以交叉编译代替运行。
+- [首次集成失败](https://github.com/ForceMind/Kexra/actions/runs/39359798489) 为共享 saveUpload 函数的聊天附件调用未同步；已修复并保留失败证据。回读 Go 1.26.9 标准库确认 Windows 的 FS 路径分隔约束后，目录列表改用受限目录句柄。
+- 本机仅在 exec-server 断开前执行实际 workspace 源码的临时 HTTP harness：原始 8 项失败、初次受限实现 8 项通过；最终完整集成结果来自上述隔离运行，不能冒称最终源码已在本机全仓库测试。
+
+无数据、证据、JWT 或配置迁移；绝对或越界符号链接会被拒绝，相对内部链接保留。`os.Root` 不代替 Agent/命令/MCP 的独立操作系统隔离，也不隔离 bind mount、设备文件或同一卷中的硬链接。回退源码会恢复原先文件边界风险，不能将其作为生产安全回退。
+
+后续：PR #15 的未修复系统漏洞与浏览器/Node 内嵌组件审计继续阻塞发布；继续工作空间中文化，并验证 JWT 配置目录的真实路径/符号链接、初始化并发和工具权限等独立 P0 边界。
+
+## 已实现并通过专项验证：工作空间默认中文
+
+PR #18 修改 `server/workspace.go` 的 10 条默认错误及 `server/workspace_localized_test.go`。纠正强制韩语的旧测试；5 条实际 HTTP 错误直接与固定中文展示比较，另验证包含韩语的文件名与原始证据内容不被翻译。专项结果为 22 个测试/子用例通过、零失败/跳过；不改状态码、表单、路径、原始底层错误或存储内容。完整 server DB 的 407 pass / 1 skip 属于 PR #17 的代码范围，不能自动当作新增本地化测试已执行全仓库/DB。
