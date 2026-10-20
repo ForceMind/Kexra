@@ -1,0 +1,101 @@
+name: Kexra One-Time Workspace Boundary Validation
+on:
+  push:
+    branches: [verify/kexra-workspace-root-20261020]
+    paths: [".github/workflows/kexra-workspace-root-once.yml"]
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: artex
+          POSTGRES_PASSWORD: ci-isolated-workspace-only
+          POSTGRES_DB: artex
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U artex -d artex"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 70a4583a43a669a435d94b177788d56f7e0b7f35
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.9"
+          cache: true
+      - name: Exact source, formatting, migration and docs
+        run: |
+          test "$(git rev-parse HEAD)" = 70a4583a43a669a435d94b177788d56f7e0b7f35
+          test -z "$(gofmt -l server/workspace.go server/workspace_security_test.go)"
+          python3 -I scripts/check-kexra-migration.py
+          python3 -I scripts/check-doc-links.py
+      - name: Verify all eight security regressions fail on original handler
+        run: |
+          trap 'git checkout -- server/workspace.go' EXIT
+          git show 998d5082778b8a469fc48e3b6ec72fbb28eeeefb:server/workspace.go > server/workspace.go
+          set +e
+          go test -json ./server -run '^TestWorkspaceSymlinksCannotEscape$' -count=1 > workspace-baseline.json
+          result=$?
+          set -e
+          test "$result" = 1
+          python3 - <<'PY'
+          import json
+          rows=[json.loads(line) for line in open('workspace-baseline.json') if line.strip()]
+          failed={r.get('Test') for r in rows if r.get('Action')=='fail' and r.get('Test','').startswith('TestWorkspaceSymlinksCannotEscape/')}
+          expected={'TestWorkspaceSymlinksCannotEscape/'+x for x in ['list','read','download','write','upload','mkdir','delete','file-link-read']}
+          assert failed==expected,failed
+          print('Original real server: all eight boundary regressions reproduced:',sorted(failed))
+          PY
+      - name: Build and vet full Go source
+        run: |
+          git diff --exit-code
+          go build ./...
+          go vet ./...
+      - name: Full server PostgreSQL integration
+        env:
+          ARTEX_PG_DSN: postgres://artex:ci-isolated-workspace-only@localhost:5432/artex?sslmode=disable
+        run: go test -json ./server -count=1 > workspace-server-postgres.json
+      - name: Workspace race regression
+        run: go test -race ./server -run '^TestWorkspace' -count=1
+      - name: Summarize real integration results
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json,collections,pathlib
+          p=pathlib.Path('workspace-server-postgres.json')
+          if p.exists():
+              rows=[json.loads(l) for l in p.read_text().splitlines() if l.strip()]
+              counts=collections.Counter(r['Action'] for r in rows if r.get('Test') and r['Action'] in ['pass','fail','skip'])
+              print('server PostgreSQL test/subtest counts',dict(counts))
+              print('skipped',[r.get('Test') for r in rows if r.get('Action')=='skip'])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workspace-linux-regression
+          path: workspace-*.json
+          retention-days: 14
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 70a4583a43a669a435d94b177788d56f7e0b7f35
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.9"
+          cache: true
+      - name: Native Windows full server package workspace tests
+        run: |
+          test "$(git rev-parse HEAD)" = 70a4583a43a669a435d94b177788d56f7e0b7f35
+          go test ./server -run '^TestWorkspace' -count=1 -v
