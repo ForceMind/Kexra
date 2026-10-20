@@ -165,3 +165,49 @@ func TestWorkspaceConfinedFileLifecycle(t *testing.T) {
 		t.Fatalf("delete failed: %v", err)
 	}
 }
+
+func TestChatUploadsCannotEscapeWorkspace(t *testing.T) {
+	for _, scope := range []string{"session", "staging"} {
+		t.Run(scope, func(t *testing.T) {
+			base := t.TempDir()
+			workspace, private := filepath.Join(base, "workspace"), filepath.Join(base, "private")
+			sub := "sessions"
+			if scope == "staging" {
+				sub = "drafts"
+			}
+			if err := os.MkdirAll(filepath.Join(workspace, sub, "fixture"), 0o700); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Mkdir(private, 0o700); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink(private, filepath.Join(workspace, sub, "fixture", "uploads")); err != nil {
+				t.Fatal(err)
+			}
+			var body bytes.Buffer
+			form := multipart.NewWriter(&body)
+			file, err := form.CreateFormFile("file", "new-attachment.txt")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := file.Write([]byte("fixture upload")); err != nil {
+				t.Fatal(err)
+			}
+			if err := form.Close(); err != nil {
+				t.Fatal(err)
+			}
+			req := httptest.NewRequest("POST", "/api/chat/upload?scope="+scope+"&id=fixture", &body)
+			req.Header.Set("Content-Type", form.FormDataContentType())
+			s := &Server{m: &Manager{dir: workspace}}
+			rec := httptest.NewRecorder()
+			s.chatUpload(rec, req)
+			entries, err := os.ReadDir(private)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(entries) != 0 || rec.Code < 400 {
+				t.Fatalf("chat upload escaped workspace: status=%d outside-files=%d body=%s", rec.Code, len(entries), rec.Body.String())
+			}
+		})
+	}
+}
