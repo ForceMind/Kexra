@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 18b5161d5454a494ac59b1418bcd0456a56be181
+          ref: 8f2f796282deb8eecbde81944ed00cac96b1d4b1
       - uses: actions/setup-node@v4
         with:
           node-version: "22.23.2"
@@ -37,7 +37,7 @@ jobs:
       - name: Verify native ARM64 host
         run: |
           test "$(uname -m)" = ${{ matrix.machine }}
-          test "$(git rev-parse HEAD)" = 18b5161d5454a494ac59b1418bcd0456a56be181
+          test "$(git rev-parse HEAD)" = 8f2f796282deb8eecbde81944ed00cac96b1d4b1
       - name: Browser dependency security and integrity gates
         run: |
           npm audit --prefix docker/browser-tools --package-lock-only --ignore-scripts --json > docker-browser-npm-audit.json
