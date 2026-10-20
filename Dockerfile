@@ -10,10 +10,15 @@
 #   mkdir -p server/webui && cp -r web/out server/webui/dist
 #   CGO_ENABLED=0 GOARCH=amd64 go build -tags embedui -o dist/amd64/kexra ./cmd/kexra
 #   docker build -t kexra:local .
-FROM node:22.23.2-bookworm-slim AS node-runtime
+FROM node:22.23.2-bookworm-slim@sha256:48e4b67d85f87bd551df43704e24d252f56cc5f8e9718841aace50f19948f0f9 AS node-runtime
+# npm 官方包携带其依赖；单独固定并核验，避免继承 Node 镜像中的旧 npm 漏洞。
+COPY docker/npm-runtime.json docker/install-npm-runtime.cjs /tmp/kexra-npm/
+RUN node /tmp/kexra-npm/install-npm-runtime.cjs && rm -rf /tmp/kexra-npm
 
-FROM python:3.12-slim-bookworm
+FROM python:3.12.15-slim-trixie@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
 ARG TARGETARCH
+# 固定经过验证的软件源快照；保留 Debian 签名校验，不追随浮动 apt 索引。
+COPY docker/debian.sources /etc/apt/sources.list.d/debian.sources
 
 # 使用明确版本的官方 Node 22 运行时，代替构建期执行远程 NodeSource 安装脚本。
 # Docker 会根据构建的目标平台选择相同架构的 Node 层。
@@ -24,7 +29,8 @@ RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 
 # 随镜像安装授权实验室中可能用到的基础网络诊断工具。
 # Node 已从上方精确版本的官方镜像复制，不执行远程 setup 脚本。
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends \
       ca-certificates ripgrep curl wget vim git jq unzip \
       dnsutils iputils-ping netcat-openbsd inetutils-telnet whois nmap \
       libstdc++6 libgcc-s1 \
