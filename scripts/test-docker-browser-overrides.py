@@ -11,14 +11,14 @@ entry.unlink()
 entry.write_text("#!/usr/local/bin/python3\nimport json,os,sys\nprint(json.dumps({'args':sys.argv[1:],'env':{k:v for k,v in os.environ.items() if k.startswith('PLAYWRIGHT_MCP_')}}))\n")
 entry.chmod(0o755)
 base = {k:v for k,v in os.environ.items() if not k.startswith('PLAYWRIGHT_MCP_')}
-def probe(args, extra=None):
+def probe(args, extra=None, expected_args=None):
     result = subprocess.run(['npx','@playwright/mcp',*args],env={**base,**(extra or {})},capture_output=True,text=True,timeout=15,check=True)
     data = json.loads(result.stdout)
-    assert data['args'] == args, data
+    assert data['args'] == (args if expected_args is None else expected_args), data
     return data['env']
-default = probe(['--headless'])
+default = probe(['--headless'], expected_args=['--headless','--no-sandbox'])
 assert pathlib.Path(default['PLAYWRIGHT_MCP_EXECUTABLE_PATH']).is_file(), default
-assert default['PLAYWRIGHT_MCP_NO_SANDBOX'] == 'true', default
+assert 'PLAYWRIGHT_MCP_NO_SANDBOX' not in default, default
 for args, extra in [
     (['--headless','--browser','firefox'],{}),
     (['--browser=firefox','--headless'],{}),

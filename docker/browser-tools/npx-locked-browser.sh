@@ -21,7 +21,7 @@ if [ "${1:-}" = "@playwright/mcp" ]; then
         # 当前镜像以 root 运行；Chromium 的 root 启动需要显式关闭其沙箱。
         # 尊重已有环境配置；此默认值不作用于显式选择的浏览器。
         if [ "$(id -u)" = 0 ] && [ "${PLAYWRIGHT_MCP_NO_SANDBOX+x}" != x ]; then
-            export PLAYWRIGHT_MCP_NO_SANDBOX=true
+            set -- "$@" --no-sandbox
         fi
     fi
     exec /opt/kexra-browser-tools/node_modules/.bin/playwright-mcp "$@"
