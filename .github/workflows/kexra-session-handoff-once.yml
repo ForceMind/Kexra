@@ -12,11 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: aeeb711cc2bbef5da8aaca7a6c0d44138da5f40b
+          ref: 9fb41801e0fe2f6dfd9c6c1afc63987be67204ce
           fetch-depth: 0
       - name: Final documentation, compatibility, tool integrity and license gates
         run: |
-          test "$(git rev-parse HEAD)" = aeeb711cc2bbef5da8aaca7a6c0d44138da5f40b
+          test "$(git rev-parse HEAD)" = 9fb41801e0fe2f6dfd9c6c1afc63987be67204ce
           python3 -I scripts/check-kexra-migration.py
           python3 -I scripts/check-doc-links.py
           python3 -I scripts/check-docker-toolchain.py
