@@ -11,7 +11,7 @@
 | Go 未导入包所在模块 | 含旧压缩库及 OpenPGP 告警 | 1 项：GO-2026-5932，未导入的 `golang.org/x/crypto/openpgp` | 见下方保留事项 |
 | Web CycloneDX SBOM | 已生成 | 基于修复后锁文件重新生成 | 复扫运行的 `dependency-security-repair-evidence` artifact |
 | Docker 浏览器工具 npm 锁文件 | 原先未形成锁文件 | **0 项**，已在两架构镜像验证 | [PR #13 验证](https://github.com/ForceMind/Kexra/actions/runs/39212481678) |
-| apt / 基础镜像 / 浏览器二进制 | 未审计 | **未完成 CVE 审计** | 不把工具 npm 审计当成完整镜像审计 |
+| 完整镜像识别组件 | 初扫严重 8 / 高危 229 | 候选严重 4 / 高危 150，**仍不通过** | 2026-10-20 增量如下，浏览器与内嵌组件未完成审计 |
 
 复扫使用 Go 1.26.9、Node 22.23.2。完整 Go build/vet/非数据库单测、selfupdate race、模块校验，以及 npm ci、Biome、Next 静态导出（30 页）、中韩键集、中文默认页面、第三方样式哈希、迁移和文档门禁均成功。此记录不包含数据库集成、Docker 镜像、生产或外部目标测试。
 
@@ -48,3 +48,15 @@ python3 -I scripts/check-web-vendor.py
 ~~~
 
 审计会查询公开漏洞数据库，结果随数据库更新而变化；每次保留工具版本、候选 SHA 和完整错误。不得把扫描器失败、网络错误或过滤严重级别后的结果记成零漏洞。Go 官方工具链版本可在 [下载清单](https://go.dev/dl/?mode=json) 核对。
+
+## 2026-10-20 完整镜像增量（发布阻塞）
+
+main 基线 `998d5082778b8a469fc48e3b6ec72fbb28eeeefb` 的 [真实 amd64 镜像初审](https://github.com/ForceMind/Kexra/actions/runs/39268345885) 识别 Debian 包 261、Node 包 205（含 npm 自带依赖）、Python 包 1、实际 Go 二进制包 51；发现次数为严重 8 / 高危 229 / 中危 341 / 低危 389 / 未知 13。Trivy 0.76.0 官方安装包经 SHA256 核验，最后门禁真实失败；这是组件与漏洞的出现次数，不是唯一 CVE 数或可利用性证明。
+
+artifact `kexra-full-image-audit-amd64`（14 天）保存 521 组件的镜像 SPDX、工具 CycloneDX、完整 Trivy JSON、基础层信息、镜像 ID、dpkg/运行时、浏览器版本/二进制 SHA256、安装许可文件和 SHA256 清单。许可归档不等于兼容性审查。Playwright 的 Chromium 和 Node 内 V8/OpenSSL 等二进制组件不因包扫描无告警而自动验收。
+
+[草稿 PR #15](https://github.com/ForceMind/Kexra/pull/15) 的首候选 `1484a50c91d386a06f0a34399c7ea58c2ac1e385` 尝试 Debian 13、固定镜像/apt 快照及 npm 12.2.1，[复扫](https://github.com/ForceMind/Kexra/actions/runs/39358072868) 为严重 4 / 高危 150 / 中危 239 / 低危 273 / 未知 13，SPDX 463 组件，仍失败。剩余严重/高危在系统层，报告无修复版本；没有删除有效诊断工具、忽略发现或降低严重性。该运行的 MCP outcome 也失败，后由独立 PR #16 修复；不能把允许失败的中间步骤 conclusion 当作真实 outcome。
+
+四项严重已核对 Debian 官方状态：[CVE-2019-16224](https://security-tracker.debian.org/tracker/CVE-2019-16224)、[16225](https://security-tracker.debian.org/tracker/CVE-2019-16225)、[16227](https://security-tracker.debian.org/tracker/CVE-2019-16227) 涉及仍未修复的 LMDB/恶意数据库文件；[CVE-2026-6653](https://security-tracker.debian.org/tracker/CVE-2026-6653) 在 trixie 的 libxml2 仍受影响。尚未完成产品可达性与安全兼容补丁验证，不以 no-dsa/minor 状态宣称已修复。
+
+本方案和审计脚本保存在 `codex/image-supply-chain-20261020`，尚未合并 main。后续 Node 22.23.3 和合入的主线修复没有重新镜像复扫，不能直接沿用首候选结果。当前未发布镜像/版本，不能混装 unstable 系统库或回移未经兼容验证的补丁来强行归零。
