@@ -90,7 +90,13 @@ func (s *Server) chatUpload(w http.ResponseWriter, r *http.Request) {
 		defer s.engine.decInflight(id)
 	}
 	dir := filepath.Join(s.m.dir, sub, id, "uploads")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	root, ok := s.wsOpenRoot(w)
+	if !ok {
+		return
+	}
+	defer root.Close()
+	dirName := s.wsRootName(dir)
+	if err := root.MkdirAll(dirName, 0o755); err != nil {
 		writeErr(w, 500, errChatUploadMkdir+err.Error())
 		return
 	}
@@ -99,6 +105,7 @@ func (s *Server) chatUpload(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, errChatUploadParse+err.Error())
 		return
 	}
+	defer r.MultipartForm.RemoveAll()
 	files := r.MultipartForm.File["file"]
 	if len(files) == 0 {
 		writeErr(w, 400, errChatUploadNoFile)
@@ -110,15 +117,36 @@ func (s *Server) chatUpload(w http.ResponseWriter, r *http.Request) {
 		if name == "" || name == "." || name == ".." || strings.ContainsAny(name, `/\`) {
 			continue
 		}
-		dest := uniqueUploadPath(dir, name)
-		if err := saveUpload(hdr, dest); err != nil {
+		dest, err := uniqueRootUploadPath(root, dirName, name)
+		if err != nil {
+			writeErr(w, 500, errChatUploadSaveFailed+err.Error())
+			return
+		}
+		if err := saveUpload(root, hdr, dest); err != nil {
 			writeErr(w, 500, errChatUploadSaveFailed+err.Error())
 			return
 		}
 		base := filepath.Base(dest)
-		out = append(out, chatAttachment{Name: base, Path: "uploads/" + base, Size: hdr.Size, Abs: dest})
+		out = append(out, chatAttachment{Name: base, Path: "uploads/" + base, Size: hdr.Size, Abs: filepath.Join(dir, base)})
 	}
 	writeJSON(w, 200, map[string]any{"attachments": out})
+}
+
+// uniqueRootUploadPath keeps collision checks and the eventual write beneath the same root.
+func uniqueRootUploadPath(root *os.Root, dir, name string) (string, error) {
+	ext := filepath.Ext(name)
+	stem := strings.TrimSuffix(name, ext)
+	for i := 0; ; i++ {
+		candidate := filepath.Join(dir, name)
+		if i > 0 {
+			candidate = filepath.Join(dir, fmt.Sprintf("%s-%d%s", stem, i, ext))
+		}
+		if _, err := root.Stat(candidate); os.IsNotExist(err) {
+			return candidate, nil
+		} else if err != nil {
+			return "", err
+		}
+	}
 }
 
 // uniqueUploadPath returns dir/name, or dir/name-1, dir/name-2… when it already exists,

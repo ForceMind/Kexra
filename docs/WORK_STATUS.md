@@ -2,18 +2,14 @@
 
 更新时间：2026-10-20，北京时间。此文件记录事实与恢复入口；长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
 
-## 当前开发中：完整镜像供应链
+## 当前恢复入口（2026-10-20）
 
-2026-10-20 回读 GitHub，主线仍为 `998d5082778b8a469fc48e3b6ec72fbb28eeeefb`；PR #9/#11/#12/#13/#14 均已合并，无正式 Release。当前开发分支 `codex/image-supply-chain-20261020`，[草稿 PR #15](https://github.com/ForceMind/Kexra/pull/15)。
-
-- **已完成并验证**：[完整镜像基线审计](https://github.com/ForceMind/Kexra/actions/runs/39268345885) 真正构建当前应用镜像，生成 521 组件的 SPDX、工具 CycloneDX、运行时与 dpkg 清单、许可文件及 SHA256；Trivy 0.76.0 安装包经官方发布 SHA256 核验。实际发现为严重 8 / 高危 229 / 中危 341 / 低危 389 / 未知 13（组件与漏洞的出现次数，不是唯一 CVE 数量），最后门禁失败；不把扫描执行成功写成安全通过。
-- **开发中**：Python 3.12.15 / Debian 13 基础层 digest、Node digest、Debian 签名快照、SHA512 固定的官方 npm 12.2.1；完整镜像审计覆盖门禁与无网络真实 MCP 协议/页面交互测试。代码初始提交 `1484a50c91d386a06f0a34399c7ea58c2ac1e385` 的 [复扫](https://github.com/ForceMind/Kexra/actions/runs/39358072868) 为严重 4 / 高危 150，仍失败；463 组件 SPDX 已生成。后续 Node 22.23.3 尚未重新构建，不把初次结果转移到新提交。
-- **已完成并验证**：本地审计门禁 5 项回归、Docker 静态检查、Node 语法、Python 语法与定向缓存编译、diff 空白检查通过。默认 Python 编译缓存因沙箱不可写失败，改用 `/tmp/kexra-pycache` 后通过；本机仍缺少 Docker，不能声明本机镜像通过。
-- **阻塞**：完整镜像高危/严重发现尚未消除；浏览器及 Node 内嵌组件并非 Trivy 包识别的完整覆盖，许可文件归档也不能替代逐项许可审查。禁止正式发布；等待复扫后记录可修复项、保留风险及兼容性证据。
-
-初次真实 MCP 调用发现默认系统 Chrome 不存在；独立修复保存在 `codex/docker-mcp-runtime-20261020` / [PR #16](https://github.com/ForceMind/Kexra/pull/16)，最终测试提交 `8f2f796282deb8eecbde81944ed00cac96b1d4b1` 已通过 Linux amd64/arm64 原生真实 MCP、配置覆盖、新旧登录、JWT 持久化及 DB 恢复。PR #16 已合并为 `6287962a736114ca270d8d074baafae2170ea1ac`。无数据库或用户配置变更。
-
-此前源码读取调用被用户中断，期间没有继续后台开发；恢复后重新核实主线与已启动的 Actions 结果。
+- 已合并并验证：PR #16（默认 MCP 实际运行，合并 `6287962a736114ca270d8d074baafae2170ea1ac`）、PR #17（工作空间/附件文件边界，合并 `300f1958518cddd601e7438ca0bfeae0a41e78e4`）。恢复时必须重新回读 GitHub main，不能把这些历史 SHA 当成永远最新。
+- 工作空间默认 10 条 API 错误的中文化保存在 [PR #18](https://github.com/ForceMind/Kexra/pull/18)。代码 `5fe6ad790c43ed98d90f62258bcfb53e56909a62` 的 [专项验证](https://github.com/ForceMind/Kexra/actions/runs/39360407124) 为 **22 pass / 0 fail / 0 skip**，格式与 server vet 通过。真实 HTTP 固定中文断言和韩语原始证据/文件名原样保留均验证；不代表其余后端已全部中文化。
+- 未合并的供应链工作保存在 `codex/image-supply-chain-20261020` / [草稿 PR #15](https://github.com/ForceMind/Kexra/pull/15)。完整基线严重 8 / 高危 229，首个 Debian 13/npm 候选严重 4 / 高危 150，均未通过发布安全门槛；最新 Node 22.23.3 和后续合并主线没有重新执行镜像复扫，不能转移旧结果。
+- 本机 exec-server 连接已中断，最终分支/文档/验证都保存在 GitHub；本地是未同步的部分源码快照，不是完整远程仓库。不要据此覆盖远程，也不要将本地 synthetic SHA 当作远程 SHA。
+- 下一 P0：JWT 配置目录的真实路径与符号链接、管理员初始化并发、工具调用/出站权限；并继续 PR #15 的可修复系统补丁方案、浏览器/Node 内嵌组件及许可复核。P2 继续聊天附件及其他默认后端文案。
+- 仍不可正式发布；六套原工作流仍手动，没有镜像推送、正式标签、生产迁移或 ChatGPT 定时任务。
 
 ## 本次接管基线
 
@@ -102,4 +98,27 @@ Linux amd64/arm64 原生镜像真实构建、Chromium 无网络页面、命令�
 3. 核对 PR #13/#14 的最终合并与验证状态，随后按路线优先完成完整镜像 SBOM/CVE 和基础层/digest 复核；保留未导入 OpenPGP 模块告警与 CLI/MCP 子依赖兼容记录。
 4. 有客观阻塞时保留分支和真实结果，继续处理独立任务。六套正式 Actions 不恢复自动触发。
 
-工作空间边界独立修复见 [PR #17](https://github.com/ForceMind/Kexra/pull/17)：完整 server 复现 8 项越界失败；首次集成因共享上传函数签名未同步聊天附件而失败，已修正并重测。本机 exec-server 断开后没有继续本地测试，源码与真实验证保存在 GitHub。
+## 2026-10-20 增量：默认 MCP 实际运行
+
+[PR #16](https://github.com/ForceMind/Kexra/pull/16) 修复默认 browser MCP 查找不存在的系统 Chrome，以及 root Chromium 需要显式 sandbox 参数的问题。代码提交 `8f2f796282deb8eecbde81944ed00cac96b1d4b1` 的 [两架构原生验证](https://github.com/ForceMind/Kexra/actions/runs/39359004374) 全部通过：完整镜像构建、真实无网络 MCP 初始化/工具/页面交互/中文快照、9 种自定义配置保留、常规 npx、新旧登录/Cookie、容器重建后 JWT 与数据库备份恢复。只改限定入口及验证脚本，无数据迁移、镜像推送或正式发布；root 浏览器关闭 Chromium 沙箱的边界见部署说明。
+
+P0 完整镜像审计仍阻塞发布：[初审](https://github.com/ForceMind/Kexra/actions/runs/39268345885) 严重 8 / 高危 229；[候选复扫](https://github.com/ForceMind/Kexra/actions/runs/39358072868) 严重 4 / 高危 150。升级/固定方案和完整审计门禁保存在 `codex/image-supply-chain-20261020` / [草稿 PR #15](https://github.com/ForceMind/Kexra/pull/15)，没有合并失败的候选，也没有忽略漏洞。
+
+工作空间符号链接越界已用临时文件复现，正在独立修复；本机 exec-server 连接中断后，本地编译/新文件写入不可用，后续通过 GitHub 保存代码并执行隔离验证。恢复时必须先回读远程 SHA，不依赖本地部分源码快照。
+
+## 已实现并通过隔离验证：工作空间与附件文件边界
+
+[PR #17](https://github.com/ForceMind/Kexra/pull/17)，代码 `055a3fbeef1e8f6f19d7f09dbe92b6f5e1241519`，[最终验证](https://github.com/ForceMind/Kexra/actions/runs/39360052527)。所有工作空间文件 I/O 与聊天附件创建/上传都通过 `os.Root`；下载使用受限文件句柄，不再由 ServeFile 重新打开路径；相对内部符号链接、中文文件名、二进制证据、Range 下载与正常文件生命周期保留。
+
+- 完整 server 上原始 handler 的 8 个越界回归全部失败，真实复现；修复后 Linux 全仓库 build/vet、server PostgreSQL 16 的 **407 pass / 0 fail / 1 skip**、工作空间/附件 race 回归通过。唯一跳过仍是需要私有外部模型配置的 `TestLiveContextReview`，没有调用外部模型。
+- Windows 原生完整 server 包的工作空间/附件定向回归通过，包括符号链接越界、嵌套目录和文件生命周期。没有以交叉编译代替运行。
+- [首次集成失败](https://github.com/ForceMind/Kexra/actions/runs/39359798489) 为共享 saveUpload 函数的聊天附件调用未同步；已修复并保留失败证据。回读 Go 1.26.9 标准库确认 Windows 的 FS 路径分隔约束后，目录列表改用受限目录句柄。
+- 本机仅在 exec-server 断开前执行实际 workspace 源码的临时 HTTP harness：原始 8 项失败、初次受限实现 8 项通过；最终完整集成结果来自上述隔离运行，不能冒称最终源码已在本机全仓库测试。
+
+无数据、证据、JWT 或配置迁移；绝对或越界符号链接会被拒绝，相对内部链接保留。`os.Root` 不代替 Agent/命令/MCP 的独立操作系统隔离，也不隔离 bind mount、设备文件或同一卷中的硬链接。回退源码会恢复原先文件边界风险，不能将其作为生产安全回退。
+
+后续：PR #15 的未修复系统漏洞与浏览器/Node 内嵌组件审计继续阻塞发布；继续工作空间中文化，并验证 JWT 配置目录的真实路径/符号链接、初始化并发和工具权限等独立 P0 边界。
+
+## 已实现并通过专项验证：工作空间默认中文
+
+PR #18 修改 `server/workspace.go` 的 10 条默认错误及 `server/workspace_localized_test.go`。纠正强制韩语的旧测试；5 条实际 HTTP 错误直接与固定中文展示比较，另验证包含韩语的文件名与原始证据内容不被翻译。专项结果为 22 个测试/子用例通过、零失败/跳过；不改状态码、表单、路径、原始底层错误或存储内容。完整 server DB 的 407 pass / 1 skip 属于 PR #17 的代码范围，不能自动当作新增本地化测试已执行全仓库/DB。

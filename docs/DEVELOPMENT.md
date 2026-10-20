@@ -83,3 +83,5 @@ CI 通过 `.github/workflows/ci.yml`、`web.yml`、`docs.yml` 和 `detections.ym
 - `config.example.json` 与 Docker 的不同默认端口；
 - 各种 `ARTEX_*` 字段是否只作兼容，而非可立即删除；
 - GitHub Actions 因平台原因在执行测试前失败时，不应将状态写成“测试通过”。
+
+工作空间与聊天附件文件边界回归：`go test ./server -run '^(TestWorkspace|TestChatUploadsCannotEscapeWorkspace)' -count=1`。完整 server DB 集成仍须 PostgreSQL 16 与 `ARTEX_PG_DSN`；主线 PR #17/#18 的验证范围见 [工作状态](WORK_STATUS.md)。

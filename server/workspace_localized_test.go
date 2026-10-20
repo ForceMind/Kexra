@@ -7,12 +7,10 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"unicode"
 )
 
-// TestWorkspaceErrorConstantsLocalized guards F3b (workspace.go): every user-facing
-// error string the workspace file manager hands back must be Korean (Hangul present,
-// no Chinese Han). Reverting any literal to Chinese fails this test. The constants
-// are DB-independent, so this always runs (no postgres needed).
+// TestWorkspaceErrorConstantsLocalized checks default messages only, not raw evidence or errors.
 func TestWorkspaceErrorConstantsLocalized(t *testing.T) {
 	for label, msg := range map[string]string{
 		"illegalPath":      errWsIllegalPath,
@@ -26,7 +24,7 @@ func TestWorkspaceErrorConstantsLocalized(t *testing.T) {
 		"uploadParse":      errWsUploadParse,
 		"noUploadFile":     errWsNoUploadFile,
 	} {
-		assertKoreanError(t, label, msg)
+		assertWorkspaceChineseError(t, label, msg)
 	}
 }
 
@@ -42,10 +40,7 @@ func wsErrBody(t *testing.T, rec *httptest.ResponseRecorder) string {
 	return out.Error
 }
 
-// TestWorkspaceHandlerResponsesLocalized drives the workspace file-manager handlers
-// over real HTTP. They only touch s.m.dir and the filesystem (never s.m.pg), so a
-// temp-dir Manager is enough — no DB. This proves the Korean constants actually land
-// in the HTTP response body, not just that the constants are Korean.
+// TestWorkspaceHandlerResponsesLocalized verifies actual Chinese HTTP error bodies without a DB.
 func TestWorkspaceHandlerResponsesLocalized(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(dir, "sub"), 0o755); err != nil {
@@ -60,11 +55,11 @@ func TestWorkspaceHandlerResponsesLocalized(t *testing.T) {
 		code    int
 		want    string
 	}{
-		{"read-missing", s.wsRead, httptest.NewRequest(http.MethodGet, "/api/workspace/read?path=nope.txt", nil), 404, errWsFileNotFound},
-		{"read-dir", s.wsRead, httptest.NewRequest(http.MethodGet, "/api/workspace/read?path=sub", nil), 400, errWsIsDir},
-		{"list-missing", s.wsList, httptest.NewRequest(http.MethodGet, "/api/workspace/list?path=nope", nil), 404, errWsPathNotFound},
-		{"list-not-dir", s.wsList, nil, 400, errWsNotDir}, // req built below (needs a real file)
-		{"delete-root", s.wsDelete, httptest.NewRequest(http.MethodDelete, "/api/workspace/delete?path=", nil), 400, errWsCannotDeleteRoot},
+		{"read-missing", s.wsRead, httptest.NewRequest(http.MethodGet, "/api/workspace/read?path=nope.txt", nil), 404, "文件不存在"},
+		{"read-dir", s.wsRead, httptest.NewRequest(http.MethodGet, "/api/workspace/read?path=sub", nil), 400, "该路径是目录，无法作为文件读取"},
+		{"list-missing", s.wsList, httptest.NewRequest(http.MethodGet, "/api/workspace/list?path=nope", nil), 404, "路径不存在"},
+		{"list-not-dir", s.wsList, nil, 400, "不是目录"}, // req built below (needs a real file)
+		{"delete-root", s.wsDelete, httptest.NewRequest(http.MethodDelete, "/api/workspace/delete?path=", nil), 400, "不能删除工作空间根目录"},
 	}
 
 	// list-not-dir needs an actual file to point at.
@@ -84,7 +79,42 @@ func TestWorkspaceHandlerResponsesLocalized(t *testing.T) {
 			if got != c.want {
 				t.Fatalf("error = %q, want %q", got, c.want)
 			}
-			assertKoreanError(t, c.name, got)
+			assertWorkspaceChineseError(t, c.name, got)
 		})
+	}
+}
+
+func assertWorkspaceChineseError(t *testing.T, label, message string) {
+	t.Helper()
+	hasHan := false
+	for _, r := range message {
+		if unicode.Is(unicode.Hangul, r) {
+			t.Fatalf("%s still contains a legacy default Korean message: %q", label, message)
+		}
+		hasHan = hasHan || unicode.Is(unicode.Han, r)
+	}
+	if !hasHan {
+		t.Fatalf("%s has no Chinese display text: %q", label, message)
+	}
+}
+
+func TestWorkspaceEvidenceTextIsNotTranslated(t *testing.T) {
+	dir := t.TempDir()
+	name, content := "원본-证据.txt", "원본 증거 / raw payload: 사용자 원문"
+	if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	s := &Server{m: &Manager{dir: dir}}
+	rec := httptest.NewRecorder()
+	s.wsRead(rec, httptest.NewRequest(http.MethodGet, "/api/workspace/read?path="+name, nil))
+	if rec.Code != 200 {
+		t.Fatalf("status=%d body=%s", rec.Code, rec.Body.String())
+	}
+	var body map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if body["content"] != content || body["path"] != name {
+		t.Fatalf("evidence or filename changed: %v", body)
 	}
 }
