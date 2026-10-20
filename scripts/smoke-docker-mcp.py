@@ -88,7 +88,10 @@ def main() -> None:
             print("MCP tools/list → navigate → evaluate/click → snapshot → close：通过（容器无网络）", flush=True)
         finally:
             selector.close()
-            proc.stdin.close()
+            try:
+                proc.stdin.close()
+            except BrokenPipeError:
+                pass
             subprocess.run(["docker", "rm", "-f", name], capture_output=True, timeout=15, check=False)
             try:
                 proc.wait(timeout=10)

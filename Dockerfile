@@ -10,7 +10,7 @@
 #   mkdir -p server/webui && cp -r web/out server/webui/dist
 #   CGO_ENABLED=0 GOARCH=amd64 go build -tags embedui -o dist/amd64/kexra ./cmd/kexra
 #   docker build -t kexra:local .
-FROM node:22.23.2-bookworm-slim@sha256:48e4b67d85f87bd551df43704e24d252f56cc5f8e9718841aace50f19948f0f9 AS node-runtime
+FROM node:22.23.3-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392 AS node-runtime
 # npm 官方包携带其依赖；单独固定并核验，避免继承 Node 镜像中的旧 npm 漏洞。
 COPY docker/npm-runtime.json docker/install-npm-runtime.cjs /tmp/kexra-npm/
 RUN node /tmp/kexra-npm/install-npm-runtime.cjs && rm -rf /tmp/kexra-npm

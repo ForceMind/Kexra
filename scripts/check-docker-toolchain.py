@@ -21,7 +21,7 @@ def require(condition: bool, message: str) -> None:
         errors.append(message)
 
 
-require("FROM node:22.23.2-bookworm-slim@sha256:48e4b67d85f87bd551df43704e24d252f56cc5f8e9718841aace50f19948f0f9 AS node-runtime" in dockerfile,
+require("FROM node:22.23.3-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392 AS node-runtime" in dockerfile,
         "Node 运行时未采用预定的版本化官方镜像")
 require("FROM python:3.12.15-slim-trixie@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1" in dockerfile,
         "Python / Debian 基础镜像未固定到已审查的多架构 digest")
