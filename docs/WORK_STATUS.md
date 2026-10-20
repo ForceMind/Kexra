@@ -7,9 +7,11 @@
 2026-10-20 回读 GitHub，主线仍为 `998d5082778b8a469fc48e3b6ec72fbb28eeeefb`；PR #9/#11/#12/#13/#14 均已合并，无正式 Release。当前开发分支 `codex/image-supply-chain-20261020`，[草稿 PR #15](https://github.com/ForceMind/Kexra/pull/15)。
 
 - **已完成并验证**：[完整镜像基线审计](https://github.com/ForceMind/Kexra/actions/runs/39268345885) 真正构建当前应用镜像，生成 521 组件的 SPDX、工具 CycloneDX、运行时与 dpkg 清单、许可文件及 SHA256；Trivy 0.76.0 安装包经官方发布 SHA256 核验。实际发现为严重 8 / 高危 229 / 中危 341 / 低危 389 / 未知 13（组件与漏洞的出现次数，不是唯一 CVE 数量），最后门禁失败；不把扫描执行成功写成安全通过。
-- **开发中**：Python 3.12.15 / Debian 13 基础层 digest、Node digest、Debian 签名快照、SHA512 固定的官方 npm 12.2.1；完整镜像审计覆盖门禁与无网络真实 MCP 协议/页面交互测试。代码初始提交 `1484a50c91d386a06f0a34399c7ea58c2ac1e385`，隔离复测尚未完成。
+- **开发中**：Python 3.12.15 / Debian 13 基础层 digest、Node digest、Debian 签名快照、SHA512 固定的官方 npm 12.2.1；完整镜像审计覆盖门禁与无网络真实 MCP 协议/页面交互测试。代码初始提交 `1484a50c91d386a06f0a34399c7ea58c2ac1e385` 的 [复扫](https://github.com/ForceMind/Kexra/actions/runs/39358072868) 为严重 4 / 高危 150，仍失败；463 组件 SPDX 已生成。后续 Node 22.23.3 尚未重新构建，不把初次结果转移到新提交。
 - **已完成并验证**：本地审计门禁 5 项回归、Docker 静态检查、Node 语法、Python 语法与定向缓存编译、diff 空白检查通过。默认 Python 编译缓存因沙箱不可写失败，改用 `/tmp/kexra-pycache` 后通过；本机仍缺少 Docker，不能声明本机镜像通过。
 - **阻塞**：完整镜像高危/严重发现尚未消除；浏览器及 Node 内嵌组件并非 Trivy 包识别的完整覆盖，许可文件归档也不能替代逐项许可审查。禁止正式发布；等待复扫后记录可修复项、保留风险及兼容性证据。
+
+初次真实 MCP 调用发现默认系统 Chrome 不存在；独立修复保存在 `codex/docker-mcp-runtime-20261020` / [PR #16](https://github.com/ForceMind/Kexra/pull/16)，测试提交 `18b5161d5454a494ac59b1418bcd0456a56be181` 的 Linux amd64/arm64 原生验证进行中。无数据库或用户配置变更。
 
 此前源码读取调用被用户中断，期间没有继续后台开发；恢复后重新核实主线与已启动的 Actions 结果。
 

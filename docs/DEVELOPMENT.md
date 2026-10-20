@@ -45,9 +45,13 @@ python3 -I scripts/check-i18n-keys.py
 python3 -I scripts/check-web-zh.py
 python3 -I scripts/check-doc-links.py
 python3 -I scripts/check-web-vendor.py
+python3 -I scripts/check-docker-toolchain.py
+python3 -I scripts/test-image-audit.py
 ~~~
 
 `check-web-zh.py` 需要先生成 `web/out`；其静态 HTML 检查**不能证明**运行时 API/Mock/Agent 输出已全部中文化。
+
+真实镜像漏洞/SBOM 与无网络 MCP 协议验证命令见 [依赖安全审计](DEPENDENCY_SECURITY.md)。这类测试需要 Docker 及已构建的完整应用镜像，不能以静态工具链检查代替。
 
 **GitHub Actions 节省额度状态**：当前 `main` 的 CI、文档、前端、检测规则、外链周检及 Release 工作流仍为手动触发（`workflow_dispatch`）；不会因 push、PR 或定时任务自动运行。仓库已公开，但自动门禁的恢复需单独检查运行费用、安全边界与范围。
 
