@@ -1,0 +1,38 @@
+name: Kexra One-Time Workspace Chinese Regression
+on:
+  push:
+    branches: [verify/kexra-workspace-zh-20261020]
+    paths: [".github/workflows/kexra-workspace-zh-once.yml"]
+permissions:
+  contents: read
+jobs:
+  localized:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 5fe6ad790c43ed98d90f62258bcfb53e56909a62
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.9"
+          cache: true
+      - name: Exact source, Go format and localized real HTTP regression
+        run: |
+          test "$(git rev-parse HEAD)" = 5fe6ad790c43ed98d90f62258bcfb53e56909a62
+          test -z "$(gofmt -l server/workspace.go server/workspace_localized_test.go)"
+          go test -json ./server -run '^(TestWorkspace|TestChatUploadsCannotEscapeWorkspace)' -count=1 > workspace-zh.json
+          go vet ./server
+          python3 - <<'PY'
+          import json,collections
+          rows=[json.loads(l) for l in open('workspace-zh.json') if l.strip()]
+          counts=collections.Counter(r['Action'] for r in rows if r.get('Test') and r['Action'] in ['pass','fail','skip'])
+          print('Chinese workspace and boundary test/subtest counts:',dict(counts))
+          assert counts['fail']==0 and counts['skip']==0 and counts['pass']>0,counts
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workspace-zh-results
+          path: workspace-zh.json
+          retention-days: 14
