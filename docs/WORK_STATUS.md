@@ -11,7 +11,7 @@
 - **已完成并验证**：本地审计门禁 5 项回归、Docker 静态检查、Node 语法、Python 语法与定向缓存编译、diff 空白检查通过。默认 Python 编译缓存因沙箱不可写失败，改用 `/tmp/kexra-pycache` 后通过；本机仍缺少 Docker，不能声明本机镜像通过。
 - **阻塞**：完整镜像高危/严重发现尚未消除；浏览器及 Node 内嵌组件并非 Trivy 包识别的完整覆盖，许可文件归档也不能替代逐项许可审查。禁止正式发布；等待复扫后记录可修复项、保留风险及兼容性证据。
 
-初次真实 MCP 调用发现默认系统 Chrome 不存在；独立修复保存在 `codex/docker-mcp-runtime-20261020` / [PR #16](https://github.com/ForceMind/Kexra/pull/16)，测试提交 `18b5161d5454a494ac59b1418bcd0456a56be181` 的 Linux amd64/arm64 原生验证进行中。无数据库或用户配置变更。
+初次真实 MCP 调用发现默认系统 Chrome 不存在；独立修复保存在 `codex/docker-mcp-runtime-20261020` / [PR #16](https://github.com/ForceMind/Kexra/pull/16)，最终测试提交 `8f2f796282deb8eecbde81944ed00cac96b1d4b1` 已通过 Linux amd64/arm64 原生真实 MCP、配置覆盖、新旧登录、JWT 持久化及 DB 恢复。PR #16 已合并为 `6287962a736114ca270d8d074baafae2170ea1ac`。无数据库或用户配置变更。
 
 此前源码读取调用被用户中断，期间没有继续后台开发；恢复后重新核实主线与已启动的 Actions 结果。
 
@@ -101,3 +101,5 @@ Linux amd64/arm64 原生镜像真实构建、Chromium 无网络页面、命令�
 2. 阅读 `AGENTS.md`、本文件和路线，避免把历史验收当成当前提交的测试结果。
 3. 核对 PR #13/#14 的最终合并与验证状态，随后按路线优先完成完整镜像 SBOM/CVE 和基础层/digest 复核；保留未导入 OpenPGP 模块告警与 CLI/MCP 子依赖兼容记录。
 4. 有客观阻塞时保留分支和真实结果，继续处理独立任务。六套正式 Actions 不恢复自动触发。
+
+工作空间边界独立修复见 [PR #17](https://github.com/ForceMind/Kexra/pull/17)：完整 server 复现 8 项越界失败；首次集成因共享上传函数签名未同步聊天附件而失败，已修正并重测。本机 exec-server 断开后没有继续本地测试，源码与真实验证保存在 GitHub。

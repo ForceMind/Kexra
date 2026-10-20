@@ -76,7 +76,11 @@ python3 -I scripts/check-docker-toolchain.py
 
 浏览器工具安装在 `/opt/kexra-browser-tools`，CLI 通过 PATH 使用。内置 browser MCP 的历史默认命令 `npx @playwright/mcp` 由一个限定入口直接交给已锁定的 `playwright-mcp`；其他包、显式版本和 npx 参数交给原始 CLI，不改数据库或用户配置。
 
-这只验证 MCP/CLI 入口与独立浏览器启动，**未验证完整 MCP 浏览器协议/业务调用**。锁文件保留当前 CLI/MCP 自带的固定 alpha Playwright 依赖，不把顶层 `playwright@1.64.1` 的成功当作全部子组件兼容证明。
+上述 PR #13 只验证入口与独立浏览器。后续 PR #16 的真实协议回归发现默认 MCP 查找未安装的系统 Chrome，现已将未指定浏览器的调用指向锁定 Chromium，并为当前 root 镜像显式提供 `--no-sandbox`。这会关闭 Chromium 的进程沙箱；容器必须留在授权隔离实验室，不能据此认定具备生产级浏览器隔离。
+
+测试提交 `8f2f796282deb8eecbde81944ed00cac96b1d4b1` 已通过 [Linux amd64/arm64 原生验证](https://github.com/ForceMind/Kexra/actions/runs/39359004374)：在无网络容器中完成 MCP initialize、tools/list、browser_navigate、页面交互、中文 snapshot 与 close；9 种参数/环境/配置覆盖、显式沙箱偏好与其他 npx 入口均保留。两架构重新验证了应用启动、旧登录/Cookie、容器重建后的 JWT 及 PostgreSQL 恢复。首次修复的沙箱环境变量未生效，[失败运行](https://github.com/ForceMind/Kexra/actions/runs/39358684950) 保留；改为显式参数后通过。
+
+锁文件继续保留 CLI/MCP 的固定 alpha Playwright 依赖；本轮验证了该 MCP 与顶层 Chromium 的上述组合，未覆盖其他浏览器、自定义可执行文件、外部网站或全部工具调用。显式浏览器/路径/配置保持用户选择，不自动下载浏览器或改写数据库。
 
 工具锁文件 npm 审计各严重级别均为 0。运行 artifact 保存工具 CycloneDX SBOM、dpkg 清单、Go 构建信息和本地镜像 ID；这些不是完整镜像 CVE 通过证明，也不覆盖所有打包在组件内部的代码。基础镜像 digest、apt、浏览器/嵌入组件及完整镜像 SBOM/CVE 仍为发布门槛。
 
