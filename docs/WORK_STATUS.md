@@ -1,6 +1,6 @@
 # Kexra 当前状态与交接
 
-更新时间：2026-10-19，北京时间。此文件记录事实与恢复入口；长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
+更新时间：2026-10-20，北京时间。此文件记录事实与恢复入口；长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
 
 ## 本次接管基线
 
@@ -88,3 +88,11 @@ Linux amd64/arm64 原生镜像真实构建、Chromium 无网络页面、命令�
 2. 阅读 `AGENTS.md`、本文件和路线，避免把历史验收当成当前提交的测试结果。
 3. 核对 PR #13/#14 的最终合并与验证状态，随后按路线优先完成完整镜像 SBOM/CVE 和基础层/digest 复核；保留未导入 OpenPGP 模块告警与 CLI/MCP 子依赖兼容记录。
 4. 有客观阻塞时保留分支和真实结果，继续处理独立任务。六套正式 Actions 不恢复自动触发。
+
+## 2026-10-20 增量：默认 MCP 实际运行
+
+[PR #16](https://github.com/ForceMind/Kexra/pull/16) 修复默认 browser MCP 查找不存在的系统 Chrome，以及 root Chromium 需要显式 sandbox 参数的问题。代码提交 `8f2f796282deb8eecbde81944ed00cac96b1d4b1` 的 [两架构原生验证](https://github.com/ForceMind/Kexra/actions/runs/39359004374) 全部通过：完整镜像构建、真实无网络 MCP 初始化/工具/页面交互/中文快照、9 种自定义配置保留、常规 npx、新旧登录/Cookie、容器重建后 JWT 与数据库备份恢复。只改限定入口及验证脚本，无数据迁移、镜像推送或正式发布；root 浏览器关闭 Chromium 沙箱的边界见部署说明。
+
+P0 完整镜像审计仍阻塞发布：[初审](https://github.com/ForceMind/Kexra/actions/runs/39268345885) 严重 8 / 高危 229；[候选复扫](https://github.com/ForceMind/Kexra/actions/runs/39358072868) 严重 4 / 高危 150。升级/固定方案和完整审计门禁保存在 `codex/image-supply-chain-20261020` / [草稿 PR #15](https://github.com/ForceMind/Kexra/pull/15)，没有合并失败的候选，也没有忽略漏洞。
+
+工作空间符号链接越界已用临时文件复现，正在独立修复；本机 exec-server 连接中断后，本地编译/新文件写入不可用，后续通过 GitHub 保存代码并执行隔离验证。恢复时必须先回读远程 SHA，不依赖本地部分源码快照。
