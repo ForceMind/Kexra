@@ -23,6 +23,7 @@ class ImageAuditTests(unittest.TestCase):
                 "debian", "node-pkg", "python-pkg", "gobinary",
             )],
         }
+        self.report["Results"][-1]["Target"] = "app/kexra"
         self.sbom = {"spdxVersion": "SPDX-2.3", "packages": [{"name": "fixture"}]}
 
     def test_empty_or_source_reports_are_rejected(self):
@@ -66,6 +67,56 @@ class ImageAuditTests(unittest.TestCase):
         summary = audit.summarize(self.report, self.sbom)
         self.assertEqual(summary["blockers"], [])
         self.assertEqual(set(summary["coverage"]), {"debian", "node-pkg", "python-pkg", "gobinary"})
+
+    def test_actual_application_target_accepts_container_path_spellings(self):
+        for target in ("app/kexra", "/app/kexra"):
+            report = copy.deepcopy(self.report)
+            report["Results"][-1]["Target"] = target
+            with self.subTest(target=target):
+                self.assertEqual(audit.summarize(report, self.sbom)["blockers"], [])
+
+    def test_unrelated_or_missing_go_target_cannot_replace_application(self):
+        for target in (None, "", "/tmp/kexra", "/app/kexra.bak", "/app/other/kexra", "app/../app/kexra"):
+            report = copy.deepcopy(self.report)
+            if target is None:
+                del report["Results"][-1]["Target"]
+            else:
+                report["Results"][-1]["Target"] = target
+            with self.subTest(target=target), self.assertRaises(ValueError):
+                audit.summarize(report, self.sbom)
+
+    def test_application_must_have_go_packages(self):
+        for changes in ({"Packages": []}, {"Type": "node-pkg"}):
+            report = copy.deepcopy(self.report)
+            report["Results"][-1].update(changes)
+            report["Results"].append({
+                "Target": "/usr/bin/other", "Type": "gobinary", "Packages": [{"Name": "fixture"}],
+            })
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                audit.summarize(report, self.sbom)
+
+    def test_other_go_targets_keep_their_vulnerabilities(self):
+        self.report["Results"].append({
+            "Target": "/usr/bin/other", "Type": "gobinary", "Packages": [{"Name": "fixture"}],
+            "Vulnerabilities": [{"VulnerabilityID": "fixture-other-go", "Severity": "HIGH"}],
+        })
+        summary = audit.summarize(self.report, self.sbom)
+        self.assertEqual(summary["coverage"]["gobinary"], 2)
+        self.assertEqual(summary["counts"], {"HIGH": 1})
+        self.assertEqual(summary["blockers"][0]["target"], "/usr/bin/other")
+
+    def test_unrelated_go_target_is_invalid_through_cli(self):
+        self.report["Results"][-1]["Target"] = "/usr/bin/other"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "report.json").write_text(json.dumps(self.report))
+            (root / "sbom.json").write_text(json.dumps(self.sbom))
+            result = subprocess.run([
+                sys.executable, "-I", str(Path(__file__).with_name("check-image-audit.py")),
+                str(root / "report.json"), str(root / "sbom.json"), "--summary", str(root / "summary.json"),
+            ], capture_output=True, text=True, check=False)
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            self.assertFalse((root / "summary.json").exists())
 
 
 if __name__ == "__main__":

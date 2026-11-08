@@ -73,7 +73,7 @@ python3 -I scripts/test-image-audit.py
 python3 -I scripts/smoke-docker-mcp.py --image kexra:local
 ~~~
 
-扫描器或网络失败不能生成安全通过结论；缺少系统、Node、Python、实际 Go 二进制覆盖或空 SBOM 时门禁直接报错。浏览器协议测试使用唯一命名的 `--network none` 临时容器，只操作 `about:blank` 和内存页面，不依赖外部模型或外部网站。
+扫描器或网络失败不能生成安全通过结论；缺少系统、Node、Python、实际 Go 二进制覆盖或空 SBOM 时门禁直接报错。实际 Go 覆盖必须来自 `Type=gobinary`、`Target` 为 `app/kexra` 或 `/app/kexra` 且包含包清单的结果；任意其他 Go 工具、同名备份或空应用结果均不能代替。两种 Target 仅代表同一容器路径的带/不带前导斜杠拼写，不接受按文件名或宽松路径归一化匹配。浏览器协议测试使用唯一命名的 `--network none` 临时容器，只操作 `about:blank` 和内存页面，不依赖外部模型或外部网站。
 
 ## 复现命令
 
@@ -92,3 +92,4 @@ python3 -I scripts/check-web-vendor.py
 ~~~
 
 审计会查询公开漏洞数据库，结果随数据库更新而变化；每次保留工具版本、候选 SHA 和完整错误。不得把扫描器失败、网络错误或过滤严重级别后的结果记成零漏洞。Go 官方工具链版本可在 [下载清单](https://go.dev/dl/?mode=json) 核对。
+

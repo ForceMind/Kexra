@@ -16,11 +16,16 @@ def summarize(report: dict, sbom: dict) -> dict:
     coverage = {}
     counts = Counter()
     blockers = []
+    application_covered = False
     for result in report.get("Results", []):
         kind = result.get("Type")
         packages = result.get("Packages", [])
         if packages:
             coverage[kind] = coverage.get(kind, 0) + len(packages)
+            # Trivy 容器路径可有或无前导 /；其他 Go 工具不能替代应用本身。
+            if (kind == "gobinary" and result.get("Target") in ("app/kexra", "/app/kexra")
+                    and isinstance(packages, list)):
+                application_covered = True
         for vulnerability in result.get("Vulnerabilities", []):
             severity = vulnerability.get("Severity", "UNKNOWN")
             counts[severity] += 1
@@ -34,6 +39,8 @@ def summarize(report: dict, sbom: dict) -> dict:
     required = {"debian", "node-pkg", "python-pkg", "gobinary"}
     if not required <= coverage.keys():
         raise ValueError(f"镜像扫描缺少组件覆盖：{sorted(required - coverage.keys())}")
+    if not application_covered:
+        raise ValueError("镜像扫描缺少实际 /app/kexra Go 二进制的非空包清单")
     if not str(sbom.get("spdxVersion", "")).startswith("SPDX-") or not sbom.get("packages"):
         raise ValueError("SPDX 镜像 SBOM 为空或格式无效")
     return {
