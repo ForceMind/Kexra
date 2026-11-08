@@ -1,8 +1,48 @@
 # Kexra 当前状态与交接
 
-更新时间：2026-10-20，北京时间。此文件记录事实与恢复入口；长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
+更新时间：2026-11-07（America/Los_Angeles）。此文件记录事实与恢复入口；长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
 
-## 当前恢复入口（2026-10-20）
+## 当前恢复入口（2026-11-07，认证启动安全）
+
+- 已回读远程主线 `70a468f87f9531f32ebdc63f0fdeee258d0f8e00`，本轮基于该完整远程 tree 创建 `codex/auth-startup-safety-20261107`。本地 `work/Kexra` 是过时的源码子集，不用于覆盖主线。独立供应链草稿 PR #15 当前为 `e9ac6c3c501c9783363b8ca4347c19f2be8a5e45`，其审计门禁 10 项定向回归已通过，最新组合仍未完成真实镜像复扫。
+- **已实现，PostgreSQL 集成待验证**：管理员初始化由 `db.SetSettingIfEmpty` 单条条件写入确定唯一胜者，兼容缺失或空值，已有非空密码不能被初始化覆盖；读取失败返回 500，竞争失败返回原有中文 403，只有成功写入者获得 Token。新增多连接池数据库回归及 8 个 Server 的并发 HTTP 回归；表锁用于确保所有请求到达竞争写入点，不依靠随机延时碰撞。测试仅创建随机 schema，不操作原有密码或真实服务。
+- **已实现并通过本地定向验证**：JWT 目录使用实际目录身份、逐段目录句柄和打开前后身份核对，拒绝工作目录别名、密钥文件链接和根目录别名；安全系统路径别名仍可使用。完整临时文件经同步后以无覆盖硬链接发布，并发首次启动使用唯一持久化密钥。每次启动都核对两个遗留位置，匹配才清理，冲突或清理失败拒绝启动；64 KiB 上限防止把大文件当作密钥读取。
+- 修改文件：`db/settings.go`、`db/settings_test.go`、`server/auth.go`、`server/auth_keys.go`、`server/auth_keys_security_test.go`、`server/auth_key_persistence_test.go`、`server/auth_init_concurrency_test.go`、`server/auth_localized_test.go`，以及配置/安全/状态文档和更新记录。无新依赖或数据库结构迁移；不改变已有账号、密码哈希和新旧 Cookie/JWT 兼容路径。新增严格检查可能使不安全、损坏或冲突的旧配置拒绝启动，不会自动轮换密钥。
+
+| 本轮检查 | 实际结果 |
+| --- | --- |
+| macOS arm64 / Go 1.27.0，实际 `auth_keys.go` 与原有/新增密钥测试 | 19 个主测试 + 5 个子例，**24 pass / 0 fail / 0 skip** |
+| 同一真实文件集 `go test -race` | 通过 |
+| 同一真实文件集 `go vet` | 通过 |
+| Windows amd64 测试二进制交叉编译 | 通过；未在 Windows 原生执行，也未验证 ACL |
+| 所有改动 Go 文件的 gofmt/语法解析 | 通过 |
+| 真实 PostgreSQL 初始化/设置并发、完整 Go 构建/vet/单测、Web、Docker | **未执行**；本机无 PostgreSQL/Docker，缺完整模块依赖，终端 GitHub DNS 不可用；不能将只读审查或交叉编译当作集成通过 |
+
+复现本地定向验证：
+
+~~~bash
+GOCACHE=/tmp/kexra-auth-key-cache go test server/auth_keys.go server/auth_key_persistence_test.go server/auth_keys_security_test.go -count=1
+GOCACHE=/tmp/kexra-auth-key-cache go test -race server/auth_keys.go server/auth_key_persistence_test.go server/auth_keys_security_test.go -count=1
+GOCACHE=/tmp/kexra-auth-key-cache go vet server/auth_keys.go server/auth_key_persistence_test.go server/auth_keys_security_test.go
+~~~
+
+下一验收必须在完整仓库、已修复的推荐 Go 1.26.9 工具链和专用 PostgreSQL 16 测试库执行：
+
+~~~bash
+# ARTEX_PG_DSN 指向有 CREATE SCHEMA 权限的专用测试库，不使用生产连接。
+go test ./db -run '^TestSetSettingIfEmpty' -count=1
+go test -race ./server -run '^TestAuthInit' -count=1
+go build ./...
+go vet ./db ./server
+~~~
+
+数据库未配置时集成测试会跳过；配置后连接、锁同步或 SQL 故障均会失败。验收时必须确认上述并发用例实际执行且没有跳过。未以临时 push 触发工作流绕过手动策略：六套原 Actions 保持原样，本轮未触发 Actions。当前连接未提供工作流手动 dispatch 能力，不能声称云端验证已运行。
+
+父目录/挂载须可信，`os.Root` 不隔离既有硬链接、bind mount 或同权限进程。遗留副本删除后未同步源目录，尚不声明断电迁移恢复；Windows ACL、真实旧实例升级及生产恢复另行验证。回退代码会恢复旧认证边界，不作为安全生产回退；始终保留密钥和数据库备份。本轮只提交草稿供审查，不合并、发布镜像、创建正式标签或改变运行中的服务。
+
+完成本轮 PostgreSQL/完整工程验收后，继续工具调用与出站权限边界，以及 PR #15 的最新镜像复扫、系统补丁兼容性和浏览器/Node 内嵌组件审计；这些未完成项继续阻塞正式发布。
+
+## 历史恢复记录（2026-10-20）
 
 - 已合并并验证：PR #16（默认 MCP 实际运行，合并 `6287962a736114ca270d8d074baafae2170ea1ac`）、PR #17（工作空间/附件文件边界，合并 `300f1958518cddd601e7438ca0bfeae0a41e78e4`）。恢复时必须重新回读 GitHub main，不能把这些历史 SHA 当成永远最新。
 - 工作空间默认 10 条 API 错误的中文化保存在 [PR #18](https://github.com/ForceMind/Kexra/pull/18)。代码 `5fe6ad790c43ed98d90f62258bcfb53e56909a62` 的 [专项验证](https://github.com/ForceMind/Kexra/actions/runs/39360407124) 为 **22 pass / 0 fail / 0 skip**，格式与 server vet 通过。真实 HTTP 固定中文断言和韩语原始证据/文件名原样保留均验证；不代表其余后端已全部中文化。
@@ -122,3 +162,4 @@ P0 完整镜像审计仍阻塞发布：[初审](https://github.com/ForceMind/Kex
 ## 已实现并通过专项验证：工作空间默认中文
 
 PR #18 修改 `server/workspace.go` 的 10 条默认错误及 `server/workspace_localized_test.go`。纠正强制韩语的旧测试；5 条实际 HTTP 错误直接与固定中文展示比较，另验证包含韩语的文件名与原始证据内容不被翻译。专项结果为 22 个测试/子用例通过、零失败/跳过；不改状态码、表单、路径、原始底层错误或存储内容。完整 server DB 的 407 pass / 1 skip 属于 PR #17 的代码范围，不能自动当作新增本地化测试已执行全仓库/DB。
+
