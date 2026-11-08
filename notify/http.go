@@ -100,10 +100,11 @@ var notifyTransport = func() *http.Transport {
 // 目标流量用的，常是不稳定的隧道，而通知的可用性不该被目标网络的抖动绑架。
 // IM 推送直连即可。超时设为 15 秒——比这更慢的对端实际上已经是故障状态。
 //
-// 拒绝跨主机重定向：本功能的投递地址都是「一个固定 endpoint」形态，正常不会
+// 拒绝跨主机和 HTTPS 降级重定向：本功能的投递地址都是「一个固定 endpoint」形态，正常不会
 // 重定向到别的主机；而这几家的凭据（钉钉的 access_token、企微的 key、Telegram 的
-// bot token）**就在 URL 里**，跟随跨主机跳转等于把凭据交给重定向目标。同主机
-// 的跳转（如末尾补斜杠）仍允许。
+// bot token）**就在 URL 里**。通用 Webhook 还会带鉴权头和敏感正文，HTTPS 降级
+// 会把这些内容明文发送。同主机的安全跳转（如末尾补斜杠）仍允许，HTTP 自建
+// 目标和 HTTP → HTTPS 升级也保留。
 var httpClient = &http.Client{
 	Timeout:   15 * time.Second,
 	Transport: notifyTransport,
@@ -113,6 +114,9 @@ var httpClient = &http.Client{
 		}
 		if len(via) > 0 && req.URL.Host != via[0].URL.Host {
 			return fmt.Errorf("禁止重定向到其他主机 (%s → %s)", via[0].URL.Host, req.URL.Host)
+		}
+		if len(via) > 0 && strings.EqualFold(via[len(via)-1].URL.Scheme, "https") && !strings.EqualFold(req.URL.Scheme, "https") {
+			return errors.New("禁止将 HTTPS 请求重定向到非 HTTPS 地址")
 		}
 		return nil
 	},
@@ -223,7 +227,13 @@ func redactTransportError(err error) string {
 			host = u.Host
 		}
 		if uerr.Err != nil {
-			return fmt.Sprintf("%s %s: %s", uerr.Op, host, uerr.Err)
+			reason := uerr.Err.Error()
+			// net/http 把非法 Location 原文与解析错误拼成不带结构化字段的错误。
+			// Location 也可以是带 token 的相对地址，不能仅靠 http(s) 前缀脱敏。
+			if strings.HasPrefix(reason, "failed to parse Location header ") {
+				reason = "无法解析重定向 Location 地址"
+			}
+			return fmt.Sprintf("%s %s: %s", uerr.Op, host, redactURLsInText(reason))
 		}
 		return fmt.Sprintf("%s %s: 未知错误", uerr.Op, host)
 	}
