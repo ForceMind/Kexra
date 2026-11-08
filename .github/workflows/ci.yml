@@ -20,6 +20,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Docker dependency and audit regression checks (no image build)
+        run: |
+          python3 -I scripts/check-docker-toolchain.py
+          python3 -I scripts/test-image-audit.py
       - uses: actions/setup-go@v5
         with:
           go-version: "1.26.9"
