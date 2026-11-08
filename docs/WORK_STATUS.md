@@ -1,8 +1,16 @@
 # Kexra 当前状态与交接
 
-更新时间：2026-10-20，北京时间。此文件记录事实与恢复入口；长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
+更新时间：2026-11-08（America/Los_Angeles）。此文件记录事实与恢复入口；长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
 
-## 当前恢复入口（2026-10-20）
+## 当前恢复入口（2026-11-08，模型 HTTP 与工具装配）
+
+- main 仍为 `70a468f87f9531f32ebdc63f0fdeee258d0f8e00`；PR #19/#20/#21 均开放且保持草稿，最新 head 分别为 `33bb3e6` / `fe1981d` / `c8820ea`，没有新增 review thread。本分支 `codex/runtime-boundaries-20261108` 独立基于 main，保留这些未合并工作，不以本轮替代其验收。
+- 模型 HTTP 工厂限定同源重定向并隐藏非法代理地址中的凭据，保留直连/合法代理、HTTP 内网、SDK quota/录制/会话包装。工厂标准库测试 22 条通过，race/vet 通过，Windows amd64 仅交叉编译通过。
+- 工具表读取失败返回显式空列表；装配完成后防止空列表变为 nil 触发 SDK DefaultTools，并清除不再允许工具的延迟元数据。真实装配函数的裁剪回归 6 条通过，race/vet 通过；原行为已先复现失败。
+- 新增完整 SDK 包装回归及 server 闭数据库句柄回归，尚未执行；完整 Go/Web/PG/网络/Docker 仍受当前环境限制。本轮没有运行外部模型、代理或扫描，也未触发 Actions、合并、发布或修改生产数据。
+- 具体改动、命令、兼容性和裁剪范围见 [运行时边界](RUNTIME_BOUNDARIES.md)。下一阶段完成完整 SDK/server/数据库集成、现有草稿的联合验证，以及镜像/生产发布门禁；不能把单模块验证转移到完整工程。
+
+## 历史恢复记录（2026-10-20）
 
 - 已合并并验证：PR #16（默认 MCP 实际运行，合并 `6287962a736114ca270d8d074baafae2170ea1ac`）、PR #17（工作空间/附件文件边界，合并 `300f1958518cddd601e7438ca0bfeae0a41e78e4`）。恢复时必须重新回读 GitHub main，不能把这些历史 SHA 当成永远最新。
 - 工作空间默认 10 条 API 错误的中文化保存在 [PR #18](https://github.com/ForceMind/Kexra/pull/18)。代码 `5fe6ad790c43ed98d90f62258bcfb53e56909a62` 的 [专项验证](https://github.com/ForceMind/Kexra/actions/runs/39360407124) 为 **22 pass / 0 fail / 0 skip**，格式与 server vet 通过。真实 HTTP 固定中文断言和韩语原始证据/文件名原样保留均验证；不代表其余后端已全部中文化。
@@ -122,3 +130,4 @@ P0 完整镜像审计仍阻塞发布：[初审](https://github.com/ForceMind/Kex
 ## 已实现并通过专项验证：工作空间默认中文
 
 PR #18 修改 `server/workspace.go` 的 10 条默认错误及 `server/workspace_localized_test.go`。纠正强制韩语的旧测试；5 条实际 HTTP 错误直接与固定中文展示比较，另验证包含韩语的文件名与原始证据内容不被翻译。专项结果为 22 个测试/子用例通过、零失败/跳过；不改状态码、表单、路径、原始底层错误或存储内容。完整 server DB 的 407 pass / 1 skip 属于 PR #17 的代码范围，不能自动当作新增本地化测试已执行全仓库/DB。
+
