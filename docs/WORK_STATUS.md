@@ -1,8 +1,16 @@
 # Kexra 当前状态与交接
 
-更新时间：2026-10-20，北京时间。此文件记录事实与恢复入口；长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
+更新时间：2026-11-07（America/Los_Angeles）。此文件记录事实与恢复入口；长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
 
-## 当前恢复入口（2026-10-20）
+## 当前恢复入口（2026-11-07，远程 MCP 与通知出站）
+
+- main 为 `70a468f87f9531f32ebdc63f0fdeee258d0f8e00`。认证草稿 [PR #19](https://github.com/ForceMind/Kexra/pull/19) 仍为 `33bb3e65624180ff8881503ebecbe100ceb2d01d`，未合并、没有新增 review thread 或 Actions；其 PostgreSQL/完整工程门禁继续保留。供应链草稿 PR #15 为 `e9ac6c3c501c9783363b8ca4347c19f2be8a5e45`，仍阻塞正式发布。
+- 本分支 `codex/remote-egress-safety-20261107` 独立基于 main，完成 MCP 同来源凭据边界、完整有界 SSE endpoint 帧，以及通知 HTTPS 降级阻断与非法 Location 错误脱敏。保留合法 HTTP/内网部署、现有通知拨号策略和 SDK 工具适配接口；无新依赖、配置字段或数据库迁移。不同来源重定向/endpoint、含 userinfo/fragment 的 MCP 地址会明确失败。
+- MCP 实际传输文件的 15 个顶层/88 个叶用例通过，含父测试 99 个 pass，零失败/跳过；race、vet 与 Windows amd64 交叉编译通过。通知 98 个精选顶层/151 个测试事件通过，同一选择集 race 及整包 vet 通过。反例均先在旧代码复现；范围、兼容约束和命令见 [出站边界](OUTBOUND_SECURITY.md)。
+- HTTP 回归运行真实 net/http.Client 和内存 RoundTripper，SSE 用 io.Pipe；当前沙箱 bind 拒绝，未执行真实 socket/TLS/DNS/代理集成，也未运行完整 SDK、Go/Web/PostgreSQL/Docker。交叉编译不等于 Windows 原生通过，本轮不恢复或触发 Actions，不合并或发布。
+- 后续继续工具策略加载故障阻断的独立变更，模型 HTTP 客户端、其他工具权限和完整出站授权；与 PR #19 集成验收、PR #15 镜像复扫分别保留门禁。回退会恢复旧凭据边界，不视为安全生产回退。
+
+## 历史恢复记录（2026-10-20）
 
 - 已合并并验证：PR #16（默认 MCP 实际运行，合并 `6287962a736114ca270d8d074baafae2170ea1ac`）、PR #17（工作空间/附件文件边界，合并 `300f1958518cddd601e7438ca0bfeae0a41e78e4`）。恢复时必须重新回读 GitHub main，不能把这些历史 SHA 当成永远最新。
 - 工作空间默认 10 条 API 错误的中文化保存在 [PR #18](https://github.com/ForceMind/Kexra/pull/18)。代码 `5fe6ad790c43ed98d90f62258bcfb53e56909a62` 的 [专项验证](https://github.com/ForceMind/Kexra/actions/runs/39360407124) 为 **22 pass / 0 fail / 0 skip**，格式与 server vet 通过。真实 HTTP 固定中文断言和韩语原始证据/文件名原样保留均验证；不代表其余后端已全部中文化。
@@ -122,3 +130,4 @@ P0 完整镜像审计仍阻塞发布：[初审](https://github.com/ForceMind/Kex
 ## 已实现并通过专项验证：工作空间默认中文
 
 PR #18 修改 `server/workspace.go` 的 10 条默认错误及 `server/workspace_localized_test.go`。纠正强制韩语的旧测试；5 条实际 HTTP 错误直接与固定中文展示比较，另验证包含韩语的文件名与原始证据内容不被翻译。专项结果为 22 个测试/子用例通过、零失败/跳过；不改状态码、表单、路径、原始底层错误或存储内容。完整 server DB 的 407 pass / 1 skip 属于 PR #17 的代码范围，不能自动当作新增本地化测试已执行全仓库/DB。
+
