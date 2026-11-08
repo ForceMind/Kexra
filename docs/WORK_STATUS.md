@@ -1,8 +1,16 @@
 # Kexra 当前状态与交接
 
-更新时间：2026-10-20，北京时间。此文件记录事实与恢复入口；长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
+更新时间：2026-11-07（America/Los_Angeles）。此文件记录事实与恢复入口；长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
 
-## 当前恢复入口（2026-10-20）
+## 当前恢复入口（2026-11-07，工具策略加载故障）
+
+- 固定主线为 `70a468f87f9531f32ebdc63f0fdeee258d0f8e00`；本分支 `codex/tool-policy-fail-closed-20261107` 独立保存策略异常阻断，不覆盖认证草稿 [PR #19](https://github.com/ForceMind/Kexra/pull/19) 或供应链草稿 PR #15 的未合并工作。
+- `guard/guard.go` 对启用检查/规则匹配的加载错误立即阻断；`intercept/intercept.go` 两个接口显式返回 error，规则与工具集合完整成功后才发布缓存，拒绝损坏配置/null 元素/启用的非法正则。显式 `[]`、缺省工具和配置 FailAction=allow 保留，无数据库迁移。
+- 新增真实策略代码的 SQL 故障注入回归，旧源码先复现失败；修改后含既有用例共 49 条通过记录，race/vet/格式检查通过。生产调用点已扫描全部 385 个 Go 文件，只有 Guard 两处，已同步修改。
+- 验证来自临时裁剪工程：保留真实策略/官方 SDK 类型，裁剪 DB 初始化与未用会话持久化；交付三文件与运行文件逐字节相同。未执行完整工程 build、真实 PostgreSQL、server/Web、网络或 CI，不将裁剪验证写成全工程通过。详情与复现入口见 [策略故障边界](TOOL_POLICY_SECURITY.md)。
+- 此分支保持草稿待完整集成。并行的 MCP/通知出站变更、认证 PR #19 数据库门禁、PR #15 完整镜像复扫独立保留；下一步继续其他工具表/模型网络客户端和审批/出站授权。六套正式 Actions 原样且未触发，没有发布、生产服务或真实数据变更。
+
+## 历史恢复记录（2026-10-20）
 
 - 已合并并验证：PR #16（默认 MCP 实际运行，合并 `6287962a736114ca270d8d074baafae2170ea1ac`）、PR #17（工作空间/附件文件边界，合并 `300f1958518cddd601e7438ca0bfeae0a41e78e4`）。恢复时必须重新回读 GitHub main，不能把这些历史 SHA 当成永远最新。
 - 工作空间默认 10 条 API 错误的中文化保存在 [PR #18](https://github.com/ForceMind/Kexra/pull/18)。代码 `5fe6ad790c43ed98d90f62258bcfb53e56909a62` 的 [专项验证](https://github.com/ForceMind/Kexra/actions/runs/39360407124) 为 **22 pass / 0 fail / 0 skip**，格式与 server vet 通过。真实 HTTP 固定中文断言和韩语原始证据/文件名原样保留均验证；不代表其余后端已全部中文化。
@@ -122,3 +130,4 @@ P0 完整镜像审计仍阻塞发布：[初审](https://github.com/ForceMind/Kex
 ## 已实现并通过专项验证：工作空间默认中文
 
 PR #18 修改 `server/workspace.go` 的 10 条默认错误及 `server/workspace_localized_test.go`。纠正强制韩语的旧测试；5 条实际 HTTP 错误直接与固定中文展示比较，另验证包含韩语的文件名与原始证据内容不被翻译。专项结果为 22 个测试/子用例通过、零失败/跳过；不改状态码、表单、路径、原始底层错误或存储内容。完整 server DB 的 407 pass / 1 skip 属于 PR #17 的代码范围，不能自动当作新增本地化测试已执行全仓库/DB。
+
