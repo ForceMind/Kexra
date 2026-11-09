@@ -1,8 +1,44 @@
 # Kexra 当前状态与交接
 
-更新时间为 2026-11-08（America/Los_Angeles）。长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
+更新时间为 2026-11-09（America/Los_Angeles）。长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
 
 ## 当前恢复入口
+
+聊天附件修复分支为 `codex/chat-upload-integrity-20261109`，基于联合验收分支 `codex/security-integration-20261108` 的 `9b64cec1affbab109b0def3e347d845bd3896ac8`。认证、出站、拦截策略和工具装配四项进展沿用 PR #23 的源提交与验收范围。
+
+聊天附件原先在 `Stat` 检查文件名之后调用共享 `saveUpload` 创建文件，两个请求可取得同一路径；悬空符号链接也会被当成未占用名称。新上传专用函数通过 `os.Root.OpenFile` 的 `O_CREATE|O_EXCL` 排他分配名称，冲突时延续 `-1`、`-2` 命名，保留原文件和链接。复制字节数必须与 multipart 文件大小一致，复制或关闭失败后删除不完整文件。批量上传沿用逐文件提交，已经成功保存的文件在后续文件失败时仍存在。
+
+附件的八项默认错误改为简体中文，包括任务不存在、无效 scope/id、任务删除中、创建目录、解析、缺少文件及保存失败。scope、id、file、JSON 字段、状态码和原始底层错误保留原协议；用户文件名和附件字节通过回归确认原样保存。工作空间直接上传仍调用原有共享保存函数，单独维护其文件管理语义。无数据库、环境变量或配置迁移。
+
+| 本轮实际检查 | 结果 |
+| --- | --- |
+| 原始 chatUpload 的悬空链接 HTTP 回归 | 先复现 1 项失败，原处理函数返回了链接占用的名称 |
+| 生产上传存储文件的独立标准库单测 | 7 条通过记录，含子例，零失败或跳过 |
+| 实际附件与工作空间 handler 的裁剪联合回归 | 最终 race 运行 46 条通过记录，含父测试和子例，零失败或跳过 |
+| 存储文件集与裁剪 handler 工程 vet | 通过 |
+| Windows amd64 存储测试二进制 | 交叉编译通过，原生运行和权限尚待验收 |
+
+裁剪工程为 `/tmp/kexra-chat-upload-check`。生产 chatupload、上传存储、workspace 与测试文件逐字节一致，Manager 的查询方法、Engine 的删除屏障/在跑计数以及 JSON helpers 从实际源码提取；支持声明只保留所需字段和 Activity 类型，数据库、SDK 与完整服务启动未进入本轮运行。HTTP 使用 httptest.NewRecorder，不绑定端口。回归包含 24 个同时开始的同名上传、已有文件/目录/悬空链接、截短的 multipart 临时文件、失败后的重试、零字节附件和中文/韩文文件名及二进制证据。
+
+存储模块可在当前受限环境单独复现。
+
+~~~bash
+go test server/chat_upload_storage.go server/chat_upload_storage_test.go -count=1
+go test -race server/chat_upload_storage.go server/chat_upload_storage_test.go -count=1
+go vet server/chat_upload_storage.go server/chat_upload_storage_test.go
+~~~
+
+完整依赖环境继续运行。
+
+~~~bash
+go test -race ./server -run '^(TestChatUpload|TestWorkspace)' -count=1
+go build ./...
+go vet ./...
+~~~
+
+本轮再次确认 `github.com` 与 `proxy.golang.org` 的 DNS 不可用，当前无 PostgreSQL/Docker，GitHub 连接无手动 dispatch 能力。完整 Go/Web、SQL、真实网络与镜像复扫继续按下列联合验收入口恢复。最新源码仍需在固定 Go 1.26.9 或开发指南允许的补丁版本执行全部发布门禁。
+
+## 联合验收入口（2026-11-08）
 
 联合验证分支为 `codex/security-integration-20261108`，基于 main `70a468f87f9531f32ebdc63f0fdeee258d0f8e00`，整合以下固定提交。创建提交时以 main 为首父提交，四项源提交为附加父提交，保留研发历史。
 
