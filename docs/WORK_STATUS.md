@@ -30,10 +30,30 @@
 | 裁剪四包和通知 vet | 通过 |
 | 所有 27 份生产 Go 源码及测试 | blob SHA 与源 PR 一致，gofmt 通过 |
 | 本次合并的 9 份 Markdown 文档 | 相对链接目标存在，合并差异无空白错误 |
-| 完整项目迁移检查 | 未完成，本地部分源码缺少入口、Web 和工作流文件，报告 14 项缺失 |
-| 完整 Go/Web、PostgreSQL、SDK、真实 socket/TLS、Docker | 未执行，仍待完整环境验收 |
+| 完整源码迁移检查 | 通过，扫描全部 401 份 Go 文件；此前部分快照的 14 项缺失已补齐 |
+| 原有文档链接门禁 | 通过，79 份 Markdown、665 个文件引用、27 个锚点，零失效引用 |
+| 中韩翻译键门禁 | 通过，2952 个可翻译字段一致 |
+| 第三方样式与许可门禁 | 通过，固定 SHA256 与 MIT 许可声明一致 |
+| 全部 Go 源码语法解析 | 401 份文件通过解析；55 份未改动主线文件存在 gofmt 差异，本轮 27 份改动文件格式通过 |
+| 完整构建与依赖安装 | 已尝试，Go 模块和 npm registry 的 DNS 解析失败，未到达完整编译或 Web 检查/构建阶段 |
+| 完整 Go/Web 回归、PostgreSQL、SDK、真实 socket/TLS、Docker | 未完成，仍待依赖和完整运行环境验收 |
 
-本地快照中的缺失与裁剪工程的通过分别记录。生产 Go 文件与源 PR 逐字节核对，裁剪中的 `db/settings.go` 仅保留策略测试所需部分。当前工具链低于开发指南推荐的 Go 1.27.2，最终验收使用仓库固定的 Go 1.26.9 或指南允许的补丁版本。
+源码验收固定在 `91919a87b8922208ce3788937e6c0963eded49e3`，本地目录为 `work/kexra-full-integration`。从固定远程 tree 逐项恢复文件，共 812 个 blob 中的 811 个已核对内容 SHA 与文件模式，包含全部源码、测试、文档和工作流。唯一未取回的 `web/media/dashboard.png` 为 1,246,155 字节历史截图，Contents 接口返回空内容，blob 接口按 UTF-8 解码失败；该图片未被文档门禁引用。源代码完整性与该图片的缺失分别记录，未声称整个本地 Git tree 与远程完全相同。
+
+生产 Go 文件与源 PR 逐字节核对，裁剪中的 `db/settings.go` 仅保留策略测试所需部分。当前工具链低于开发指南推荐的 Go 1.27.2，最终验收使用仓库固定的 Go 1.26.9 或指南允许的补丁版本。
+
+## 本轮完整源码检查命令
+
+以下四项使用原仓库脚本，均已实际通过。
+
+~~~bash
+python3 -I scripts/check-kexra-migration.py
+python3 -I scripts/check-doc-links.py
+python3 -I scripts/check-i18n-keys.py
+python3 -I scripts/check-web-vendor.py
+~~~
+
+`go mod download github.com/Autumn-27/norma` 和 `go build ./...` 均在下载阶段遇到 `lookup proxy.golang.org: no such host`。前端尝试 `npm ci --ignore-scripts --no-audit --fetch-retries=0 --fetch-timeout=10000 --cache /tmp/kexra-full-npm-cache`，返回 `ENOTFOUND registry.npmjs.org`；安装未完成，尚未运行 Biome、Next.js 构建或依赖审计。`ignore-scripts` 仅用于定位安装阻塞，正式前端验收继续使用开发指南中的正常安装命令。PostgreSQL 和 Docker 仍未安装，GitHub 连接当前无手动 workflow dispatch 能力。
 
 ## 下一验收命令
 
