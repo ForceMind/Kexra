@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Autumn-27/norma/skill"
+	actool "github.com/Autumn-27/norma/tool"
 	"github.com/ForceMind/Kexra/agent"
 	"github.com/ForceMind/Kexra/db"
 	"github.com/ForceMind/Kexra/traffic"
-	"github.com/Autumn-27/norma/skill"
-	actool "github.com/Autumn-27/norma/tool"
 )
 
 // wireAgentAugment connects the PG agent_visibility table into the agent runtime:
@@ -239,8 +239,8 @@ func wireTools(pg *db.DB, domainReg map[string]actool.CoreTool) {
 	agent.ToolResolve = func(ctx context.Context, agentKey string, tools []actool.CoreTool) []actool.CoreTool {
 		rows, err := pg.ListTools()
 		if err != nil {
-			log.Printf("[tools] 读取工具表失败，按代码默认放行: %v", err)
-			return tools
+			log.Printf("[tools] 读取工具表失败，本次不装配工具: %v", err)
+			return []actool.CoreTool{}
 		}
 		byKey := make(map[string]*db.Tool, len(rows))
 		for _, t := range rows {
