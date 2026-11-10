@@ -2,6 +2,14 @@
 
 更新时间为 2026-11-09（America/Los_Angeles）。长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
 
+## 安装、更新与启动脚本中文化
+
+分支 `codex/launcher-zh-20261109` 基于 PR #24 的 `a29e5cfdce4bb0c8e489146f4973c5c9090a631a`。`install.sh`、`update.sh`、`start.sh` 和 `start.bat` 的菜单、错误、状态与说明改为简体中文。命令、参数、环境变量、配置字段、镜像与数据库兼容名称沿用现有契约。
+
+macOS 隔离夹具对照运行了修改前后的真实脚本。18 组场景全部通过，退出码、命令参数记录及生成文件逐项一致。安装和更新用本地替身执行 Docker、Git、Go、npm，覆盖菜单错误、镜像缺失、Compose 失败、配置生成、内嵌前端构建路径及更新失败回退。启动使用临时子进程，覆盖二进制缺失、正常退出、退出码 75 重启、异常退避和 SIGTERM 转发。Bash 和 POSIX shell 语法检查通过，四份脚本的遗留韩文扫描为空。Windows 仅核对命令、变量展开和重定向，原生控制台验收待完成。
+
+完整构建仍受 Go 模块下载的 DNS 错误阻塞。真实 Docker 部署、数据库、跨平台安装和发布验收沿用下方门禁。此次变更仅涉及脚本显示和维护文档。
+
 ## 当前恢复入口
 
 聊天附件修复分支为 `codex/chat-upload-integrity-20261109`，基于联合验收分支 `codex/security-integration-20261108` 的 `9b64cec1affbab109b0def3e347d845bd3896ac8`。认证、出站、拦截策略和工具装配四项进展沿用 PR #23 的源提交与验收范围。
