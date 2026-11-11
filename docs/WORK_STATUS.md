@@ -1,6 +1,14 @@
 # Kexra 当前状态与交接
 
-更新时间为 2026-11-09（America/Los_Angeles）。长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
+更新时间为 2026-11-10（America/Los_Angeles）。长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
+
+## 聊天引用、会话与复测提示中文化
+
+分支 `codex/chat-messages-zh-20261110` 基于 PR #25 的 `62a288043ca6461a588242895fedeb90b66ae965`。聊天引用的六条错误及九类显示标签、会话的十二条默认错误、两个默认标题、活动错误摘要和五条复测结束原因采用简体中文。会话自动命名识别空标题、`新对话` 和历史默认值 `새 대화`，以支持升级前已创建的会话。已存标题和历史记录沿用原数据，部署时无需数据库迁移。活动错误摘要拼接底层错误原文。
+
+macOS 隔离 Go 工程运行实际引用 handler、会话请求解析、标题判定及复测文案。`go test -race -count=1 ./...` 的 39 条父测试及子例记录通过。用同一套断言运行旧源码有 33 条失败记录，覆盖韩文回退和新默认标题识别。隔离工程从生产文件提取会话帮助函数与复测常量，引用模块整文件运行，数据库方法在该夹具中会拒绝调用。实际 PostgreSQL 查询和智能体执行待完整工程验收。
+
+完整工程 `go test ./server ./db -run 'Test(ChatMention|Conversation|IsDefaultConversationTitle|TranscriptErrorSummary|FindingRetestReasons)' -count=1` 在加载依赖时受阻。Go 模块代理 DNS 解析仍失败。复测结束原因进入现有 `finding_retests.error` 字段，状态值沿用原协议。
 
 ## 安装、更新与启动脚本中文化
 
