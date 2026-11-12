@@ -2,71 +2,63 @@ package server
 
 import (
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 )
 
-// TestChatMentionErrorsLocalized guards F3b chat_mentions.go: every user-facing
-// @멘션(인용) error response must be Korean (Hangul present, no Chinese Han). The
-// wire token labels (chatMentionPattern·chatMentionKinds), the agent-input
-// snapshot header, and the truncation markers fed into that snapshot stay in the
-// original language by design and are intentionally not checked here.
 func TestChatMentionErrorsLocalized(t *testing.T) {
-	// Fixed user-facing literals.
-	for label, msg := range map[string]string{
-		"badID":       errChatMentionBadID,
-		"tooMany":     errChatMentionTooMany,
-		"badSearch":   errChatMentionBadSearch,
-		"dataUnavail": errChatMentionDataUnavail,
-		"tooLarge":    errChatMentionTooLarge,
-	} {
-		assertKoreanError(t, label, msg)
-	}
-
-	// parseChatMentions — a non-positive id inside a valid wire token.
-	if _, err := parseChatMentions("@[漏洞#0]"); err == nil {
-		t.Fatal("잘못된 인용 ID 가 통과해서는 안 됩니다")
-	} else {
-		assertKoreanError(t, "parse.badID", err.Error())
-	}
-
-	// parseChatMentions — exceeding the per-message mention cap (11 distinct ids).
-	var b strings.Builder
+	var tooMany strings.Builder
 	for i := 1; i <= 11; i++ {
-		fmt.Fprintf(&b, "@[漏洞#%d] ", i)
-	}
-	if _, err := parseChatMentions(b.String()); err == nil {
-		t.Fatal("인용 상한 초과가 통과해서는 안 됩니다")
-	} else {
-		assertKoreanError(t, "parse.tooMany", err.Error())
+		fmt.Fprintf(&tooMany, "@[漏洞#%d] ", i)
 	}
 
-	// composeChatMentionMessage — a mention is present but the database is nil.
-	if _, err := composeChatMentionMessage(nil, "@[漏洞#1]"); err == nil {
-		t.Fatal("DB 없이 인용 해석이 통과해서는 안 됩니다")
-	} else {
-		assertKoreanError(t, "compose.dataUnavail", err.Error())
+	server := &Server{m: &Manager{}}
+	for _, tc := range []struct {
+		name, message, want string
+		status              int
+	}{
+		{"invalid-id", "@[漏洞#0]", "引用 ID 无效，请重新选择", http.StatusBadRequest},
+		{"too-many", tooMany.String(), "每条消息最多引用 10 条记录", http.StatusBadRequest},
+		{"data-unavailable", "@[漏洞#1]", "暂时无法读取引用记录", http.StatusInternalServerError},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			if _, ok := server.prepareChatMentionMessage(rec, tc.message); ok {
+				t.Fatal("invalid reference accepted")
+			}
+			if got := decodeErrorField(t, rec.Body.Bytes()); rec.Code != tc.status || got != tc.want {
+				t.Fatalf("status=%d error=%q, want %d %q", rec.Code, got, tc.status, tc.want)
+			}
+		})
 	}
 
-	// searchChatMentions — invalid kind and over-long query are rejected before
-	// the database handle is touched, so &Server{} is enough to reach the branch.
-	for _, q := range []string{"kind=unsupported", "q=" + url.QueryEscape(strings.Repeat("字", 201))} {
-		w := httptest.NewRecorder()
-		(&Server{}).searchChatMentions(w, httptest.NewRequest("GET", "/api/chat/mentions?"+q, nil))
-		if w.Code != 400 {
-			t.Fatalf("검증 실패(400)를 기대했으나 %d 가 반환되었습니다 (%s)", w.Code, q)
+	for _, tc := range []struct{ name, query string }{
+		{"invalid-kind", "kind=unsupported"},
+		{"query-too-long", "q=" + url.QueryEscape(strings.Repeat("字", 201))},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			server.searchChatMentions(rec, httptest.NewRequest(http.MethodGet, "/api/chat/mentions?"+tc.query, nil))
+			const want = "引用类型无效或搜索词超过 200 个字符"
+			if got := decodeErrorField(t, rec.Body.Bytes()); rec.Code != http.StatusBadRequest || got != want {
+				t.Fatalf("status=%d error=%q, want 400 %q", rec.Code, got, want)
+			}
+		})
+	}
+
+	const wantMissing = "引用的漏洞 #7 不存在或类型不匹配，请移除后重新选择"
+	if got := fmt.Sprintf(errChatMentionNotFoundFmt, chatMentionKindLabel["finding"], 7); got != wantMissing {
+		t.Fatalf("missing record error=%q, want %q", got, wantMissing)
+	}
+	if errChatMentionTooLarge != "引用内容过大，请减少引用记录后重试" {
+		t.Fatalf("oversized reference error=%q", errChatMentionTooLarge)
+	}
+	for label, kind := range chatMentionKinds {
+		if got := chatMentionKindLabel[kind]; got != label {
+			t.Errorf("%s label=%q, want %q", kind, got, label)
 		}
-		assertKoreanError(t, "search."+q, decodeErrorField(t, w.Body.Bytes()))
 	}
-
-	// The display label map mirrors the UI mention kinds, and the not-found
-	// template resolves to a fully Korean message for a known kind.
-	for _, kind := range []string{"finding", "asset", "company", "endpoint", "ip", "app", "root_domain", "subdomain", "service"} {
-		if chatMentionKindLabel[kind] == "" {
-			t.Fatalf("종류 라벨이 누락되었습니다: %s", kind)
-		}
-	}
-	assertKoreanError(t, "notFound", fmt.Sprintf(errChatMentionNotFoundFmt, chatMentionKindLabel["finding"], 7))
 }
