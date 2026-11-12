@@ -1,10 +1,13 @@
 name: ci
-# 푸시와 PR 마다 빌드·정적 분석·테스트를 돌려, 한국어화 과정에서 생긴 회귀를
-# 머지 전에 잡는다. 릴리스 워크플로(release.yml)는 태그(v*)에서만 돌고 빌드·배포만
-# 하므로, 일상적인 변경을 검증하는 역할은 이 워크플로가 맡는다.
+# Go and PostgreSQL regression checks, with an optional Web and Docker acceptance job.
 # Temporary cost-control: dispatch by hand only; no push/PR/schedule/tag automation.
 on:
   workflow_dispatch:
+    inputs:
+      image_audit:
+        description: Run Web validation and the Linux amd64 Docker image audit
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -20,6 +23,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Docker dependency and audit regression checks (no image build)
+        run: |
+          python3 -I scripts/check-docker-toolchain.py
+          python3 -I scripts/test-image-audit.py
       - uses: actions/setup-go@v5
         with:
           go-version: "1.26.9"
@@ -30,6 +39,11 @@ jobs:
         run: go vet ./...
       - name: go test (DB 없음 — 통합 테스트는 스킵)
         run: go test ./... -count=1
+      - name: Module integrity, migration and documentation checks
+        run: |
+          go mod verify
+          python3 -I scripts/check-kexra-migration.py
+          python3 -I scripts/check-doc-links.py
 
   # 실제 PostgreSQL 이 있어야 도는 DB 통합 테스트(알림·증거·사용량 계량 등)를 맡는다.
   # 위 go job 이 스킵하는 경로(알림 채널 검증, 증거 저장, llm_usage 계량 등)를 실제
@@ -65,6 +79,8 @@ jobs:
           --health-retries 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
       - uses: actions/setup-go@v5
         with:
           go-version: "1.26.9"
@@ -73,3 +89,110 @@ jobs:
         env:
           ARTEX_PG_DSN: postgres://artex:artex@localhost:5432/artex?sslmode=disable
         run: go test ./${{ matrix.pkg }}/ -count=1
+
+  web-image-audit:
+    if: inputs.image_audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.3"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.9"
+          cache: true
+      - name: Record candidate SHA and pinned build inputs
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(uname -m)" = x86_64
+          mkdir -p image-audit
+          git rev-parse HEAD > image-audit/source-sha.txt
+          sed -n '/^FROM /p' Dockerfile > image-audit/base-images.txt
+          sha256sum Dockerfile docker/debian.sources docker/npm-runtime.json docker/browser-tools/package-lock.json web/package-lock.json go.sum > image-audit/source-inputs.sha256
+      - name: Build Chinese Web UI
+        working-directory: web
+        env:
+          NEXT_PUBLIC_LOCALE: zh
+        run: |
+          npm ci
+          npm run build:static
+      - name: Web static regression checks
+        run: |
+          python3 -I scripts/check-web-vendor.py
+          python3 -I scripts/check-i18n-keys.py
+          python3 -I scripts/check-web-zh.py
+          npm --prefix web run check -- --diagnostic-level=error --max-diagnostics=100
+      - name: Build embedded Linux binary and local image
+        run: |
+          mkdir -p server/webui/dist dist/amd64
+          cp -a web/out/. server/webui/dist/
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags embedui -o dist/amd64/kexra ./cmd/kexra
+          dist/amd64/kexra -h
+          docker build --build-arg TARGETARCH=amd64 -t kexra:local .
+          test "$(docker image inspect kexra:local --format '{{.Architecture}}')" = amd64
+          docker image inspect kexra:local > image-audit/image-inspect.json
+          docker image inspect kexra:local --format '{{.Id}}' > image-audit/image-id.txt
+      - name: Offline browser MCP smoke test
+        id: mcp
+        continue-on-error: true
+        run: python3 -I scripts/smoke-docker-mcp.py --image kexra:local
+      - name: Browser dependency lockfile audit
+        id: browser-lock
+        continue-on-error: true
+        run: npm audit --prefix docker/browser-tools --package-lock-only --ignore-scripts --json > image-audit/browser-tools-npm-audit.json
+      - name: Install hash-verified Trivy 0.76.0
+        env:
+          TRIVY_ARCHIVE_SHA256: e24b1c51293c1b15e4ba8d45bbc7891ba053f90278ec2698f3562c993e145fe7
+        run: |
+          curl --fail --location --retry 2 --output /tmp/trivy.tgz https://github.com/aquasecurity/trivy/releases/download/v0.76.0/trivy_0.76.0_Linux-64bit.tar.gz
+          printf '%s  %s\n' "$TRIVY_ARCHIVE_SHA256" /tmp/trivy.tgz | sha256sum -c -
+          mkdir /tmp/kexra-trivy
+          tar -xzf /tmp/trivy.tgz -C /tmp/kexra-trivy trivy
+          /tmp/kexra-trivy/trivy --version
+      - name: Scan image and generate SPDX SBOM (inventory, no suppression)
+        run: |
+          /tmp/kexra-trivy/trivy image --image-src docker --timeout 10m --scanners vuln,license --list-all-pkgs --format json --output image-audit/trivy-image.json kexra:local
+          /tmp/kexra-trivy/trivy image --image-src docker --timeout 10m --format spdx-json --output image-audit/image.spdx.json kexra:local
+          /tmp/kexra-trivy/trivy --version > image-audit/scanner-database.txt
+      - name: Enforce image audit and smoke test outcomes
+        id: audit
+        continue-on-error: true
+        env:
+          MCP_OUTCOME: ${{ steps.mcp.outcome }}
+          BROWSER_LOCK_OUTCOME: ${{ steps.browser-lock.outcome }}
+        run: |
+          test "$(docker image inspect kexra:local --format '{{.Id}}')" = "$(cat image-audit/image-id.txt)"
+          python3 -I scripts/check-image-audit.py image-audit/trivy-image.json image-audit/image.spdx.json --summary image-audit/summary.json
+          test "$MCP_OUTCOME" = success
+          test "$BROWSER_LOCK_OUTCOME" = success
+      - name: Record runtime, browser binaries and license inventory
+        run: |
+          docker run --rm --network none --entrypoint sh kexra:local -c 'node --version; npm --version; python --version; dpkg-query -W' > image-audit/runtime-dpkg.txt
+          docker run --rm --network none --entrypoint npm kexra:local sbom --prefix /opt/kexra-browser-tools --omit=dev --sbom-format cyclonedx > image-audit/browser-tools.cdx.json
+          docker run --rm --network none --entrypoint sh kexra:local -c 'find /root/.cache/ms-playwright -type f \( -name chrome -o -name headless_shell -o -name chrome-headless-shell \) -exec sh -c '\''"$1" --version; sha256sum "$1"'\'' sh {} \;' > image-audit/browser-binaries.txt
+          test -s image-audit/browser-binaries.txt
+          docker run --rm --network none --entrypoint tar kexra:local -czf - /usr/share/doc /usr/local/lib/node_modules/npm/LICENSE /usr/local/lib/python3.12/LICENSE.txt > image-audit/installed-license-docs.tar.gz
+      - name: Hash collected evidence
+        if: always()
+        run: |
+          if [ -d image-audit ]; then
+            cd image-audit
+            find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 -r sha256sum > SHA256SUMS
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kexra-image-audit-amd64
+          path: image-audit/
+          retention-days: 14
+      - name: Require the image audit gate to pass
+        if: always()
+        env:
+          AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+        run: test "$AUDIT_OUTCOME" = success

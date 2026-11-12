@@ -1,6 +1,18 @@
 # Kexra 当前状态与交接
 
-更新时间为 2026-11-11（America/Los_Angeles）。长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
+更新时间为 2026-11-12（America/Los_Angeles）。长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
+
+## P0 联合验收候选（2026-11-12）
+
+分支 `codex/p0-acceptance-20261112` 以 PR #27 的 `ae8d1581ee745b778e6fb5a832888bc68ce8ab38` 为首父提交，合入 PR #15 的 `e9ac6c3c501c9783363b8ca4347c19f2be8a5e45`。候选包含 PR #23–#27 的认证、出站、工具策略、附件和中文化改动，以及 Python/Debian、Node、npm 和镜像漏洞门禁。源码改动沿用两个父提交。合并处更新此交接记录和现有手动 CI。
+
+在 [CI 工作流](https://github.com/ForceMind/Kexra/actions/workflows/ci.yml) 选择该分支并启用 `image_audit`。可从已认证的终端执行：
+
+~~~bash
+gh workflow run ci.yml --repo ForceMind/Kexra --ref codex/p0-acceptance-20261112 -F image_audit=true
+~~~
+
+一次手动运行覆盖 Go build/vet/测试和六组独立 PostgreSQL 测试，并在选中镜像检查时执行中文 Web 导出与静态检查、Linux amd64 镜像构建、离线 MCP 和 Trivy 高危/严重门禁。各 job 签出运行事件指定的提交，镜像 job 记录源码 SHA、镜像 ID、构建输入摘要、Trivy JSON、SPDX、运行时和浏览器信息、许可文件及证据校验和。完整运行与漏洞复扫仍待执行，历史候选扫描见 [依赖安全](DEPENDENCY_SECURITY.md)。ARM64 镜像、浏览器与 Node 内嵌组件的独立安全复核、许可审查，以及真实升级回滚属于后续验收。
 
 ## 任务分类、模板与资产提示中文化
 
@@ -198,6 +210,14 @@ go vet ./db ./server
 - 工具表读取失败返回显式空列表；装配完成后防止空列表变为 nil 触发 SDK DefaultTools，并清除不再允许工具的延迟元数据。真实装配函数的裁剪回归 6 条通过，race/vet 通过；原行为已先复现失败。
 - 新增完整 SDK 包装回归及 server 闭数据库句柄回归，尚未执行；完整 Go/Web/PG/网络/Docker 仍受当前环境限制。本轮没有运行外部模型、代理或扫描，也未触发 Actions、合并、发布或修改生产数据。
 - 具体改动、命令、兼容性和裁剪范围见 [运行时边界](RUNTIME_BOUNDARIES.md)。下一阶段完成完整 SDK/server/数据库集成、现有草稿的联合验证，以及镜像/生产发布门禁；不能把单模块验证转移到完整工程。
+
+## PR #15 原分支审计记录（2026-11-07）
+
+- 已重新回读远程：`main` 为 `70a468f87f9531f32ebdc63f0fdeee258d0f8e00`，PR #16/#17/#18 均已合并，开放 PR 仅供应链草稿 [#15](https://github.com/ForceMind/Kexra/pull/15)。本次修改基于该草稿的远程提交 `0e2da6ad730c5ba1797a161274165684fa791a9c`，没有使用本地旧源码覆盖主线。
+- 修复审计覆盖误判：此前只检查存在任意 `gobinary` 结果，无关 Go 工具也可代替 Kexra 主程序通过。现在要求同一结果的 `Type=gobinary`、目标为 `app/kexra` 或 `/app/kexra`、且有非空包清单；其他目标的漏洞仍完整计入。
+- 实际定向验证：原有 5 项回归先通过；新增用例在未修复代码上运行 10 项测试、出现 9 个失败断言，复现漏检；修复后 `python3 -I -B scripts/test-image-audit.py -v` 为 **10 pass / 0 fail / 0 skip**。包含真实 CLI 子进程的无效报告退出码 2，以及严重/高危报告退出码 1；未把合成报告测试写成真实镜像安全验收。
+- 本轮范围只有审计脚本、回归测试与维护文档；CLI 参数和现有 SPDX 非空检查契约保持兼容，无依赖、配置或数据库迁移。六套正式工作流仍手动，本轮没有触发 Actions、构建/推送镜像或创建 Release。
+- 仍阻塞：最新组合未执行完整镜像复扫，历史候选的严重 4 / 高危 150 不能作为当前版本的扫描结果。浏览器/Node 内嵌组件、SPDX 与镜像身份关联和许可复核，以及 JWT 物理路径、初始化并发与工具出站权限仍需独立处理。本机终端仍无法解析 GitHub，且没有 Docker/PostgreSQL；本地旧目录是源码子集，迁移/文档全量检查因缺文件无法完成，不作为远程代码失败结论。PR #15 保持草稿，不合并或发布。
 
 ## 历史恢复记录（2026-10-20）
 

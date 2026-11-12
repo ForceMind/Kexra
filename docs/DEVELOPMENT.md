@@ -45,9 +45,13 @@ python3 -I scripts/check-i18n-keys.py
 python3 -I scripts/check-web-zh.py
 python3 -I scripts/check-doc-links.py
 python3 -I scripts/check-web-vendor.py
+python3 -I scripts/check-docker-toolchain.py
+python3 -I scripts/test-image-audit.py
 ~~~
 
 `check-web-zh.py` 需要先生成 `web/out`；其静态 HTML 检查**不能证明**运行时 API/Mock/Agent 输出已全部中文化。
+
+真实镜像漏洞/SBOM 与无网络 MCP 协议验证命令见 [依赖安全审计](DEPENDENCY_SECURITY.md)。这类测试需要 Docker 及已构建的完整应用镜像，不能以静态工具链检查代替。
 
 **GitHub Actions 节省额度状态**：当前 `main` 的 CI、文档、前端、检测规则、外链周检及 Release 工作流仍为手动触发（`workflow_dispatch`）；不会因 push、PR 或定时任务自动运行。仓库已公开，但自动门禁的恢复需单独检查运行费用、安全边界与范围。
 
@@ -80,4 +84,4 @@ CI 通过 `.github/workflows/ci.yml`、`web.yml`、`docs.yml` 和 `detections.ym
 - 各种 `ARTEX_*` 字段是否只作兼容，而非可立即删除；
 - GitHub Actions 因平台原因在执行测试前失败时，不应将状态写成“测试通过”。
 
-工作空间与聊天附件的快速文件边界回归：`go test ./server -run '^(TestWorkspace|TestChatUploadsCannotEscapeWorkspace)' -count=1`。完整 server 数据库集成必须另设 PostgreSQL 16 与 `ARTEX_PG_DSN`，不能以这些不依赖 DB 的定向测试替代。相关跨平台证据见 [状态记录](WORK_STATUS.md)。
+工作空间与聊天附件文件边界回归：`go test ./server -run '^(TestWorkspace|TestChatUploadsCannotEscapeWorkspace)' -count=1`。完整 server DB 集成仍须 PostgreSQL 16 与 `ARTEX_PG_DSN`；主线 PR #17/#18 的验证范围见 [工作状态](WORK_STATUS.md)。
