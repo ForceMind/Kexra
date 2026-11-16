@@ -1,6 +1,12 @@
 # Kexra 当前状态与交接
 
-更新时间为 2026-11-12（America/Los_Angeles）。长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
+更新时间为 2026-11-16（America/Los_Angeles）。长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
+
+## P0 镜像报告身份校验（2026-11-16）
+
+草稿 [PR #28](https://github.com/ForceMind/Kexra/pull/28) 在原联合验收提交 `149ea348911443a164ad7455ea31a9525d12b348` 上补齐镜像报告身份校验。CI 将 Docker 构建时记录的镜像 ID 与 Trivy 报告的 `Metadata.ImageID` 比对，并从同一份含完整包清单的 JSON 生成 SPDX。报告身份不匹配时门禁失败。变更范围为 CI、审计脚本、回归及说明，部署无需数据库或配置迁移。
+
+镜像门禁脚本 11 项回归通过，包含错误或空的预期镜像 ID、匹配 ID、以及高危/严重发现继续阻断。工作流 YAML 和 18 段 shell 通过静态检查。当前终端仍无法连接 GitHub API 来启动手动 CI。真实 Go/Web/PostgreSQL、镜像构建、MCP 和漏洞复扫仍待下方入口执行。
 
 ## P0 联合验收候选（2026-11-12）
 

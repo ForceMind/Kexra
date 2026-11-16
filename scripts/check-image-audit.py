@@ -8,11 +8,14 @@ from pathlib import Path
 import sys
 
 
-def summarize(report: dict, sbom: dict) -> dict:
+def summarize(report: dict, sbom: dict, *, expected_image_id=None) -> dict:
     if report.get("ArtifactType") != "container_image":
         raise ValueError("需要容器镜像报告，不能使用源码锁文件报告替代")
-    if not report.get("Metadata", {}).get("ImageID"):
+    image_id = report.get("Metadata", {}).get("ImageID")
+    if not isinstance(image_id, str) or not image_id.strip():
         raise ValueError("报告缺少实际镜像 ID")
+    if expected_image_id is not None and image_id != expected_image_id:
+        raise ValueError(f"扫描报告镜像 ID {image_id!r} 与构建记录 {expected_image_id!r} 不一致")
     coverage = {}
     counts = Counter()
     blockers = []
@@ -44,7 +47,7 @@ def summarize(report: dict, sbom: dict) -> dict:
     if not str(sbom.get("spdxVersion", "")).startswith("SPDX-") or not sbom.get("packages"):
         raise ValueError("SPDX 镜像 SBOM 为空或格式无效")
     return {
-        "image_id": report["Metadata"]["ImageID"],
+        "image_id": image_id,
         "coverage": coverage,
         "spdx_packages": len(sbom["packages"]),
         "counts": dict(sorted(counts.items())),
@@ -57,9 +60,14 @@ def main() -> int:
     parser.add_argument("report", type=Path)
     parser.add_argument("sbom", type=Path)
     parser.add_argument("--summary", type=Path, required=True)
+    parser.add_argument("--expected-image-id", help="构建后由 docker image inspect 记录的镜像 ID")
     args = parser.parse_args()
     try:
-        summary = summarize(json.loads(args.report.read_text()), json.loads(args.sbom.read_text()))
+        summary = summarize(
+            json.loads(args.report.read_text()),
+            json.loads(args.sbom.read_text()),
+            expected_image_id=args.expected_image_id,
+        )
         args.summary.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n")
     except (OSError, ValueError, TypeError, KeyError) as error:
         print(f"镜像审计无效：{error}", file=sys.stderr)

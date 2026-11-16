@@ -158,7 +158,7 @@ jobs:
       - name: Scan image and generate SPDX SBOM (inventory, no suppression)
         run: |
           /tmp/kexra-trivy/trivy image --image-src docker --timeout 10m --scanners vuln,license --list-all-pkgs --format json --output image-audit/trivy-image.json kexra:local
-          /tmp/kexra-trivy/trivy image --image-src docker --timeout 10m --format spdx-json --output image-audit/image.spdx.json kexra:local
+          /tmp/kexra-trivy/trivy convert --format spdx-json --output image-audit/image.spdx.json image-audit/trivy-image.json
           /tmp/kexra-trivy/trivy --version > image-audit/scanner-database.txt
       - name: Enforce image audit and smoke test outcomes
         id: audit
@@ -168,7 +168,8 @@ jobs:
           BROWSER_LOCK_OUTCOME: ${{ steps.browser-lock.outcome }}
         run: |
           test "$(docker image inspect kexra:local --format '{{.Id}}')" = "$(cat image-audit/image-id.txt)"
-          python3 -I scripts/check-image-audit.py image-audit/trivy-image.json image-audit/image.spdx.json --summary image-audit/summary.json
+          python3 -I scripts/check-image-audit.py image-audit/trivy-image.json image-audit/image.spdx.json \
+            --expected-image-id "$(cat image-audit/image-id.txt)" --summary image-audit/summary.json
           test "$MCP_OUTCOME" = success
           test "$BROWSER_LOCK_OUTCOME" = success
       - name: Record runtime, browser binaries and license inventory

@@ -66,14 +66,15 @@ Debian 将这些问题列为 no-dsa/minor 不等于软件已修复。本次不�
 复现门禁（先在可信隔离环境安装已核验 Trivy，并实际构建 `kexra:local`）：
 
 ~~~bash
-trivy image --scanners vuln,license --list-all-pkgs --format json --output trivy-image.json kexra:local
-trivy image --format spdx-json --output image.spdx.json kexra:local
-python3 -I scripts/check-image-audit.py trivy-image.json image.spdx.json --summary image-summary.json
+image_id=$(docker image inspect kexra:local --format '{{.Id}}')
+trivy image --image-src docker --scanners vuln,license --list-all-pkgs --format json --output trivy-image.json kexra:local
+trivy convert --format spdx-json --output image.spdx.json trivy-image.json
+python3 -I scripts/check-image-audit.py trivy-image.json image.spdx.json --expected-image-id "$image_id" --summary image-summary.json
 python3 -I scripts/test-image-audit.py
 python3 -I scripts/smoke-docker-mcp.py --image kexra:local
 ~~~
 
-扫描器或网络失败不能生成安全通过结论；缺少系统、Node、Python、实际 Go 二进制覆盖或空 SBOM 时门禁直接报错。实际 Go 覆盖必须来自 `Type=gobinary`、`Target` 为 `app/kexra` 或 `/app/kexra` 且包含包清单的结果；任意其他 Go 工具、同名备份或空应用结果均不能代替。两种 Target 仅代表同一容器路径的带/不带前导斜杠拼写，不接受按文件名或宽松路径归一化匹配。浏览器协议测试使用唯一命名的 `--network none` 临时容器，只操作 `about:blank` 和内存页面，不依赖外部模型或外部网站。
+CI 要求扫描 JSON 的 `Metadata.ImageID` 和构建后记录的 Docker 镜像 ID 一致。SPDX 从同一份带完整包清单的扫描 JSON 生成。缺少系统、Node、Python、实际 Go 二进制覆盖或空 SBOM 时门禁直接报错。实际 Go 覆盖必须来自 `Type=gobinary`、`Target` 为 `app/kexra` 或 `/app/kexra` 且包含包清单的结果；任意其他 Go 工具、同名备份或空应用结果均不能代替。两种 Target 仅代表同一容器路径的带/不带前导斜杠拼写，不接受按文件名或宽松路径归一化匹配。浏览器协议测试使用唯一命名的 `--network none` 临时容器，只操作 `about:blank` 和内存页面，不依赖外部模型或外部网站。
 
 ## 复现命令
 

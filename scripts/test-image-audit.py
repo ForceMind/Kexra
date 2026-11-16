@@ -68,6 +68,26 @@ class ImageAuditTests(unittest.TestCase):
         self.assertEqual(summary["blockers"], [])
         self.assertEqual(set(summary["coverage"]), {"debian", "node-pkg", "python-pkg", "gobinary"})
 
+    def test_expected_image_id_through_cli(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "report.json").write_text(json.dumps(self.report))
+            (root / "sbom.json").write_text(json.dumps(self.sbom))
+            for image_id, code in (("sha256:other-image", 2), ("", 2), ("sha256:test-fixture", 0)):
+                with self.subTest(image_id=image_id):
+                    summary = root / "summary.json"
+                    result = subprocess.run([
+                        sys.executable, "-I", str(Path(__file__).with_name("check-image-audit.py")),
+                        str(root / "report.json"), str(root / "sbom.json"),
+                        "--summary", str(summary), "--expected-image-id", image_id,
+                    ], capture_output=True, text=True, check=False)
+                    self.assertEqual(result.returncode, code, result.stdout + result.stderr)
+                    if code == 0:
+                        self.assertEqual(json.loads(summary.read_text())["image_id"], image_id)
+                    else:
+                        self.assertIn("镜像 ID", result.stderr)
+                        self.assertFalse(summary.exists())
+
     def test_actual_application_target_accepts_container_path_spellings(self):
         for target in ("app/kexra", "/app/kexra"):
             report = copy.deepcopy(self.report)
