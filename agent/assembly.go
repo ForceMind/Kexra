@@ -57,10 +57,18 @@ func AugmentTools(ctx context.Context, agentKey string, base []actool.CoreTool) 
 	// agent isn't bound to (or that are disabled) and swap in overridden
 	// descriptions/schemas + default injection. MCP/skill/host tools have no row
 	// and pass through untouched, so deferred/unlock wiring stays consistent.
-	if ToolResolve != nil {
+	resolved := ToolResolve != nil
+	if resolved {
 		out = ToolResolve(ctx, agentKey, out)
 	}
 	out, def.FindingGuidance = findingWorkflowTools(agentKey, out)
+	if resolved && len(out) == 0 {
+		// A resolved empty selection must not become nil: the SDK interprets nil
+		// as a request to install DefaultTools again. Also remove stale discovery
+		// metadata for tools that the resolver did not permit.
+		out = []actool.CoreTool{}
+		def = DeferredInfo{}
+	}
 	for i, t := range out {
 		out[i] = guardPanic(t)
 	}

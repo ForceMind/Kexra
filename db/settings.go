@@ -25,6 +25,28 @@ ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`, key
 	return err
 }
 
+// SetSettingIfEmpty atomically sets an absent or empty setting. Exactly one
+// concurrent caller providing a nonempty value can replace the empty value;
+// a nonempty setting is retained. Callers claiming initialization must provide
+// a nonempty value.
+// The bool reports whether this call stored value. Database errors are never
+// converted into a successful claim.
+func (d *DB) SetSettingIfEmpty(key, value string) (bool, error) {
+	result, err := d.Exec(`
+INSERT INTO settings(key, value) VALUES ($1, $2)
+ON CONFLICT (key) DO UPDATE
+SET value = EXCLUDED.value, updated_at = now()
+WHERE settings.value = ''`, key, value)
+	if err != nil {
+		return false, err
+	}
+	changed, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return changed == 1, nil
+}
+
 // GetBool returns the boolean setting, or def when unset/unparseable.
 func (d *DB) GetBool(key string, def bool) bool {
 	v, ok, err := d.GetSetting(key)

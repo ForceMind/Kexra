@@ -62,6 +62,7 @@ func TestAuthErrorConstantsLocalized(t *testing.T) {
 		"authErrPasswordEmpty":        authErrPasswordEmpty,
 		"authErrNewPasswordEmpty":     authErrNewPasswordEmpty,
 		"authErrPasswordHash":         authErrPasswordHash,
+		"authErrReadFailedPrefix":     authErrReadFailedPrefix,
 		"authErrSaveFailedPrefix":     authErrSaveFailedPrefix,
 		"authErrTokenGen":             authErrTokenGen,
 		"authErrBadRequest":           authErrBadRequest,

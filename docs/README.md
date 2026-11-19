@@ -19,6 +19,9 @@
 
 - [开发路线](ROADMAP.md) · [当前状态与交接](WORK_STATUS.md) · [发布验收清单](RELEASE_CHECKLIST.md)
 - [依赖安全审计与复现](DEPENDENCY_SECURITY.md)
+- [远程 MCP 与通知出站边界](OUTBOUND_SECURITY.md)
+- [工具策略加载故障边界](TOOL_POLICY_SECURITY.md)
+- [模型 HTTP 与工具装配边界](RUNTIME_BOUNDARIES.md)
 - [更新与回滚的实现、验证与边界](UPDATING.md)
 
 - [检测规则维护](../detections/MAINTENANCE.zh-CN.md)；原有 [规则资料](../detections/README.md) 中的历史技术特征不能为了改品牌而擅自替换

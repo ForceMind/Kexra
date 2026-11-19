@@ -1,27 +1,26 @@
 @echo off
-rem 콘솔을 UTF-8 로 전환합니다. 그러지 않으면 이 파일의 한글이 GBK 터미널에서 깨집니다.
+rem 使用 UTF-8 代码页显示启动提示。
 chcp 65001 >nul 2>&1
-rem ARTEX 데몬 시작 스크립트(Windows)
+rem Kexra 启动脚本（Windows）
 rem
-rem 사용법:
-rem   start.bat                  포그라운드 실행(Ctrl-C 로 중지)
-rem   start.bat -addr :9000      추가 인자는 kexra 로 그대로 전달
+rem 用法
+rem   start.bat                  前台运行（按 Ctrl+C 停止）
+rem   start.bat -addr :9000      将附加参数原样传给 kexra
 rem
-rem 이 스크립트는 한 가지만 합니다. kexra.exe 를 실행하고, 프로세스가 종료되면 종료 코드를 보고 다시 띄울지 결정합니다.
+rem 启动 kexra.exe，并根据进程退出码决定是否重启。
 rem
-rem   0      사용자가 정상 중지  -> 루프 종료
-rem   75     프로그램이 재시작 요청 -> 즉시 다시 실행(화면에서 "원클릭 업데이트" 또는 "롤백"을 누름)
-rem   그 외  비정상 종료       -> 백오프 후 다시 실행(1->2->4…최대 60초)
+rem   0      正常退出，结束循环
+rem   75     程序请求重启，立即重新运行（例如在界面执行更新或回滚）
+rem   其他   异常退出，延时重启（1→2→4 秒，最多 60 秒）
 rem
-rem 다운로드·SHA256 체크섬 검증·버전 교체는 여기서 하지 않고, 전부 kexra 가 기동할 때 스스로 처리합니다
-rem (selfupdate 패키지). 스크립트는 단순하게 유지합니다. 자세한 내용은 start.sh 상단 설명을 참고하세요.
+rem 下载、SHA256 校验和版本换装由 kexra 启动时的 selfupdate 模块处理。
 
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
 
 set "BIN=kexra.exe"
 if not exist "%BIN%" (
-	echo [kexra] 실행 파일을 찾을 수 없습니다: %BIN% 1>&2
+	echo [kexra] 找不到可执行文件：%BIN% 1>&2
 	exit /b 1
 )
 
@@ -34,19 +33,19 @@ set /a delay=1
 set "code=!ERRORLEVEL!"
 
 if "!code!"=="0" (
-	echo [kexra] 정상 종료
+	echo [kexra] 正常退出
 	exit /b 0
 )
 
 if "!code!"=="%RESTART_CODE%" (
-	rem 업데이트/롤백이 준비되었습니다. 다시 실행하면 kexra 가 기동 시 버전 교체를 완료합니다.
-	echo [kexra] 재시작 요청: 새 버전 적용…
+	rem 更新或回滚已暂存，由下一次启动完成换装。
+	echo [kexra] 收到重启请求，正在切换版本…
 	set /a delay=1
 	goto loop
 )
 
-echo [kexra] 비정상 종료 ^(code=!code!^), !delay!s 후 재시작 1>&2
-rem timeout 은 리디렉션된 콘솔에서 실패하므로 ping 으로 대체합니다(N초 지연에는 N+1 번 필요).
+echo [kexra] 异常退出 ^(code=!code!^)，!delay! 秒后重启 1>&2
+rem 用本机 ping 实现重定向控制台中的延时，N 秒需要 N+1 次。
 set /a pings=!delay!+1
 ping -n !pings! 127.0.0.1 >nul 2>&1
 set /a delay=!delay!*2

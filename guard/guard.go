@@ -14,8 +14,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ForceMind/Kexra/intercept"
 	"github.com/Autumn-27/norma/hook"
+	"github.com/ForceMind/Kexra/intercept"
 )
 
 // AuditEntry records one gated tool call.
@@ -84,11 +84,18 @@ func (g *Guard) applyIntercept(ctx context.Context, ev hook.Event) hook.Result {
 	if g.interceptor == nil {
 		return hook.Result{}
 	}
-	if !g.interceptor.IsToolEnabled(ev.ToolName) {
+	enabled, err := g.interceptor.IsToolEnabled(ev.ToolName)
+	if err != nil {
+		return g.block(ev.ToolName, systemBlockMessage("工具拦截策略不可用，平台安全管控阻止执行"), "")
+	}
+	if !enabled {
 		return hook.Result{}
 	}
 	ctx = intercept.WithCall(ctx, ev.ToolName, ev.Input)
-	dec, matched := g.interceptor.Match(ev.ToolName, ev.Input)
+	dec, matched, err := g.interceptor.Match(ev.ToolName, ev.Input)
+	if err != nil {
+		return g.block(ev.ToolName, systemBlockMessage("工具拦截策略不可用，平台安全管控阻止执行"), "")
+	}
 	if !matched {
 		// No rule matched. Ask the LLM fallback judge (if enabled); when it is off
 		// or unwired, keep current behavior and allow.

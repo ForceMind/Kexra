@@ -183,7 +183,7 @@ func (i *Interceptor) loadLocked() error {
 	if err != nil {
 		return err
 	}
-	var out []compiledRule
+	out := make([]compiledRule, 0, len(rules))
 	for _, r := range rules {
 		if !r.Enabled {
 			continue
@@ -192,35 +192,51 @@ func (i *Interceptor) loadLocked() error {
 		if r.MatchType == "regex" {
 			re, err := regexp.Compile(r.Pattern)
 			if err != nil {
-				continue // skip rules with bad regex rather than crashing
+				return fmt.Errorf("编译拦截规则 %d 失败: %w", r.ID, err)
 			}
 			cr.re = re
 		}
 		out = append(out, cr)
 	}
-	i.cached = out
-
 	// Load enabled-tools set from settings, falling back to hard-coded defaults.
-	val, ok, _ := i.db.GetSetting("intercept_enabled_tools")
-	if !ok {
-		m := make(map[string]bool, len(defaultEnabledTools))
-		for _, n := range defaultEnabledTools {
-			m[n] = true
-		}
-		i.enabledTools = m
-	} else {
-		var names []string
-		if json.Unmarshal([]byte(val), &names) != nil {
-			i.enabledTools = map[string]bool{}
-		} else {
-			m := make(map[string]bool, len(names))
-			for _, n := range names {
-				m[n] = true
-			}
-			i.enabledTools = m
+	val, ok, err := i.db.GetSetting("intercept_enabled_tools")
+	if err != nil {
+		return fmt.Errorf("读取拦截工具配置失败: %w", err)
+	}
+	names := defaultEnabledTools
+	if ok {
+		names, err = parseEnabledTools(val)
+		if err != nil {
+			return err
 		}
 	}
+	enabled := make(map[string]bool, len(names))
+	for _, n := range names {
+		enabled[n] = true
+	}
+	// Publish one complete snapshot. A failed load must not leave usable rules
+	// paired with a missing or defaulted tool set.
+	i.cached = out
+	i.enabledTools = enabled
 	return nil
+}
+
+func parseEnabledTools(val string) ([]string, error) {
+	var values []*string
+	if err := json.Unmarshal([]byte(val), &values); err != nil {
+		return nil, fmt.Errorf("解析拦截工具配置失败: %w", err)
+	}
+	if values == nil {
+		return nil, errors.New("拦截工具配置必须是 JSON 数组")
+	}
+	names := make([]string, len(values))
+	for index, value := range values {
+		if value == nil {
+			return nil, errors.New("拦截工具配置中的工具名称不能是 null")
+		}
+		names[index] = *value
+	}
+	return names, nil
 }
 
 func (i *Interceptor) rules() ([]compiledRule, error) {
@@ -245,22 +261,24 @@ func (i *Interceptor) rules() ([]compiledRule, error) {
 
 // IsToolEnabled returns true if the named tool is in the intercept-enabled set
 // (i.e. it should enter the rule-matching path). Uses the same double-check lock
-// pattern as rules().
-func (i *Interceptor) IsToolEnabled(name string) bool {
+// pattern as rules(). A loading error is distinct from explicitly disabling a tool.
+func (i *Interceptor) IsToolEnabled(name string) (bool, error) {
 	i.mu.RLock()
 	if i.enabledTools != nil {
 		v := i.enabledTools[name]
 		i.mu.RUnlock()
-		return v
+		return v, nil
 	}
 	i.mu.RUnlock()
 
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	if i.enabledTools == nil {
-		_ = i.loadLocked()
+		if err := i.loadLocked(); err != nil {
+			return false, err
+		}
 	}
-	return i.enabledTools[name]
+	return i.enabledTools[name], nil
 }
 
 // GetEnabledTools returns the ordered list of tool names that are currently
@@ -276,16 +294,15 @@ func (i *Interceptor) GetEnabledTools() ([]string, error) {
 		copy(out, defaultEnabledTools)
 		return out, nil
 	}
-	var names []string
-	if err := json.Unmarshal([]byte(val), &names); err != nil {
-		return []string{}, nil
-	}
-	return names, nil
+	return parseEnabledTools(val)
 }
 
 // SetEnabledTools persists the list of tool names that should enter the intercept
 // rule system, then invalidates the cache so the next call picks up the new list.
 func (i *Interceptor) SetEnabledTools(tools []string) error {
+	if tools == nil {
+		tools = []string{}
+	}
 	b, err := json.Marshal(tools)
 	if err != nil {
 		return err
@@ -520,11 +537,12 @@ func judgeActionLabel(action string) string {
 
 // Match evaluates the rule list (priority DESC) against a tool call.
 // Returns (Decision, true) for the first matching enabled rule, or
-// (Decision{}, false) if no rule matches.
-func (i *Interceptor) Match(toolName string, input []byte) (Decision, bool) {
+// (Decision{}, false, nil) if no rule matches. Loading errors are returned so
+// callers cannot mistake an unavailable policy for a normal no-match.
+func (i *Interceptor) Match(toolName string, input []byte) (Decision, bool, error) {
 	rules, err := i.rules()
-	if err != nil || len(rules) == 0 {
-		return Decision{}, false
+	if err != nil {
+		return Decision{}, false, err
 	}
 	for _, r := range rules {
 		if ruleMatches(r, toolName, input) {
@@ -541,10 +559,10 @@ func (i *Interceptor) Match(toolName string, input []byte) (Decision, bool) {
 				TimeoutEnabled: r.TimeoutEnabled,
 				TimeoutSeconds: r.TimeoutSeconds,
 				TimeoutAction:  r.TimeoutAction,
-			}, true
+			}, true, nil
 		}
 	}
-	return Decision{}, false
+	return Decision{}, false, nil
 }
 
 func ruleMatches(r compiledRule, toolName string, input []byte) bool {

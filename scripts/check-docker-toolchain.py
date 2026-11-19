@@ -21,8 +21,25 @@ def require(condition: bool, message: str) -> None:
         errors.append(message)
 
 
-require("FROM node:22.23.2-bookworm-slim AS node-runtime" in dockerfile,
+require("FROM node:22.23.3-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392 AS node-runtime" in dockerfile,
         "Node 运行时未采用预定的版本化官方镜像")
+require("FROM python:3.12.15-slim-trixie@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1" in dockerfile,
+        "Python / Debian 基础镜像未固定到已审查的多架构 digest")
+sources = (root / "docker/debian.sources").read_text(encoding="utf-8")
+require(sources.count("20261019T000000Z") == 2 and "trixie-security" in sources,
+        "Debian 软件源快照与已审查时间不同")
+require(sources.count("Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg") == 2,
+        "Debian 快照必须保留归档签名校验")
+require("trusted=yes" not in sources and "Allow-Insecure" not in sources,
+        "Debian 软件源不得绕过签名验证")
+npm_runtime = json.loads((root / "docker/npm-runtime.json").read_text(encoding="utf-8"))
+require(npm_runtime == {
+    "version": "12.2.1",
+    "tarball": "https://registry.npmjs.org/npm/-/npm-12.2.1.tgz",
+    "integrity": "sha512-bKCmFRVT/BB+YPEYbZwQ1XUI3N5t4xKSpU1MxOjo7z3iWzKBJ0ZXRC1xFdEN+TC7N5TdywaBzf2dMXGJq/e2PQ==",
+}, "npm 运行时清单与已审查发布包不同")
+require("RUN node /tmp/kexra-npm/install-npm-runtime.cjs" in dockerfile,
+        "npm 运行时未执行下载完整性校验")
 require("COPY --from=node-runtime /usr/local/bin/node" in dockerfile,
         "未从官方 Node 镜像复制 Node 二进制")
 require("COPY --from=node-runtime /usr/local/lib/node_modules/npm" in dockerfile,
@@ -76,4 +93,4 @@ if errors:
     sys.exit(1)
 
 print("✅ Docker 浏览器工具锁文件、完整性字段和 Compose 默认隔离静态检查通过。")
-print("注意：apt 和基础镜像 digest 尚未完全锁定；静态检查不替代镜像构建与安全审计。")
+print("基础镜像 digest、npm 发布包与 Debian 快照已固定；静态检查不替代镜像构建与安全审计。")
