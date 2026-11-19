@@ -29,6 +29,8 @@ jobs:
         run: |
           python3 -I scripts/check-docker-toolchain.py
           python3 -I scripts/test-image-audit.py
+      - name: PostgreSQL test results gate regression
+        run: python3 -I scripts/test-postgres-test-results.py
       - uses: actions/setup-go@v5
         with:
           go-version: "1.26.9"
@@ -88,7 +90,13 @@ jobs:
       - name: go test (DB 통합 · ${{ matrix.pkg }} 패키지 격리)
         env:
           ARTEX_PG_DSN: postgres://artex:artex@localhost:5432/artex?sslmode=disable
-        run: go test ./${{ matrix.pkg }}/ -count=1
+        run: |
+          report="$RUNNER_TEMP/postgres-go-test.jsonl"
+          if ! go test -json ./${{ matrix.pkg }}/ -count=1 > "$report"; then
+            cat "$report"
+            exit 1
+          fi
+          python3 -I scripts/check-postgres-test-results.py "$report"
 
   web-image-audit:
     if: inputs.image_audit

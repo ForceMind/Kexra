@@ -1,6 +1,12 @@
 # Kexra 当前状态与交接
 
-更新时间为 2026-11-16（America/Los_Angeles）。长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
+更新时间为 2026-11-19（America/Los_Angeles）。长期任务见 [路线](ROADMAP.md)，发布判断见 [发布清单](RELEASE_CHECKLIST.md)。
+
+## P0 PostgreSQL 验收结果检查（2026-11-19）
+
+草稿 [PR #28](https://github.com/ForceMind/Kexra/pull/28) 在 `5e15cb65986a96f877bd2d31b746d3227fe98bfc` 上增加 PostgreSQL 测试结果检查。六个 PostgreSQL job 读取 Go 测试的 JSON 事件，列出跳过项，并在测试因数据库未配置或不可用而跳过时失败。无需数据库或配置迁移。
+
+结果检查通过 3 项回归，覆盖 7 种现有数据库跳过原因。用 Go 实际生成的测试事件验证了数据库跳过会阻断、仅私有模型跳过可通过。工作流 YAML 和 19 段 Shell 语法检查通过。实际数据库、Go/Web 全量和镜像复扫仍待联合验收。
 
 ## P0 镜像报告身份校验（2026-11-16）
 

@@ -55,7 +55,7 @@ python3 -I scripts/test-image-audit.py
 
 **GitHub Actions 节省额度状态**：当前 `main` 的 CI、文档、前端、检测规则、外链周检及 Release 工作流仍为手动触发（`workflow_dispatch`）；不会因 push、PR 或定时任务自动运行。仓库已公开，但自动门禁的恢复需单独检查运行费用、安全边界与范围。
 
-CI 通过 `.github/workflows/ci.yml`、`web.yml`、`docs.yml` 和 `detections.yml` 组织。使用 PostgreSQL 16 的集成测试 job 按包隔离，不能以无数据库的普通 `go test` 代替它们。
+CI 通过 `.github/workflows/ci.yml`、`web.yml`、`docs.yml` 和 `detections.yml` 组织。PostgreSQL 16 集成测试按包隔离，CI 读取 `go test -json` 的结果并列出跳过项。因数据库未配置或不可用而跳过的测试会使对应 job 失败，依赖私有模型的测试可按原逻辑跳过。
 
 检测规则验证依赖测试镜像/工具，请参阅 [detections/tests/README.md](../detections/tests/README.md)，避免修改原始指纹或事件样例来“让测试通过”。
 
